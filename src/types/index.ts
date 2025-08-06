@@ -42,3 +42,6 @@ export * from './economy';
 
 // Re-export player types
 export * from './player';
+
+// Re-export ship hub types
+export * from './shipHubs';
