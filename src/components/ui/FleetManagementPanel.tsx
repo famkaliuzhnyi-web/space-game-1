@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Ship } from '../../types/player';
 import { ShipStorageManager, ShipYardOffer } from '../../systems/ShipStorageManager';
 import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
+import { ShipHubDesign } from '../../types/shipHubs';
 import Modal from './Modal';
 import ShipConstructionPanel from './ShipConstructionPanel';
+import HubShipDesigner from './HubShipDesigner';
 
 interface FleetManagementPanelProps {
   isVisible: boolean;
@@ -18,6 +20,7 @@ interface FleetManagementPanelProps {
   onSwitchShip: (shipId: string) => void;
   onPurchaseShip: (shipClassId: string) => void;
   onConstructShip?: (config: ShipConstructionConfig) => void;
+  onConstructHubShip?: (design: ShipHubDesign, shipName: string) => void;
   onStoreShip: (shipId: string) => void;
   onRetrieveShip: (shipId: string) => void;
 }
@@ -35,6 +38,7 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
   onSwitchShip,
   onPurchaseShip,
   onConstructShip,
+  onConstructHubShip,
   onStoreShip,
   onRetrieveShip
 }) => {
@@ -43,6 +47,7 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
   const [availableShips, setAvailableShips] = useState<ShipYardOffer[]>([]);
   const [storedShips, setStoredShips] = useState<any[]>([]);
   const [showConstructionPanel, setShowConstructionPanel] = useState(false);
+  const [showHubDesigner, setShowHubDesigner] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
@@ -375,7 +380,8 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
   );
 
   const renderConstructionTab = () => {
-    if (!onConstructShip) {
+    // If no construction method is available, show unavailable message
+    if (!onConstructShip && !onConstructHubShip) {
       return (
         <div style={{ padding: '20px' }}>
           <div style={{
@@ -395,7 +401,8 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
       );
     }
 
-    if (showConstructionPanel) {
+    // Show traditional construction panel
+    if (showConstructionPanel && onConstructShip) {
       return (
         <ShipConstructionPanel
           stationId={stationId}
@@ -406,75 +413,273 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
             onConstructShip(config);
             setShowConstructionPanel(false);
           }}
-          onCancel={() => setShowConstructionPanel(false)}
+          onCancel={() => {
+            setShowConstructionPanel(false);
+          }}
         />
       );
     }
 
+    // Show hub-based designer
+    if (showHubDesigner && onConstructHubShip) {
+      const availableMaterials = {
+        'electronics': 1000,
+        'steel': 1000,
+        'composites': 1000,
+        'fusion-cores': 100,
+        'rare-metals': 50
+      };
+
+      return (
+        <HubShipDesigner
+          stationId={stationId}
+          stationType={stationType}
+          techLevel={techLevel}
+          playerCredits={playerCredits}
+          availableMaterials={availableMaterials}
+          onConstructShip={(design, shipName) => {
+            onConstructHubShip(design, shipName);
+            setShowHubDesigner(false);
+          }}
+          onCancel={() => {
+            setShowHubDesigner(false);
+          }}
+        />
+      );
+    }
+
+    // Show construction method selection or single method if only one available
+    const hasTraditional = !!onConstructShip;
+    const hasHub = !!onConstructHubShip;
+
+    // If only one method is available, show it directly
+    if (hasHub && !hasTraditional) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <h3 style={{ color: '#60a5fa', marginBottom: '15px' }}>Advanced Ship Construction</h3>
+          
+          <div style={{ marginBottom: '20px', color: '#9ca3af' }}>
+            Build custom ships with modular hub-based systems
+          </div>
+
+          <div style={{
+            backgroundColor: '#1f2937',
+            padding: '25px',
+            borderRadius: '8px',
+            border: '1px solid #374151',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔧</div>
+            <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Hub-Based Ship Design</h4>
+            <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
+              Design ships using modular hub components. Place command centers, reactors, 
+              cargo holds, and specialized equipment exactly where you want them.
+            </p>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '15px',
+              marginBottom: '25px'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>🧩</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Modular Hubs</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Place anywhere on grid</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>⚡</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Power Management</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Balance generation & consumption</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>📏</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>3D Layout</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Full spatial design</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowHubDesigner(true)}
+              style={{
+                padding: '12px 30px',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                margin: '0 auto'
+              }}
+            >
+              🔧 Start Hub Design
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (hasTraditional && !hasHub) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <h3 style={{ color: '#60a5fa', marginBottom: '15px' }}>Ship Construction</h3>
+          
+          <div style={{ marginBottom: '20px', color: '#9ca3af' }}>
+            Build custom ships with modular equipment systems
+          </div>
+
+          <div style={{
+            backgroundColor: '#1f2937',
+            padding: '25px',
+            borderRadius: '8px',
+            border: '1px solid #374151',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔨</div>
+            <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Traditional Ship Construction</h4>
+            <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
+              Design and build ships tailored to your needs. Choose from various ship classes
+              and customize them with specialized equipment for optimal performance.
+            </p>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: '15px',
+              marginBottom: '25px'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>🚀</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Ship Classes</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Multiple hull types</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>⚙️</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Modular Equipment</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Customizable loadouts</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>📊</div>
+                <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Performance</div>
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>Real-time statistics</div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowConstructionPanel(true)}
+              style={{
+                padding: '12px 30px',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                margin: '0 auto'
+              }}
+            >
+              🔨 Start Construction
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Both methods available - show selection
     return (
       <div style={{ padding: '20px' }}>
         <h3 style={{ color: '#60a5fa', marginBottom: '15px' }}>Ship Construction</h3>
         
         <div style={{ marginBottom: '20px', color: '#9ca3af' }}>
-          Build custom ships with modular equipment systems
+          Choose your construction method
         </div>
 
-        <div style={{
-          backgroundColor: '#1f2937',
-          padding: '25px',
-          borderRadius: '8px',
-          border: '1px solid #374151',
-          textAlign: 'center'
-        }}>
-          <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔨</div>
-          <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Custom Ship Construction</h4>
-          <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
-            Design and build ships tailored to your needs. Choose from various ship classes
-            and customize them with specialized equipment for optimal performance.
-          </p>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '15px',
-            marginBottom: '25px'
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          {/* Traditional Construction */}
+          <div style={{
+            backgroundColor: '#1f2937',
+            padding: '25px',
+            borderRadius: '8px',
+            border: '1px solid #374151',
+            textAlign: 'center'
           }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '5px' }}>🚀</div>
-              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Ship Classes</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Multiple hull types</div>
+            <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔨</div>
+            <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Traditional Construction</h4>
+            <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
+              Select a ship class and customize it with equipment modules.
+              Fast and straightforward for standard ship designs.
+            </p>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', color: '#10b981', marginBottom: '5px' }}>✓ Quick setup</div>
+              <div style={{ fontSize: '14px', color: '#10b981', marginBottom: '5px' }}>✓ Equipment-based</div>
+              <div style={{ fontSize: '14px', color: '#10b981' }}>✓ Proven designs</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '5px' }}>⚙️</div>
-              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Modular Design</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Customizable equipment</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '24px', marginBottom: '5px' }}>📊</div>
-              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Performance</div>
-              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Real-time statistics</div>
-            </div>
+
+            <button
+              onClick={() => setShowConstructionPanel(true)}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Choose Traditional
+            </button>
           </div>
 
-          <button
-            onClick={() => setShowConstructionPanel(true)}
-            style={{
-              padding: '12px 30px',
-              backgroundColor: '#059669',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              margin: '0 auto'
-            }}
-          >
-            🔨 Start Construction
-          </button>
+          {/* Hub-Based Construction */}
+          <div style={{
+            backgroundColor: '#1f2937',
+            padding: '25px',
+            borderRadius: '8px',
+            border: '1px solid #374151',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔧</div>
+            <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Hub-Based Design</h4>
+            <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
+              Place individual hub components on a 3D grid.
+              Maximum flexibility for custom ship designs.
+            </p>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', color: '#10b981', marginBottom: '5px' }}>✓ Full customization</div>
+              <div style={{ fontSize: '14px', color: '#10b981', marginBottom: '5px' }}>✓ 3D layout design</div>
+              <div style={{ fontSize: '14px', color: '#10b981' }}>✓ Modular hubs</div>
+            </div>
+
+            <button
+              onClick={() => setShowHubDesigner(true)}
+              style={{
+                width: '100%',
+                padding: '12px 20px',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold'
+              }}
+            >
+              Choose Hub Design
+            </button>
+          </div>
         </div>
       </div>
     );

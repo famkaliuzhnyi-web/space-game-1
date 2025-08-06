@@ -5,6 +5,8 @@ import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem } from '../../types/player';
 import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
+import { ShipHubDesign } from '../../types/shipHubs';
+import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
 
 interface GameCanvasProps {
   width?: number;
@@ -389,6 +391,65 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleConstructHubShip = (design: ShipHubDesign, shipName: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const hubConstructionSystem = new HubShipConstructionSystem();
+      
+      try {
+        const availableMaterials = {
+          'electronics': 1000,
+          'steel': 1000,
+          'composites': 1000,
+          'fusion-cores': 100,
+          'rare-metals': 50
+        };
+
+        const constraints = {
+          maxShipSize: design.maxSize,
+          availableTechLevel: 10,
+          availableMaterials,
+          requirePowerBalance: true,
+          requireBasicSystems: true,
+          requireLifeSupport: true,
+          maxMassStructural: 1000
+        };
+
+        if (playerManager.getCredits() >= design.cost.totalCredits) {
+          const station = engineRef.current.getWorldManager().getCurrentStation();
+          if (station) {
+            const newShip = hubConstructionSystem.constructShipFromHubDesign(
+              design,
+              shipName,
+              station.id,
+              constraints
+            );
+            
+            // Add ship to player's fleet
+            playerManager.getOwnedShipsMap().set(newShip.id, newShip);
+            
+            // Deduct credits
+            playerManager.spendCredits(design.cost.totalCredits);
+            
+            // Update UI
+            setPlayerCredits(playerManager.getCredits());
+            setOwnedShips(playerManager.getOwnedShips());
+            
+            console.log(`Constructed hub ship: ${shipName}`);
+            alert(`Successfully constructed ${shipName} using hub design!`);
+          } else {
+            alert('No station available for construction');
+          }
+        } else {
+          alert('Insufficient credits for construction');
+        }
+      } catch (error) {
+        console.error('Hub construction failed:', error);
+        alert(`Hub construction failed: ${error}`);
+      }
+    }
+  };
+
   const handleStoreShip = (shipId: string) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
@@ -652,6 +713,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onSwitchShip={handleSwitchShip}
         onPurchaseShip={handlePurchaseShip}
         onConstructShip={handleConstructShip}
+        onConstructHubShip={handleConstructHubShip}
         onStoreShip={handleStoreShip}
         onRetrieveShip={handleRetrieveShip}
       />
