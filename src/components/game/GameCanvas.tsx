@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, ShipManagementPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, ShipManagementPanel, EquipmentMarketPanel } from '../ui';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
-import { CargoItem, Ship } from '../../types/player';
+import { CargoItem, Ship, EquipmentItem } from '../../types/player';
 
 interface GameCanvasProps {
   width?: number;
@@ -22,6 +22,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | null>(null);
+  const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -288,6 +289,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleOpenEquipmentMarket = () => {
+    setShowEquipmentMarket(true);
+  };
+
+  const handlePurchaseEquipment = (equipment: EquipmentItem, cost: number) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      
+      // Deduct credits
+      if (playerManager.getCredits() >= cost) {
+        playerManager.spendCredits(cost);
+        
+        // Add equipment to player's inventory (for now, we'll store it separately)
+        // TODO: Implement proper equipment inventory system
+        
+        // Update UI
+        setPlayerCredits(playerManager.getCredits());
+        
+        console.log(`Equipment purchased: ${equipment.name} for ${cost} credits`);
+        alert(`Successfully purchased ${equipment.name}! You can now install it in the Ship Management panel.`);
+        
+        // Close equipment market
+        setShowEquipmentMarket(false);
+      } else {
+        console.error('Insufficient credits for equipment purchase');
+        alert('Insufficient credits for this purchase');
+      }
+    }
+  };
+
   return (
     <div className={`game-canvas-container ${className}`} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Loading state */}
@@ -505,6 +536,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           currentShip={currentShip}
           playerCredits={playerCredits}
           onRepairShip={handleRepairShip}
+          onOpenEquipmentMarket={handleOpenEquipmentMarket}
+        />
+      )}
+
+      {/* Equipment Market Panel */}
+      {currentShip && (
+        <EquipmentMarketPanel
+          isVisible={showEquipmentMarket}
+          onClose={() => setShowEquipmentMarket(false)}
+          stationId={engineRef.current?.getWorldManager().getCurrentStation()?.id || 'earth-station'}
+          stationName={engineRef.current?.getWorldManager().getCurrentStation()?.name || 'Earth Station Alpha'}
+          playerCredits={playerCredits}
+          currentShip={currentShip}
+          onPurchaseEquipment={handlePurchaseEquipment}
         />
       )}
     </div>
