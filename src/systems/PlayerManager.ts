@@ -12,16 +12,20 @@ import {
 import { getCommodity } from '../data/commodities';
 import { ShipStorageManager } from './ShipStorageManager';
 import { FactionManager, ReputationChange } from './FactionManager';
+import { CharacterManager } from './CharacterManager';
+import { Character } from '../types/character';
 
 export class PlayerManager implements InventoryManager {
   private player: Player;
   private transactions: TradeTransaction[] = [];
   private shipStorage: ShipStorageManager;
   private factionManager: FactionManager;
+  private characterManager: CharacterManager;
 
   constructor(playerId: string = 'player-1', playerName: string = 'Captain') {
     this.shipStorage = new ShipStorageManager();
     this.factionManager = new FactionManager();
+    this.characterManager = new CharacterManager();
     this.player = this.createDefaultPlayer(playerId, playerName);
   }
 
@@ -637,7 +641,8 @@ export class PlayerManager implements InventoryManager {
       },
       transactions: this.transactions,
       shipStorage: this.shipStorage.serialize(),
-      factionManager: this.factionManager.serialize()
+      factionManager: this.factionManager.serialize(),
+      characterManager: this.characterManager.serialize()
     };
   }
 
@@ -694,5 +699,68 @@ export class PlayerManager implements InventoryManager {
     if (data.factionManager) {
       this.factionManager.deserialize(data.factionManager);
     }
+
+    if (data.characterManager) {
+      this.characterManager.deserialize(data.characterManager);
+    }
+  }
+
+  // Character System Integration
+  
+  /**
+   * Get the character manager
+   */
+  getCharacterManager(): CharacterManager {
+    return this.characterManager;
+  }
+
+  /**
+   * Get current character (if character system is active)
+   */
+  getCharacter(): Character | null {
+    return this.characterManager.getCharacter();
+  }
+
+  /**
+   * Enable character system by creating a character
+   */
+  createCharacter(characterData: {
+    name: string;
+    appearance: any;
+    backgroundId: string;
+    allocatedAttributes?: any;
+    allocatedSkills?: any;
+  }): boolean {
+    try {
+      const character = this.characterManager.createCharacter(
+        `${this.player.id}-character`,
+        characterData.name,
+        characterData.appearance,
+        characterData.backgroundId,
+        characterData.allocatedAttributes,
+        characterData.allocatedSkills
+      );
+      
+      this.player.characterId = character.id;
+      return true;
+    } catch (error) {
+      console.error('Failed to create character:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Award experience to character (if character system is active)
+   */
+  awardExperience(amount: number, source: string, category: any): boolean {
+    if (!this.player.characterId) return false;
+    return this.characterManager.awardExperience(amount, source, category);
+  }
+
+  /**
+   * Check if character system is active
+   */
+  hasCharacter(): boolean {
+    return !!this.player.characterId && !!this.characterManager.getCharacter();
   }
 }
