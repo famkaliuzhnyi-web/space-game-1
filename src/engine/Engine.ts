@@ -343,16 +343,16 @@ export class Engine implements GameEngine {
     return this.worldManager;
   }
 
+  getEconomicSystem(): EconomicSystem {
+    return this.economicSystem;
+  }
+
   getTimeManager(): TimeManager {
     return this.timeManager;
   }
 
   getSaveManager(): SaveManager {
     return this.saveManager;
-  }
-
-  getEconomicSystem(): EconomicSystem {
-    return this.economicSystem;
   }
 
   private initializeEconomics(): void {
