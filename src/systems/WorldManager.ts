@@ -220,4 +220,14 @@ export class WorldManager {
 
     return objects;
   }
+
+  getAllStations(): Station[] {
+    const allStations: Station[] = [];
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        allStations.push(...system.stations);
+      }
+    }
+    return allStations;
+  }
 }

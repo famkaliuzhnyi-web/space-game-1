@@ -1,0 +1,570 @@
+import { 
+  Commodity, 
+  Market, 
+  MarketCommodity, 
+  StationEconomics, 
+  Production, 
+  Consumption,
+  PricePoint,
+  EconomicEvent
+} from '../types/economy';
+import { Station } from '../types/world';
+import { COMMODITIES, getCommodity } from '../data/commodities';
+
+export class EconomicSystem {
+  private markets: Map<string, Market> = new Map();
+  private stationEconomics: Map<string, StationEconomics> = new Map();
+  private activeEvents: EconomicEvent[] = [];
+  private lastUpdateTime: number = 0;
+  private updateInterval: number = 3600000; // Update every hour (in milliseconds)
+
+  constructor() {
+    this.lastUpdateTime = Date.now();
+  }
+
+  /**
+   * Initialize economic system for a station
+   */
+  initializeStationEconomics(station: Station, system?: {securityLevel: number}): StationEconomics {
+    const economics: StationEconomics = {
+      stationId: station.id,
+      stationType: station.type,
+      population: this.calculateStationPopulation(station),
+      wealthLevel: this.determineWealthLevel(station),
+      produces: this.generateProduction(station),
+      consumes: this.generateConsumption(station),
+      economicFactors: {
+        efficiency: 0.8 + Math.random() * 0.4, // 0.8-1.2
+        corruption: Math.random() * 0.3, // 0-0.3
+        stability: 0.7 + Math.random() * 0.3, // 0.7-1.0
+        infrastructure: 0.6 + Math.random() * 0.4 // 0.6-1.0
+      },
+      market: this.initializeMarket(station, system),
+      credits: this.calculateStationCredits(station),
+      tradeVolume: 0
+    };
+
+    this.stationEconomics.set(station.id, economics);
+    return economics;
+  }
+
+  /**
+   * Initialize market for a station
+   */
+  private initializeMarket(station: Station, system?: {securityLevel: number}): Market {
+    const market: Market = {
+      stationId: station.id,
+      commodities: new Map(),
+      lastUpdate: Date.now(),
+      demandFactors: {
+        stationType: this.getStationTypeModifier(station.type),
+        population: Math.log10(this.calculateStationPopulation(station)) / 6, // Normalize to 0-1
+        securityLevel: (system?.securityLevel ?? 5) / 10,
+        factionControl: 1.0 // Default, could be modified by faction relations
+      }
+    };
+
+    // Initialize commodity prices and availability
+    this.initializeCommodityPrices(market, station, system);
+    this.markets.set(station.id, market);
+    
+    return market;
+  }
+
+  /**
+   * Initialize commodity prices and availability for a market
+   */
+  private initializeCommodityPrices(market: Market, station: Station, system?: {securityLevel: number}): void {
+    const availableCommodities = this.getAvailableCommodities(station, system);
+    
+    for (const commodityId of availableCommodities) {
+      const commodity = getCommodity(commodityId);
+      if (!commodity) continue;
+
+      const marketCommodity: MarketCommodity = {
+        commodityId,
+        available: this.calculateInitialAvailability(commodity, station),
+        demand: this.calculateInitialDemand(commodity, station),
+        currentPrice: this.calculatePrice(commodity, market),
+        priceHistory: [{
+          timestamp: Date.now(),
+          price: commodity.basePrice,
+          volume: 0
+        }],
+        supplyLevel: 'normal',
+        demandLevel: 'normal',
+        productionRate: this.getProductionRate(commodityId, station),
+        restockTime: 8 + Math.random() * 16 // 8-24 hours
+      };
+
+      market.commodities.set(commodityId, marketCommodity);
+    }
+  }
+
+  /**
+   * Calculate current price for a commodity at a market
+   */
+  calculatePrice(commodity: Commodity, market: Market): number {
+    let price = commodity.basePrice;
+    
+    // Apply demand factors
+    price *= market.demandFactors.stationType;
+    price *= (0.5 + market.demandFactors.population);
+    price *= (0.8 + market.demandFactors.securityLevel * 0.4);
+    
+    // Apply security restrictions for illegal/restricted items
+    if (commodity.legalStatus === 'illegal') {
+      price *= 2.0 + (1.0 - market.demandFactors.securityLevel) * 2.0;
+    } else if (commodity.legalStatus === 'restricted') {
+      price *= 1.2 + (1.0 - market.demandFactors.securityLevel) * 0.8;
+    }
+    
+    // Apply volatility
+    const volatilityFactor = 1.0 + (Math.random() - 0.5) * commodity.volatility;
+    price *= volatilityFactor;
+    
+    // Apply active economic events
+    price *= this.getEventPriceMultiplier(commodity.id, market.stationId);
+    
+    return Math.max(1, Math.round(price));
+  }
+
+  /**
+   * Update all markets and economic cycles
+   */
+  update(_deltaTime: number): void {
+    const currentTime = Date.now();
+    
+    // Only update markets periodically (every hour in game time)
+    if (currentTime - this.lastUpdateTime >= this.updateInterval) {
+      this.updateMarkets(_deltaTime);
+      this.updateProduction(_deltaTime);
+      this.updateEvents(_deltaTime);
+      this.lastUpdateTime = currentTime;
+    }
+  }
+
+  /**
+   * Update all market prices and availability
+   */
+  private updateMarkets(deltaTime: number): void {
+    for (const market of this.markets.values()) {
+      this.updateMarket(market, deltaTime);
+    }
+  }
+
+  /**
+   * Update a single market
+   */
+  private updateMarket(market: Market, deltaTime: number): void {
+    const economics = this.stationEconomics.get(market.stationId);
+    if (!economics) return;
+
+    for (const [commodityId, marketCommodity] of market.commodities) {
+      const commodity = getCommodity(commodityId);
+      if (!commodity) continue;
+
+      // Update supply based on production
+      const hoursPassed = deltaTime / 3600000; // Convert ms to hours
+      this.updateSupply(marketCommodity, economics, hoursPassed);
+      
+      // Update demand based on consumption
+      this.updateDemand(marketCommodity, economics, hoursPassed);
+      
+      // Update price based on supply/demand
+      this.updatePrice(marketCommodity, commodity, market);
+      
+      // Update supply/demand levels
+      this.updateSupplyDemandLevels(marketCommodity);
+    }
+
+    market.lastUpdate = Date.now();
+  }
+
+  /**
+   * Update commodity supply based on production
+   */
+  private updateSupply(marketCommodity: MarketCommodity, economics: StationEconomics, hours: number): void {
+    const production = economics.produces.find(p => p.commodityId === marketCommodity.commodityId);
+    if (production) {
+      const produced = production.baseRate * production.efficiency * economics.economicFactors.efficiency * hours;
+      marketCommodity.available += Math.round(produced);
+      marketCommodity.productionRate = production.baseRate * production.efficiency;
+    }
+  }
+
+  /**
+   * Update commodity demand based on consumption
+   */
+  private updateDemand(marketCommodity: MarketCommodity, economics: StationEconomics, hours: number): void {
+    const consumption = economics.consumes.find(c => c.commodityId === marketCommodity.commodityId);
+    if (consumption) {
+      const consumed = consumption.baseRate * hours;
+      marketCommodity.demand += Math.round(consumed);
+      
+      // Station consumes from available supply if possible
+      const actualConsumption = Math.min(consumed, marketCommodity.available);
+      marketCommodity.available -= Math.round(actualConsumption);
+      marketCommodity.available = Math.max(0, marketCommodity.available);
+    }
+  }
+
+  /**
+   * Update price based on supply and demand
+   */
+  private updatePrice(marketCommodity: MarketCommodity, commodity: Commodity, market: Market): void {
+    const supplyDemandRatio = marketCommodity.available / Math.max(1, marketCommodity.demand);
+    
+    // Price goes down with oversupply, up with shortage
+    let priceMultiplier = 1.0;
+    if (supplyDemandRatio > 2.0) {
+      priceMultiplier = 0.7; // Oversupply
+    } else if (supplyDemandRatio > 1.5) {
+      priceMultiplier = 0.85;
+    } else if (supplyDemandRatio < 0.3) {
+      priceMultiplier = 1.8; // Critical shortage
+    } else if (supplyDemandRatio < 0.7) {
+      priceMultiplier = 1.3; // Shortage
+    }
+    
+    const newPrice = this.calculatePrice(commodity, market) * priceMultiplier;
+    
+    // Add price history point
+    const pricePoint: PricePoint = {
+      timestamp: Date.now(),
+      price: newPrice,
+      volume: 0 // Will be updated when trades occur
+    };
+    
+    marketCommodity.priceHistory.push(pricePoint);
+    
+    // Keep only last 100 price points
+    if (marketCommodity.priceHistory.length > 100) {
+      marketCommodity.priceHistory = marketCommodity.priceHistory.slice(-100);
+    }
+    
+    marketCommodity.currentPrice = newPrice;
+  }
+
+  /**
+   * Update supply and demand level descriptors
+   */
+  private updateSupplyDemandLevels(marketCommodity: MarketCommodity): void {
+    const supplyRatio = marketCommodity.available / Math.max(1, marketCommodity.demand);
+    
+    // Update supply level
+    if (supplyRatio > 3.0) {
+      marketCommodity.supplyLevel = 'oversupply';
+    } else if (supplyRatio < 0.2) {
+      marketCommodity.supplyLevel = 'critical';
+    } else if (supplyRatio < 0.7) {
+      marketCommodity.supplyLevel = 'shortage';
+    } else {
+      marketCommodity.supplyLevel = 'normal';
+    }
+    
+    // Update demand level
+    if (marketCommodity.demand > marketCommodity.available * 3) {
+      marketCommodity.demandLevel = 'desperate';
+    } else if (marketCommodity.demand > marketCommodity.available * 1.5) {
+      marketCommodity.demandLevel = 'high';
+    } else if (marketCommodity.demand < marketCommodity.available * 0.3) {
+      marketCommodity.demandLevel = 'none';
+    } else if (marketCommodity.demand < marketCommodity.available * 0.7) {
+      marketCommodity.demandLevel = 'low';
+    } else {
+      marketCommodity.demandLevel = 'normal';
+    }
+  }
+
+  /**
+   * Execute a trade transaction
+   */
+  executeTrade(stationId: string, commodityId: string, quantity: number, isBuying: boolean): {
+    success: boolean;
+    totalCost?: number;
+    pricePerUnit?: number;
+    error?: string;
+  } {
+    const market = this.markets.get(stationId);
+    if (!market) {
+      return { success: false, error: 'Market not found' };
+    }
+
+    const marketCommodity = market.commodities.get(commodityId);
+    if (!marketCommodity) {
+      return { success: false, error: 'Commodity not available' };
+    }
+
+    if (isBuying) {
+      // Player buying from station
+      if (quantity > marketCommodity.available) {
+        return { success: false, error: 'Insufficient supply' };
+      }
+      
+      const totalCost = marketCommodity.currentPrice * quantity;
+      marketCommodity.available -= quantity;
+      
+      // Update price history with trade volume
+      const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+      lastPrice.volume += quantity;
+      
+      return {
+        success: true,
+        totalCost,
+        pricePerUnit: marketCommodity.currentPrice
+      };
+    } else {
+      // Player selling to station
+      const totalValue = marketCommodity.currentPrice * quantity;
+      marketCommodity.available += quantity;
+      marketCommodity.demand = Math.max(0, marketCommodity.demand - quantity);
+      
+      // Update price history with trade volume
+      const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+      lastPrice.volume += quantity;
+      
+      return {
+        success: true,
+        totalCost: totalValue,
+        pricePerUnit: marketCommodity.currentPrice
+      };
+    }
+  }
+
+  // Helper methods for initialization
+  private calculateStationPopulation(station: Station): number {
+    const basePopulation = {
+      'trade': 50000,
+      'industrial': 80000,
+      'military': 30000,
+      'research': 15000,
+      'mining': 25000
+    };
+    
+    const base = basePopulation[station.type] || 30000;
+    return Math.round(base * (0.5 + Math.random()));
+  }
+
+  private determineWealthLevel(station: Station): 'poor' | 'average' | 'wealthy' | 'elite' {
+    const random = Math.random();
+    if (station.type === 'trade' && random > 0.7) return 'wealthy';
+    if (station.type === 'research' && random > 0.8) return 'elite';
+    if (station.type === 'mining' && random < 0.3) return 'poor';
+    if (random < 0.2) return 'poor';
+    if (random > 0.8) return 'wealthy';
+    return 'average';
+  }
+
+  private generateProduction(station: Station): Production[] {
+    // This would be expanded with more sophisticated production chains
+    const productions: Production[] = [];
+    
+    switch (station.type) {
+      case 'mining':
+        productions.push(
+          { commodityId: 'iron-ore', baseRate: 100, efficiency: 1.0, capacity: 200 },
+          { commodityId: 'carbon-crystals', baseRate: 30, efficiency: 1.0, capacity: 60 }
+        );
+        break;
+      case 'industrial':
+        productions.push(
+          { commodityId: 'electronics', baseRate: 40, efficiency: 1.0, capacity: 80 },
+          { commodityId: 'machinery', baseRate: 20, efficiency: 1.0, capacity: 40 }
+        );
+        break;
+      case 'research':
+        productions.push(
+          { commodityId: 'quantum-processors', baseRate: 5, efficiency: 1.0, capacity: 10 }
+        );
+        break;
+    }
+    
+    return productions;
+  }
+
+  private generateConsumption(station: Station): Consumption[] {
+    // Basic consumption patterns for all stations
+    const consumptions: Consumption[] = [
+      { commodityId: 'protein-rations', baseRate: 20, necessity: 'essential' },
+      { commodityId: 'fusion-cells', baseRate: 10, necessity: 'critical' }
+    ];
+    
+    // Add station-specific consumption
+    switch (station.type) {
+      case 'industrial':
+        consumptions.push(
+          { commodityId: 'iron-ore', baseRate: 80, necessity: 'essential' },
+          { commodityId: 'carbon-crystals', baseRate: 25, necessity: 'normal' }
+        );
+        break;
+      case 'research':
+        consumptions.push(
+          { commodityId: 'rare-earth-elements', baseRate: 15, necessity: 'essential' },
+          { commodityId: 'electronics', baseRate: 10, necessity: 'normal' }
+        );
+        break;
+    }
+    
+    return consumptions;
+  }
+
+  private getStationTypeModifier(type: string): number {
+    const modifiers = {
+      'trade': 1.0,
+      'industrial': 0.9,
+      'military': 1.1,
+      'research': 1.2,
+      'mining': 0.8
+    };
+    return modifiers[type as keyof typeof modifiers] || 1.0;
+  }
+
+  private calculateStationCredits(station: Station): number {
+    const baseCredits = {
+      'trade': 1000000,
+      'industrial': 800000,
+      'military': 1200000,
+      'research': 600000,
+      'mining': 400000
+    };
+    
+    const base = baseCredits[station.type] || 500000;
+    return Math.round(base * (0.5 + Math.random()));
+  }
+
+  private getAvailableCommodities(_station: Station, system?: {securityLevel: number}): string[] {
+    let commodities = Object.keys(COMMODITIES);
+    
+    const securityLevel = system?.securityLevel ?? 5;
+    
+    // Filter based on security level and station type
+    if (securityLevel >= 8) {
+      // High security - no illegal items
+      commodities = commodities.filter(id => {
+        const commodity = getCommodity(id);
+        return commodity && commodity.legalStatus !== 'illegal';
+      });
+    }
+    
+    if (securityLevel >= 5) {
+      // Medium security - restricted items are rare
+      commodities = commodities.filter(id => {
+        const commodity = getCommodity(id);
+        if (!commodity) return false;
+        if (commodity.legalStatus === 'restricted') {
+          return Math.random() < 0.3; // 30% chance
+        }
+        return true;
+      });
+    }
+    
+    return commodities;
+  }
+
+  private calculateInitialAvailability(commodity: Commodity, station: Station): number {
+    const baseAvailability = Math.random() * 100 + 50; // 50-150 units
+    
+    // Adjust based on station type
+    let multiplier = 1.0;
+    if (station.type === 'trade') multiplier = 2.0;
+    if (station.type === 'industrial' && commodity.category === 'manufactured') multiplier = 1.5;
+    if (station.type === 'mining' && commodity.category === 'raw-materials') multiplier = 3.0;
+    
+    return Math.round(baseAvailability * multiplier);
+  }
+
+  private calculateInitialDemand(commodity: Commodity, station: Station): number {
+    const baseDemand = Math.random() * 50 + 25; // 25-75 units
+    
+    // Adjust based on commodity type and station needs
+    let multiplier = 1.0;
+    if (commodity.category === 'food') multiplier = 2.0;
+    if (commodity.category === 'energy') multiplier = 1.5;
+    if (station.type === 'industrial' && commodity.category === 'raw-materials') multiplier = 2.5;
+    
+    return Math.round(baseDemand * multiplier);
+  }
+
+  private getProductionRate(commodityId: string, station: Station): number {
+    const production = this.generateProduction(station).find(p => p.commodityId === commodityId);
+    return production ? production.baseRate * production.efficiency : 0;
+  }
+
+  private updateProduction(_deltaTime: number): void {
+    // Update production cycles for all stations
+    // Production logic is handled in updateMarket method
+  }
+
+  private updateEvents(_deltaTime: number): void {
+    const currentTime = Date.now();
+    
+    // Remove expired events
+    this.activeEvents = this.activeEvents.filter(event => currentTime < event.endTime);
+    
+    // Randomly generate new events (low probability)
+    if (Math.random() < 0.01) { // 1% chance per update
+      this.generateRandomEvent();
+    }
+  }
+
+  private generateRandomEvent(): void {
+    // Simple random event generation - would be expanded
+    const eventTypes = ['supply-shortage', 'demand-spike', 'price-crash'] as const;
+    const type = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    
+    const event: EconomicEvent = {
+      id: `event-${Date.now()}`,
+      type,
+      affectedCommodities: [Object.keys(COMMODITIES)[Math.floor(Math.random() * Object.keys(COMMODITIES).length)]],
+      affectedStations: Array.from(this.stationEconomics.keys()).slice(0, 3),
+      severity: Math.random() * 0.5 + 0.3, // 0.3-0.8
+      duration: (4 + Math.random() * 20) * 3600000, // 4-24 hours
+      startTime: Date.now(),
+      endTime: Date.now() + (4 + Math.random() * 20) * 3600000,
+      description: `Market ${type} affecting regional trade`,
+      effects: {
+        priceMultiplier: type === 'price-crash' ? 0.5 : type === 'demand-spike' ? 1.5 : 1.0,
+        availabilityMultiplier: type === 'supply-shortage' ? 0.3 : 1.0
+      }
+    };
+    
+    this.activeEvents.push(event);
+  }
+
+  private getEventPriceMultiplier(commodityId: string, stationId: string): number {
+    let multiplier = 1.0;
+    
+    for (const event of this.activeEvents) {
+      if (event.affectedCommodities.includes(commodityId) && 
+          event.affectedStations.includes(stationId)) {
+        multiplier *= event.effects.priceMultiplier || 1.0;
+      }
+    }
+    
+    return multiplier;
+  }
+
+  // Public getters
+  getMarket(stationId: string): Market | undefined {
+    return this.markets.get(stationId);
+  }
+
+  getStationEconomics(stationId: string): StationEconomics | undefined {
+    return this.stationEconomics.get(stationId);
+  }
+
+  getActiveEvents(): EconomicEvent[] {
+    return [...this.activeEvents];
+  }
+
+  getAllMarkets(): Map<string, Market> {
+    return new Map(this.markets);
+  }
+
+  // Test helper method to force updates
+  forceUpdate(deltaTime: number): void {
+    this.lastUpdateTime = 0; // Force next update to happen
+    this.update(deltaTime);
+  }
+}

@@ -1,5 +1,5 @@
 import { GameEngine } from '../types';
-import { InputManager, TimeManager, SaveManager } from '../systems';
+import { InputManager, TimeManager, SaveManager, EconomicSystem } from '../systems';
 import { WorldManager } from '../systems/WorldManager';
 import { Station, Planet } from '../types/world';
 
@@ -12,6 +12,7 @@ export class Engine implements GameEngine {
   private worldManager: WorldManager;
   private timeManager: TimeManager;
   private saveManager: SaveManager;
+  private economicSystem: EconomicSystem;
   private animationFrameId: number = 0;
   private camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 };
 
@@ -28,6 +29,10 @@ export class Engine implements GameEngine {
     this.worldManager = new WorldManager();
     this.timeManager = new TimeManager();
     this.saveManager = new SaveManager();
+    this.economicSystem = new EconomicSystem();
+    
+    // Initialize economics for existing stations
+    this.initializeEconomics();
     
     // Set up canvas for crisp pixel art
     this.context.imageSmoothingEnabled = false;
@@ -70,6 +75,9 @@ export class Engine implements GameEngine {
   update(deltaTime: number): void {
     // Update time system
     this.timeManager.update(deltaTime);
+    
+    // Update economic system
+    this.economicSystem.update(deltaTime * 1000); // Convert to milliseconds for economic system
 
     // Handle input for camera movement
     if (this.inputManager.isKeyPressed('KeyW') || this.inputManager.isKeyPressed('ArrowUp')) {
@@ -341,6 +349,33 @@ export class Engine implements GameEngine {
 
   getSaveManager(): SaveManager {
     return this.saveManager;
+  }
+
+  getEconomicSystem(): EconomicSystem {
+    return this.economicSystem;
+  }
+
+  private initializeEconomics(): void {
+    // Initialize economics for all existing stations
+    const allStations = this.worldManager.getAllStations();
+    for (const station of allStations) {
+      // Find the system this station belongs to
+      const system = this.findSystemForStation(station.id);
+      this.economicSystem.initializeStationEconomics(station, system);
+    }
+  }
+
+  private findSystemForStation(stationId: string): {securityLevel: number} | undefined {
+    // Get the galaxy from WorldManager and find the system containing this station
+    const galaxy = this.worldManager.getGalaxy();
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        if (system.stations.some(station => station.id === stationId)) {
+          return { securityLevel: system.securityLevel };
+        }
+      }
+    }
+    return undefined;
   }
 
   dispose(): void {
