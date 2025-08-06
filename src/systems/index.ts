@@ -5,3 +5,4 @@ export { SaveManager } from './SaveManager';
 export { EconomicSystem } from './EconomicSystem';
 export { ContractManager } from './ContractManager';
 export { RouteAnalyzer } from './RouteAnalyzer';
+export { PlayerManager } from './PlayerManager';
