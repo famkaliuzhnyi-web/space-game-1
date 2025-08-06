@@ -8,6 +8,7 @@ interface ShipManagementPanelProps {
   currentShip: Ship;
   playerCredits: number;
   onRepairShip?: (repairType: 'hull' | 'engines' | 'cargo' | 'shields') => void;
+  onOpenEquipmentMarket?: () => void;
 }
 
 const ShipManagementPanel: React.FC<ShipManagementPanelProps> = ({
@@ -15,7 +16,8 @@ const ShipManagementPanel: React.FC<ShipManagementPanelProps> = ({
   onClose,
   currentShip,
   playerCredits,
-  onRepairShip
+  onRepairShip,
+  onOpenEquipmentMarket
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'equipment' | 'maintenance'>('overview');
 
@@ -189,6 +191,7 @@ const ShipManagementPanel: React.FC<ShipManagementPanelProps> = ({
                 <div style={{ marginBottom: '10px' }}>🔧</div>
                 <div>No equipment installed</div>
                 <button
+                  onClick={() => onOpenEquipmentMarket?.()}
                   style={{
                     marginTop: '10px',
                     padding: '6px 12px',
