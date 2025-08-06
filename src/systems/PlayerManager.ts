@@ -122,9 +122,25 @@ export class PlayerManager implements InventoryManager {
     return ship;
   }
 
+  getCurrentShipId(): string {
+    return this.player.currentShipId;
+  }
+
+  getId(): string {
+    return this.player.id;
+  }
+
+  getShipStorageManager(): ShipStorageManager {
+    return this.shipStorage;
+  }
+
   // Multi-ship management
   getOwnedShips(): Ship[] {
     return Array.from(this.player.ownedShips.values());
+  }
+
+  getOwnedShipsMap(): Map<string, Ship> {
+    return this.player.ownedShips;
   }
 
   getShipById(shipId: string): Ship | null {

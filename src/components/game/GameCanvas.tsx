@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, ShipManagementPanel, EquipmentMarketPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel } from '../ui';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem } from '../../types/player';
+import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
 
 interface GameCanvasProps {
   width?: number;
@@ -40,6 +41,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [cargoUsed, setCargoUsed] = useState(0);
   const [cargoCapacity, setCargoCapacity] = useState(100);
   const [currentShip, setCurrentShip] = useState<Ship | null>(null);
+  const [ownedShips, setOwnedShips] = useState<Ship[]>([]);
+  const [currentShipId, setCurrentShipId] = useState<string>('');
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -77,6 +80,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setCargoUsed(playerManager.getCargoUsed());
         setCargoCapacity(playerManager.getCargoCapacity());
         setCurrentShip(playerManager.getShip());
+        setOwnedShips(playerManager.getOwnedShips());
+        setCurrentShipId(playerManager.getCurrentShipId());
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
         setEngineError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -271,28 +276,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return [];
   };
 
-  const handleRepairShip = (repairType: 'hull' | 'engines' | 'cargo' | 'shields') => {
-    if (engineRef.current) {
-      const playerManager = engineRef.current.getPlayerManager();
-      const result = playerManager.repairShipComponent(repairType);
-      
-      if (result.success) {
-        // Update player data
-        setPlayerCredits(playerManager.getCredits());
-        setCurrentShip(playerManager.getShip());
-        
-        console.log(`${repairType} repaired for ${result.cost} credits`);
-      } else {
-        console.error('Repair failed:', result.error);
-        alert(`Repair failed: ${result.error}`);
-      }
-    }
-  };
-
-  const handleOpenEquipmentMarket = () => {
-    setShowEquipmentMarket(true);
-  };
-
   const handlePurchaseEquipment = (equipment: EquipmentItem, cost: number) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
@@ -315,6 +298,133 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       } else {
         console.error('Insufficient credits for equipment purchase');
         alert('Insufficient credits for this purchase');
+      }
+    }
+  };
+
+  // Fleet Management Handlers
+  const handleSwitchShip = (shipId: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const success = playerManager.switchToShip(shipId);
+      
+      if (success) {
+        setCurrentShip(playerManager.getShip());
+        setCurrentShipId(shipId);
+        setCargoItems(playerManager.getCargoManifest());
+        setCargoUsed(playerManager.getCargoUsed());
+        setCargoCapacity(playerManager.getCargoCapacity());
+        console.log(`Switched to ship: ${shipId}`);
+      } else {
+        alert('Failed to switch ships');
+      }
+    }
+  };
+
+  const handlePurchaseShip = (shipClassId: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const shipStorage = engineRef.current.getPlayerManager().getShipStorageManager();
+      
+      // Get ship cost from shipyard
+      const station = engineRef.current.getWorldManager().getCurrentStation();
+      if (station) {
+        const offers = shipStorage.getShipYardOffers(station.id);
+        const offer = offers.find(o => o.shipClassId === shipClassId);
+        
+        if (offer && playerManager.getCredits() >= offer.basePrice) {
+          // Purchase the ship
+          const success = shipStorage.purchaseShip(station.id, shipClassId, playerManager.getCredits(), playerManager.getId());
+          
+          if (success) {
+            setPlayerCredits(playerManager.getCredits());
+            setOwnedShips(playerManager.getOwnedShips());
+            console.log(`Purchased ship: ${shipClassId}`);
+            alert(`Successfully purchased ${offer.shipClass.name}!`);
+          } else {
+            alert('Failed to purchase ship');
+          }
+        } else {
+          alert('Insufficient credits or ship not available');
+        }
+      }
+    }
+  };
+
+  const handleConstructShip = (config: ShipConstructionConfig) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const constructionSystem = new (require('../../systems/ShipConstructionSystem').ShipConstructionSystem)();
+      
+      try {
+        const cost = constructionSystem.calculateConstructionCost(config);
+        
+        if (playerManager.getCredits() >= cost.totalCredits) {
+          const station = engineRef.current.getWorldManager().getCurrentStation();
+          if (station) {
+            const newShip = constructionSystem.constructShip(config, station.id);
+            
+            // Add ship to player's fleet
+            playerManager.getOwnedShipsMap().set(newShip.id, newShip);
+            
+            // Deduct credits
+            playerManager.spendCredits(cost.totalCredits);
+            
+            // Update UI
+            setPlayerCredits(playerManager.getCredits());
+            setOwnedShips(playerManager.getOwnedShips());
+            
+            console.log(`Constructed ship: ${config.shipName}`);
+            alert(`Successfully constructed ${config.shipName}!`);
+          } else {
+            alert('No station available for construction');
+          }
+        } else {
+          alert('Insufficient credits for construction');
+        }
+      } catch (error) {
+        console.error('Construction failed:', error);
+        alert(`Construction failed: ${error}`);
+      }
+    }
+  };
+
+  const handleStoreShip = (shipId: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const shipStorage = playerManager.getShipStorageManager();
+      const ship = playerManager.getOwnedShipsMap().get(shipId);
+      const station = engineRef.current.getWorldManager().getCurrentStation();
+      
+      if (ship && station) {
+        const result = shipStorage.storeShip(ship, station.id);
+        
+        if (result.success) {
+          console.log(`Ship stored: ${shipId}, Daily fee: ${result.dailyFee} CR`);
+          alert(`Ship stored! Daily storage fee: ${result.dailyFee} CR`);
+        } else {
+          alert(`Failed to store ship: ${result.error}`);
+        }
+      }
+    }
+  };
+
+  const handleRetrieveShip = (shipId: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const shipStorage = playerManager.getShipStorageManager();
+      const station = engineRef.current.getWorldManager().getCurrentStation();
+      
+      if (station) {
+        const result = shipStorage.retrieveShip(shipId, playerManager.getId(), playerManager.getCredits());
+        
+        if (result.success) {
+          setPlayerCredits(playerManager.getCredits());
+          console.log(`Ship retrieved: ${shipId}, Fee paid: ${result.totalFees || 0} CR`);
+          alert(`Ship retrieved! Storage fees paid: ${result.totalFees || 0} CR`);
+        } else {
+          alert(`Failed to retrieve ship: ${result.error}`);
+        }
       }
     }
   };
@@ -528,17 +638,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         currentStationName="Earth Station Alpha"
       />
 
-      {/* Ship Management Panel */}
-      {currentShip && (
-        <ShipManagementPanel
-          isVisible={showShipManagement}
-          onClose={() => setActivePanel(null)}
-          currentShip={currentShip}
-          playerCredits={playerCredits}
-          onRepairShip={handleRepairShip}
-          onOpenEquipmentMarket={handleOpenEquipmentMarket}
-        />
-      )}
+      {/* Fleet Management Panel */}
+      <FleetManagementPanel
+        isVisible={showShipManagement}
+        onClose={() => setActivePanel(null)}
+        playerCredits={playerCredits}
+        currentShipId={currentShipId}
+        ownedShips={ownedShips}
+        stationId={engineRef.current?.getWorldManager().getCurrentStation()?.id || 'earth-station'}
+        stationName={engineRef.current?.getWorldManager().getCurrentStation()?.name || 'Earth Station Alpha'}
+        stationType="trade"
+        techLevel={1}
+        onSwitchShip={handleSwitchShip}
+        onPurchaseShip={handlePurchaseShip}
+        onConstructShip={handleConstructShip}
+        onStoreShip={handleStoreShip}
+        onRetrieveShip={handleRetrieveShip}
+      />
 
       {/* Equipment Market Panel */}
       {currentShip && (
