@@ -10,6 +10,7 @@ export { default as ContractPanel } from './ContractPanel';
 export { TradeRoutePanel } from './TradeRoutePanel';
 export { default as ShipManagementPanel } from './ShipManagementPanel';
 export { default as EquipmentMarketPanel } from './EquipmentMarketPanel';
+export { default as FleetManagementPanel } from './FleetManagementPanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
 export type { InventoryItem, CargoHold } from './InventoryPanel';
 export type { ModalAction } from './Modal';

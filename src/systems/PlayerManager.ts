@@ -1,5 +1,6 @@
 import { 
   Player, 
+  PlayerWithCurrentShip,
   Ship, 
   CargoItem, 
   ShipClass, 
@@ -9,12 +10,15 @@ import {
   EquipmentItem
 } from '../types/player';
 import { getCommodity } from '../data/commodities';
+import { ShipStorageManager } from './ShipStorageManager';
 
 export class PlayerManager implements InventoryManager {
   private player: Player;
   private transactions: TradeTransaction[] = [];
+  private shipStorage: ShipStorageManager;
 
   constructor(playerId: string = 'player-1', playerName: string = 'Captain') {
+    this.shipStorage = new ShipStorageManager();
     this.player = this.createDefaultPlayer(playerId, playerName);
   }
 
@@ -79,12 +83,16 @@ export class PlayerManager implements InventoryManager {
       contractsFailed: 0
     };
 
+    const ownedShips = new Map<string, Ship>();
+    ownedShips.set(defaultShip.id, defaultShip);
+
     return {
       id,
       name,
       credits: 10000,
       currentStationId: 'earth-station',
-      ship: defaultShip,
+      currentShipId: defaultShip.id,
+      ownedShips,
       reputation: new Map(),
       contracts: [],
       achievements: [],
@@ -95,6 +103,120 @@ export class PlayerManager implements InventoryManager {
   // Core player data accessors
   getPlayer(): Player {
     return this.player;
+  }
+
+  // Backward compatibility - returns player with current ship as 'ship' property
+  getPlayerWithCurrentShip(): PlayerWithCurrentShip {
+    const currentShip = this.getCurrentShip();
+    return {
+      ...this.player,
+      ship: currentShip
+    };
+  }
+
+  getCurrentShip(): Ship {
+    const ship = this.player.ownedShips.get(this.player.currentShipId);
+    if (!ship) {
+      throw new Error(`Current ship ${this.player.currentShipId} not found in owned ships`);
+    }
+    return ship;
+  }
+
+  // Multi-ship management
+  getOwnedShips(): Ship[] {
+    return Array.from(this.player.ownedShips.values());
+  }
+
+  getShipById(shipId: string): Ship | null {
+    return this.player.ownedShips.get(shipId) || null;
+  }
+
+  switchToShip(shipId: string): { success: boolean; error?: string } {
+    const ship = this.player.ownedShips.get(shipId);
+    if (!ship) {
+      return { success: false, error: 'Ship not found in owned ships' };
+    }
+
+    // Check if ship is at the same station
+    if (ship.location.stationId !== this.player.currentStationId) {
+      return { 
+        success: false, 
+        error: `Ship is at ${ship.location.stationId}, but you are at ${this.player.currentStationId}` 
+      };
+    }
+
+    // Check if ship is in storage
+    const storageInfo = this.shipStorage.getShipStorageInfo(shipId);
+    if (storageInfo) {
+      return { 
+        success: false, 
+        error: 'Ship is in storage. Retrieve it first before switching.' 
+      };
+    }
+
+    this.player.currentShipId = shipId;
+    return { success: true };
+  }
+
+  purchaseShip(shipClassId: string, stationId: string): { success: boolean; ship?: Ship; cost?: number; error?: string } {
+    if (stationId !== this.player.currentStationId) {
+      return { success: false, error: 'You must be at the station to purchase a ship' };
+    }
+
+    const result = this.shipStorage.purchaseShip(stationId, shipClassId, this.player.credits, this.player.id);
+    
+    if (result.success && result.ship && result.cost !== undefined) {
+      // Add ship to owned ships
+      this.player.ownedShips.set(result.ship.id, result.ship);
+      
+      // Deduct credits
+      this.player.credits -= result.cost;
+      
+      return { success: true, ship: result.ship, cost: result.cost };
+    }
+
+    return result;
+  }
+
+  storeShip(shipId: string): { success: boolean; dailyFee?: number; error?: string } {
+    if (shipId === this.player.currentShipId) {
+      return { success: false, error: 'Cannot store your current ship. Switch to another ship first.' };
+    }
+
+    const ship = this.player.ownedShips.get(shipId);
+    if (!ship) {
+      return { success: false, error: 'Ship not found in owned ships' };
+    }
+
+    return this.shipStorage.storeShip(ship, this.player.currentStationId);
+  }
+
+  retrieveShip(shipId: string): { success: boolean; ship?: Ship; totalFees?: number; error?: string } {
+    const result = this.shipStorage.retrieveShip(shipId, this.player.id, this.player.credits);
+    
+    if (result.success && result.totalFees !== undefined) {
+      // Deduct storage fees
+      this.player.credits -= result.totalFees;
+      
+      return { success: true, totalFees: result.totalFees };
+    }
+
+    return result;
+  }
+
+  getShipsAtCurrentStation(): { owned: Ship[]; stored: any[]; forSale: any[] } {
+    const ownedAtStation = this.getOwnedShips().filter(ship => 
+      ship.location.stationId === this.player.currentStationId
+    );
+    
+    const storedAtStation = this.shipStorage.getShipsAtStation(this.player.currentStationId);
+    const shipsForSale = this.shipStorage.getShipYardOffers(this.player.currentStationId);
+
+    return {
+      owned: ownedAtStation,
+      stored: storedAtStation,
+      forSale: shipsForSale
+    };
   }
 
   getCredits(): number {
@@ -119,7 +241,8 @@ export class PlayerManager implements InventoryManager {
 
   setCurrentStation(stationId: string): void {
     this.player.currentStationId = stationId;
-    this.player.ship.location.stationId = stationId;
+    const currentShip = this.getCurrentShip();
+    currentShip.location.stationId = stationId;
     this.player.statistics.stationsVisited.add(stationId);
   }
 
@@ -136,8 +259,9 @@ export class PlayerManager implements InventoryManager {
       return { success: false, error: `Insufficient cargo space. Need ${spaceNeeded} units, have ${this.getAvailableSpace()}` };
     }
 
-    // Add to cargo
-    const cargo = this.player.ship.cargo;
+    // Add to current ship's cargo
+    const currentShip = this.getCurrentShip();
+    const cargo = currentShip.cargo;
     const existingItem = cargo.items.get(commodityId);
 
     if (existingItem) {
@@ -165,7 +289,8 @@ export class PlayerManager implements InventoryManager {
   }
 
   removeCommodity(commodityId: string, quantity: number): { success: boolean; error?: string } {
-    const cargo = this.player.ship.cargo;
+    const currentShip = this.getCurrentShip();
+    const cargo = currentShip.cargo;
     const existingItem = cargo.items.get(commodityId);
 
     if (!existingItem) {
@@ -195,19 +320,22 @@ export class PlayerManager implements InventoryManager {
   }
 
   getAvailableSpace(): number {
-    return this.player.ship.cargo.capacity - this.player.ship.cargo.used;
+    const currentShip = this.getCurrentShip();
+    return currentShip.cargo.capacity - currentShip.cargo.used;
   }
 
   getCargoValue(): number {
     let totalValue = 0;
-    for (const item of this.player.ship.cargo.items.values()) {
+    const currentShip = this.getCurrentShip();
+    for (const item of currentShip.cargo.items.values()) {
       totalValue += item.quantity * item.averagePurchasePrice;
     }
     return totalValue;
   }
 
   getCommodityQuantity(commodityId: string): number {
-    const item = this.player.ship.cargo.items.get(commodityId);
+    const currentShip = this.getCurrentShip();
+    const item = currentShip.cargo.items.get(commodityId);
     return item ? item.quantity : 0;
   }
 
@@ -220,12 +348,14 @@ export class PlayerManager implements InventoryManager {
   }
 
   getCargoManifest(): CargoItem[] {
-    return Array.from(this.player.ship.cargo.items.values());
+    const currentShip = this.getCurrentShip();
+    return Array.from(currentShip.cargo.items.values());
   }
 
   clear(): void {
-    this.player.ship.cargo.items.clear();
-    this.player.ship.cargo.used = 0;
+    const currentShip = this.getCurrentShip();
+    currentShip.cargo.items.clear();
+    currentShip.cargo.used = 0;
   }
 
   // Trading functionality
@@ -280,7 +410,8 @@ export class PlayerManager implements InventoryManager {
     this.addCredits(totalEarnings);
 
     // Calculate profit/loss
-    const cargoItem = this.player.ship.cargo.items.get(commodityId);
+    const currentShip = this.getCurrentShip();
+    const cargoItem = currentShip.cargo.items.get(commodityId);
     const averageCost = cargoItem?.averagePurchasePrice || 0;
     const profit = (pricePerUnit - averageCost) * quantity;
     
@@ -329,20 +460,23 @@ export class PlayerManager implements InventoryManager {
 
   // Ship and equipment management
   getShip(): Ship {
-    return this.player.ship;
+    return this.getCurrentShip();
   }
 
   getCargoCapacity(): number {
-    return this.player.ship.cargo.capacity;
+    const currentShip = this.getCurrentShip();
+    return currentShip.cargo.capacity;
   }
 
   getCargoUsed(): number {
-    return this.player.ship.cargo.used;
+    const currentShip = this.getCurrentShip();
+    return currentShip.cargo.used;
   }
 
   // Ship repair and maintenance
   repairShipComponent(component: 'hull' | 'engines' | 'cargo' | 'shields'): { success: boolean; cost: number; error?: string } {
-    const currentCondition = this.player.ship.condition[component];
+    const currentShip = this.getCurrentShip();
+    const currentCondition = currentShip.condition[component];
     
     if (currentCondition >= 0.99) {
       return { success: false, cost: 0, error: `${component} doesn't need repair` };
@@ -363,7 +497,7 @@ export class PlayerManager implements InventoryManager {
     }
 
     // Repair to 100%
-    this.player.ship.condition[component] = 1.0;
+    currentShip.condition[component] = 1.0;
     
     return { success: true, cost: repairCost };
   }
@@ -380,20 +514,21 @@ export class PlayerManager implements InventoryManager {
       return { success: false, cost, error: `Insufficient credits. Need ${cost}, have ${this.player.credits}` };
     }
 
+    const currentShip = this.getCurrentShip();
     // Update last maintenance time
-    this.player.ship.condition.lastMaintenance = Date.now();
+    currentShip.condition.lastMaintenance = Date.now();
 
     if (serviceType === 'full') {
       // Full service improves all conditions slightly
-      Object.keys(this.player.ship.condition).forEach(key => {
+      Object.keys(currentShip.condition).forEach(key => {
         if (key !== 'lastMaintenance') {
-          const current = this.player.ship.condition[key as keyof typeof this.player.ship.condition] as number;
-          this.player.ship.condition[key as keyof typeof this.player.ship.condition] = Math.min(1.0, current + 0.05);
+          const current = currentShip.condition[key as keyof typeof currentShip.condition] as number;
+          currentShip.condition[key as keyof typeof currentShip.condition] = Math.min(1.0, current + 0.05);
         }
       });
 
       // Improve equipment condition
-      Object.values(this.player.ship.equipment).forEach(equipmentArray => {
+      Object.values(currentShip.equipment).forEach(equipmentArray => {
         equipmentArray.forEach((item: EquipmentItem) => {
           item.condition = Math.min(1.0, item.condition + 0.1);
         });
@@ -408,16 +543,17 @@ export class PlayerManager implements InventoryManager {
     const degradationRate = 0.000001; // Very slow degradation
     const timeFactor = deltaTime * degradationRate;
 
+    const currentShip = this.getCurrentShip();
     // Degrade ship condition based on time and usage
-    Object.keys(this.player.ship.condition).forEach(key => {
+    Object.keys(currentShip.condition).forEach(key => {
       if (key !== 'lastMaintenance') {
-        const current = this.player.ship.condition[key as keyof typeof this.player.ship.condition] as number;
-        this.player.ship.condition[key as keyof typeof this.player.ship.condition] = Math.max(0.1, current - timeFactor);
+        const current = currentShip.condition[key as keyof typeof currentShip.condition] as number;
+        currentShip.condition[key as keyof typeof currentShip.condition] = Math.max(0.1, current - timeFactor);
       }
     });
 
     // Degrade equipment condition
-    Object.values(this.player.ship.equipment).forEach(equipmentArray => {
+    Object.values(currentShip.equipment).forEach(equipmentArray => {
       equipmentArray.forEach((item: EquipmentItem) => {
         item.condition = Math.max(0.1, item.condition - timeFactor);
       });
@@ -426,11 +562,12 @@ export class PlayerManager implements InventoryManager {
 
   // Testing/debugging methods
   simulateShipDamage(damageAmount: number = 0.3): void {
+    const currentShip = this.getCurrentShip();
     // Damage hull most, others less
-    this.player.ship.condition.hull = Math.max(0.1, this.player.ship.condition.hull - damageAmount);
-    this.player.ship.condition.engines = Math.max(0.1, this.player.ship.condition.engines - damageAmount * 0.7);
-    this.player.ship.condition.cargo = Math.max(0.1, this.player.ship.condition.cargo - damageAmount * 0.5);
-    this.player.ship.condition.shields = Math.max(0.1, this.player.ship.condition.shields - damageAmount * 0.8);
+    currentShip.condition.hull = Math.max(0.1, currentShip.condition.hull - damageAmount);
+    currentShip.condition.engines = Math.max(0.1, currentShip.condition.engines - damageAmount * 0.7);
+    currentShip.condition.cargo = Math.max(0.1, currentShip.condition.cargo - damageAmount * 0.5);
+    currentShip.condition.shields = Math.max(0.1, currentShip.condition.shields - damageAmount * 0.8);
     
     console.log('Ship damaged for testing - use Ship Management panel to repair');
   }
@@ -446,40 +583,70 @@ export class PlayerManager implements InventoryManager {
           stationsVisited: Array.from(this.player.statistics.stationsVisited),
           commoditiesTraded: Array.from(this.player.statistics.commoditiesTraded)
         },
-        ship: {
-          ...this.player.ship,
-          cargo: {
-            ...this.player.ship.cargo,
-            items: Array.from(this.player.ship.cargo.items.entries())
+        ownedShips: Array.from(this.player.ownedShips.entries()).map(([shipId, ship]) => [
+          shipId,
+          {
+            ...ship,
+            cargo: {
+              ...ship.cargo,
+              items: Array.from(ship.cargo.items.entries())
+            }
           }
-        }
+        ])
       },
-      transactions: this.transactions
+      transactions: this.transactions,
+      shipStorage: this.shipStorage.serialize()
     };
   }
 
   deserialize(data: any): void {
     if (data.player) {
-      this.player = {
-        ...data.player,
-        reputation: new Map(data.player.reputation || []),
-        statistics: {
-          ...data.player.statistics,
-          stationsVisited: new Set(data.player.statistics?.stationsVisited || []),
-          commoditiesTraded: new Set(data.player.statistics?.commoditiesTraded || [])
-        },
-        ship: {
+      // Handle owned ships conversion
+      const ownedShips = new Map<string, Ship>();
+      if (data.player.ownedShips) {
+        data.player.ownedShips.forEach(([shipId, shipData]: [string, any]) => {
+          ownedShips.set(shipId, {
+            ...shipData,
+            cargo: {
+              ...shipData.cargo,
+              items: new Map(shipData.cargo?.items || [])
+            }
+          });
+        });
+      } else if (data.player.ship) {
+        // Backward compatibility: convert old single ship to multi-ship format
+        const legacyShip = {
           ...data.player.ship,
           cargo: {
             ...data.player.ship.cargo,
             items: new Map(data.player.ship.cargo?.items || [])
           }
+        };
+        ownedShips.set(legacyShip.id, legacyShip);
+      }
+
+      this.player = {
+        ...data.player,
+        currentShipId: data.player.currentShipId || (ownedShips.size > 0 ? Array.from(ownedShips.keys())[0] : 'player-ship-1'),
+        ownedShips,
+        reputation: new Map(data.player.reputation || []),
+        statistics: {
+          ...data.player.statistics,
+          stationsVisited: new Set(data.player.statistics?.stationsVisited || []),
+          commoditiesTraded: new Set(data.player.statistics?.commoditiesTraded || [])
         }
       };
+
+      // Remove the old ship property if it exists
+      delete (this.player as any).ship;
     }
 
     if (data.transactions) {
       this.transactions = data.transactions;
+    }
+
+    if (data.shipStorage) {
+      this.shipStorage.deserialize(data.shipStorage);
     }
   }
 }

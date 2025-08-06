@@ -3,11 +3,17 @@ export interface Player {
   name: string;
   credits: number;
   currentStationId: string;
-  ship: Ship;
+  currentShipId: string; // ID of the currently active ship
+  ownedShips: Map<string, Ship>; // shipId -> ship data
   reputation: Map<string, FactionReputation>; // faction -> reputation
   contracts: string[]; // Active contract IDs
   achievements: string[]; // Achievement IDs
   statistics: PlayerStatistics;
+}
+
+// Backward compatibility - accessing current ship
+export interface PlayerWithCurrentShip extends Player {
+  ship: Ship; // Computed property for backward compatibility
 }
 
 export interface Ship {
