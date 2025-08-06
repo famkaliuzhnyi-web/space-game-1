@@ -23,6 +23,15 @@ This project supports **automatic branch preview deployments** perfect for check
 - **Main branch**: [https://famkaliuzhnyi-web.github.io/space-game-1/](https://famkaliuzhnyi-web.github.io/space-game-1/)
 - **Branch previews**: `https://famkaliuzhnyi-web.github.io/space-game-1/{branch-name}/`
 
+## 📋 Development Planning & Execution
+
+**For GitHub Agents and Developers:**
+
+- **[High-Level Execution Plan](./EXECUTION_PLAN.md)** - Master development roadmap and phases
+- **[Agent Instructions](./AGENT_INSTRUCTIONS.md)** - Detailed guidelines for GitHub agents
+- **[Progress Tracker](./PROGRESS_TRACKER.md)** - Current status and milestone tracking
+- **[Task Templates](./TASK_TEMPLATES.md)** - Templates for creating development tasks
+
 ## 📖 Game Documentation
 
 This project includes comprehensive documentation for a 2D Space RPG with logistics-focused gameplay:
