@@ -11,14 +11,17 @@ import {
 } from '../types/player';
 import { getCommodity } from '../data/commodities';
 import { ShipStorageManager } from './ShipStorageManager';
+import { FactionManager, ReputationChange } from './FactionManager';
 
 export class PlayerManager implements InventoryManager {
   private player: Player;
   private transactions: TradeTransaction[] = [];
   private shipStorage: ShipStorageManager;
+  private factionManager: FactionManager;
 
   constructor(playerId: string = 'player-1', playerName: string = 'Captain') {
     this.shipStorage = new ShipStorageManager();
+    this.factionManager = new FactionManager();
     this.player = this.createDefaultPlayer(playerId, playerName);
   }
 
@@ -93,7 +96,7 @@ export class PlayerManager implements InventoryManager {
       currentStationId: 'earth-station',
       currentShipId: defaultShip.id,
       ownedShips,
-      reputation: new Map(),
+      reputation: this.factionManager.initializePlayerReputation(),
       contracts: [],
       achievements: [],
       statistics: defaultStatistics
@@ -588,6 +591,28 @@ export class PlayerManager implements InventoryManager {
     console.log('Ship damaged for testing - use Ship Management panel to repair');
   }
 
+  // Faction management
+  getFactionManager(): FactionManager {
+    return this.factionManager;
+  }
+
+  getPlayerReputation(): Map<string, import('../types/player').FactionReputation> {
+    return this.player.reputation;
+  }
+
+  modifyFactionReputation(factionId: string, change: number, reason: string): ReputationChange[] {
+    const result = this.factionManager.modifyReputation(this.player.reputation, factionId, change, reason);
+    return result.success ? [{ factionId, change, reason, timestamp: Date.now() }] : [];
+  }
+
+  handleTradeReputationGain(stationFactionId: string, tradeValue: number): ReputationChange[] {
+    return this.factionManager.handleTradeCompletion(this.player.reputation, stationFactionId, tradeValue);
+  }
+
+  handleMissionReputation(factionId: string, missionType: string, success: boolean): ReputationChange[] {
+    return this.factionManager.handleMissionCompletion(this.player.reputation, factionId, missionType, success);
+  }
+
   // Save/load support
   serialize(): any {
     return {
@@ -611,7 +636,8 @@ export class PlayerManager implements InventoryManager {
         ])
       },
       transactions: this.transactions,
-      shipStorage: this.shipStorage.serialize()
+      shipStorage: this.shipStorage.serialize(),
+      factionManager: this.factionManager.serialize()
     };
   }
 
@@ -663,6 +689,10 @@ export class PlayerManager implements InventoryManager {
 
     if (data.shipStorage) {
       this.shipStorage.deserialize(data.shipStorage);
+    }
+
+    if (data.factionManager) {
+      this.factionManager.deserialize(data.factionManager);
     }
   }
 }

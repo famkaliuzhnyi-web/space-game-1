@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel } from '../ui';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
-import { CargoItem, Ship, EquipmentItem } from '../../types/player';
+import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
 import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
 import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
@@ -24,7 +24,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   
   // Computed panel visibility states for backward compatibility
@@ -34,6 +34,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showRouteAnalysis = activePanel === 'routes';
   const showInventory = activePanel === 'inventory';
   const showShipManagement = activePanel === 'ship';
+  const showFactionReputation = activePanel === 'factions';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -45,6 +46,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [currentShip, setCurrentShip] = useState<Ship | null>(null);
   const [ownedShips, setOwnedShips] = useState<Ship[]>([]);
   const [currentShipId, setCurrentShipId] = useState<string>('');
+  const [playerReputation, setPlayerReputation] = useState<Map<string, FactionReputation>>(new Map());
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -84,6 +86,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setCurrentShip(playerManager.getShip());
         setOwnedShips(playerManager.getOwnedShips());
         setCurrentShipId(playerManager.getCurrentShipId());
+        setPlayerReputation(playerManager.getPlayerReputation());
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
         setEngineError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -127,6 +130,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(activePanel === 'navigation' ? null : 'navigation');
       } else if (event.code === 'KeyS') {
         setActivePanel(activePanel === 'ship' ? null : 'ship');
+      } else if (event.code === 'KeyF') {
+        setActivePanel(activePanel === 'factions' ? null : 'factions');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -632,6 +637,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Ship (S)
         </button>
+        <button 
+          onClick={() => setActivePanel(activePanel === 'factions' ? null : 'factions')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'factions' ? '#4a90e2' : undefined
+          }}
+        >
+          Factions (F)
+        </button>
         {/* Temporary test button for ship damage */}
         <button 
           onClick={() => {
@@ -730,6 +745,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           onPurchaseEquipment={handlePurchaseEquipment}
         />
       )}
+
+      {/* Faction Reputation Panel */}
+      <FactionReputationPanel
+        isVisible={showFactionReputation}
+        onClose={() => setActivePanel(null)}
+        playerReputation={playerReputation}
+        factionManager={engineRef.current?.getPlayerManager().getFactionManager()}
+      />
     </div>
   );
 };

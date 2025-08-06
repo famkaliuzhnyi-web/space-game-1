@@ -9,3 +9,4 @@ export { PlayerManager } from './PlayerManager';
 export { EquipmentManager } from './EquipmentManager';
 export { ShipStorageManager } from './ShipStorageManager';
 export { ShipConstructionSystem } from './ShipConstructionSystem';
+export { FactionManager } from './FactionManager';
