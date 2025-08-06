@@ -14,7 +14,7 @@ export class Engine implements GameEngine {
     
     const context = canvas.getContext('2d');
     if (!context) {
-      throw new Error('Failed to get 2D context from canvas');
+      throw new Error('Failed to get 2D context from canvas. This may occur on older devices or browsers that don\'t support HTML5 Canvas.');
     }
     this.context = context;
     
@@ -22,6 +22,10 @@ export class Engine implements GameEngine {
     
     // Set up canvas for crisp pixel art
     this.context.imageSmoothingEnabled = false;
+    
+    // Ensure canvas has a dark background
+    this.context.fillStyle = '#0a0a0a';
+    this.context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   start(): void {
@@ -98,5 +102,9 @@ export class Engine implements GameEngine {
     this.canvas.width = width;
     this.canvas.height = height;
     this.context.imageSmoothingEnabled = false;
+    
+    // Ensure canvas maintains dark background after resize
+    this.context.fillStyle = '#0a0a0a';
+    this.context.fillRect(0, 0, width, height);
   }
 }
