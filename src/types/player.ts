@@ -69,6 +69,8 @@ export interface EquipmentItem {
     fuelEfficiency?: number;
     shieldStrength?: number;
     scannerRange?: number;
+    weaponDamage?: number;
+    accuracy?: number;
   };
   condition: number; // 0-1, affects performance
 }
