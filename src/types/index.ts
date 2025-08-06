@@ -33,3 +33,6 @@ export interface InputState {
     touches: Vector2D[];
   };
 }
+
+// Re-export world types
+export * from './world';
