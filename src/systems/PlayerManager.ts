@@ -5,7 +5,8 @@ import {
   ShipClass, 
   TradeTransaction, 
   InventoryManager,
-  PlayerStatistics
+  PlayerStatistics,
+  EquipmentItem
 } from '../types/player';
 import { getCommodity } from '../data/commodities';
 
@@ -337,6 +338,101 @@ export class PlayerManager implements InventoryManager {
 
   getCargoUsed(): number {
     return this.player.ship.cargo.used;
+  }
+
+  // Ship repair and maintenance
+  repairShipComponent(component: 'hull' | 'engines' | 'cargo' | 'shields'): { success: boolean; cost: number; error?: string } {
+    const currentCondition = this.player.ship.condition[component];
+    
+    if (currentCondition >= 0.99) {
+      return { success: false, cost: 0, error: `${component} doesn't need repair` };
+    }
+
+    const baseCost = {
+      hull: 1000,
+      engines: 800,
+      cargo: 500,
+      shields: 600
+    };
+
+    const damageFactor = (1 - currentCondition);
+    const repairCost = Math.round(baseCost[component] * damageFactor);
+
+    if (!this.spendCredits(repairCost)) {
+      return { success: false, cost: repairCost, error: `Insufficient credits. Need ${repairCost}, have ${this.player.credits}` };
+    }
+
+    // Repair to 100%
+    this.player.ship.condition[component] = 1.0;
+    
+    return { success: true, cost: repairCost };
+  }
+
+  performMaintenance(serviceType: 'basic' | 'full'): { success: boolean; cost: number; error?: string } {
+    const costs = {
+      basic: 500,
+      full: 2500
+    };
+
+    const cost = costs[serviceType];
+
+    if (!this.spendCredits(cost)) {
+      return { success: false, cost, error: `Insufficient credits. Need ${cost}, have ${this.player.credits}` };
+    }
+
+    // Update last maintenance time
+    this.player.ship.condition.lastMaintenance = Date.now();
+
+    if (serviceType === 'full') {
+      // Full service improves all conditions slightly
+      Object.keys(this.player.ship.condition).forEach(key => {
+        if (key !== 'lastMaintenance') {
+          const current = this.player.ship.condition[key as keyof typeof this.player.ship.condition] as number;
+          this.player.ship.condition[key as keyof typeof this.player.ship.condition] = Math.min(1.0, current + 0.05);
+        }
+      });
+
+      // Improve equipment condition
+      Object.values(this.player.ship.equipment).forEach(equipmentArray => {
+        equipmentArray.forEach((item: EquipmentItem) => {
+          item.condition = Math.min(1.0, item.condition + 0.1);
+        });
+      });
+    }
+
+    return { success: true, cost };
+  }
+
+  // Ship degradation over time (should be called periodically)
+  degradeShipCondition(deltaTime: number): void {
+    const degradationRate = 0.000001; // Very slow degradation
+    const timeFactor = deltaTime * degradationRate;
+
+    // Degrade ship condition based on time and usage
+    Object.keys(this.player.ship.condition).forEach(key => {
+      if (key !== 'lastMaintenance') {
+        const current = this.player.ship.condition[key as keyof typeof this.player.ship.condition] as number;
+        this.player.ship.condition[key as keyof typeof this.player.ship.condition] = Math.max(0.1, current - timeFactor);
+      }
+    });
+
+    // Degrade equipment condition
+    Object.values(this.player.ship.equipment).forEach(equipmentArray => {
+      equipmentArray.forEach((item: EquipmentItem) => {
+        item.condition = Math.max(0.1, item.condition - timeFactor);
+      });
+    });
+  }
+
+  // Testing/debugging methods
+  simulateShipDamage(damageAmount: number = 0.3): void {
+    // Damage hull most, others less
+    this.player.ship.condition.hull = Math.max(0.1, this.player.ship.condition.hull - damageAmount);
+    this.player.ship.condition.engines = Math.max(0.1, this.player.ship.condition.engines - damageAmount * 0.7);
+    this.player.ship.condition.cargo = Math.max(0.1, this.player.ship.condition.cargo - damageAmount * 0.5);
+    this.player.ship.condition.shields = Math.max(0.1, this.player.ship.condition.shields - damageAmount * 0.8);
+    
+    console.log('Ship damaged for testing - use Ship Management panel to repair');
   }
 
   // Save/load support

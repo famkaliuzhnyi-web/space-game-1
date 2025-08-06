@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, ShipManagementPanel } from '../ui';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
-import { CargoItem } from '../../types/player';
+import { CargoItem, Ship } from '../../types/player';
 
 interface GameCanvasProps {
   width?: number;
@@ -21,7 +21,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | null>(null);
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -29,6 +29,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showContracts = activePanel === 'contracts';
   const showRouteAnalysis = activePanel === 'routes';
   const showInventory = activePanel === 'inventory';
+  const showShipManagement = activePanel === 'ship';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -37,6 +38,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [cargoItems, setCargoItems] = useState<CargoItem[]>([]);
   const [cargoUsed, setCargoUsed] = useState(0);
   const [cargoCapacity, setCargoCapacity] = useState(100);
+  const [currentShip, setCurrentShip] = useState<Ship | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -73,6 +75,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setCargoItems(playerManager.getCargoManifest());
         setCargoUsed(playerManager.getCargoUsed());
         setCargoCapacity(playerManager.getCargoCapacity());
+        setCurrentShip(playerManager.getShip());
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
         setEngineError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -114,6 +117,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(null);
       } else if (event.code === 'KeyN') {
         setActivePanel(activePanel === 'navigation' ? null : 'navigation');
+      } else if (event.code === 'KeyS') {
+        setActivePanel(activePanel === 'ship' ? null : 'ship');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -265,6 +270,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return [];
   };
 
+  const handleRepairShip = (repairType: 'hull' | 'engines' | 'cargo' | 'shields') => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const result = playerManager.repairShipComponent(repairType);
+      
+      if (result.success) {
+        // Update player data
+        setPlayerCredits(playerManager.getCredits());
+        setCurrentShip(playerManager.getShip());
+        
+        console.log(`${repairType} repaired for ${result.cost} credits`);
+      } else {
+        console.error('Repair failed:', result.error);
+        alert(`Repair failed: ${result.error}`);
+      }
+    }
+  };
+
   return (
     <div className={`game-canvas-container ${className}`} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Loading state */}
@@ -397,6 +420,34 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Inventory (I)
         </button>
+        <button 
+          onClick={() => setActivePanel(activePanel === 'ship' ? null : 'ship')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'ship' ? '#4a90e2' : undefined
+          }}
+        >
+          Ship (S)
+        </button>
+        {/* Temporary test button for ship damage */}
+        <button 
+          onClick={() => {
+            if (engineRef.current) {
+              engineRef.current.getPlayerManager().simulateShipDamage();
+              setCurrentShip(engineRef.current.getPlayerManager().getShip());
+            }
+          }}
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: '#dc2626',
+            color: 'white',
+            fontSize: '12px'
+          }}
+        >
+          🔥 Damage Ship (Test)
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -445,6 +496,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         playerCredits={playerCredits}
         currentStationName="Earth Station Alpha"
       />
+
+      {/* Ship Management Panel */}
+      {currentShip && (
+        <ShipManagementPanel
+          isVisible={showShipManagement}
+          onClose={() => setActivePanel(null)}
+          currentShip={currentShip}
+          playerCredits={playerCredits}
+          onRepairShip={handleRepairShip}
+        />
+      )}
     </div>
   );
 };
