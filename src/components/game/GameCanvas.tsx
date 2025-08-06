@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
 import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel } from '../ui';
+import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
@@ -24,7 +25,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   
   // Computed panel visibility states for backward compatibility
@@ -35,6 +36,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showInventory = activePanel === 'inventory';
   const showShipManagement = activePanel === 'ship';
   const showFactionReputation = activePanel === 'factions';
+  const showMaintenance = activePanel === 'maintenance';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -247,6 +249,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       setActivePanel('routes');
       
       console.log('Route analysis opened:', analysis.routes.length, 'routes found');
+    }
+  };
+
+  const handleOpenMaintenance = () => {
+    if (engineRef.current && currentShip) {
+      setActivePanel('maintenance');
+    }
+  };
+
+  const handleMaintenancePerformed = (cost: number) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      playerManager.spendCredits(cost);
+      setPlayerCredits(playerManager.getCredits());
+      
+      // Update ship condition in state
+      setCurrentShip(playerManager.getShip());
+      
+      console.log(`Maintenance completed for ${cost} credits. Remaining: ${playerManager.getCredits()}`);
     }
   };
 
@@ -647,6 +668,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Factions (F)
         </button>
+        <button 
+          onClick={handleOpenMaintenance} 
+          disabled={!engineRef.current || !!engineError || !currentShip}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'maintenance' ? '#4a90e2' : undefined
+          }}
+        >
+          Maintenance (X)
+        </button>
         {/* Temporary test button for ship damage */}
         <button 
           onClick={() => {
@@ -753,6 +784,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         playerReputation={playerReputation}
         factionManager={engineRef.current?.getPlayerManager().getFactionManager()}
       />
+
+      {/* Maintenance Panel */}
+      {currentShip && engineRef.current && (
+        <MaintenancePanel
+          isVisible={showMaintenance}
+          onClose={() => setActivePanel(null)}
+          ship={currentShip}
+          playerCredits={playerCredits}
+          stationId={engineRef.current.getWorldManager().getCurrentStation()?.id || 'earth-station'}
+          maintenanceManager={engineRef.current.getMaintenanceManager()}
+          onMaintenancePerformed={handleMaintenancePerformed}
+        />
+      )}
     </div>
   );
 };

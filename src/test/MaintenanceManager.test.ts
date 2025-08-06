@@ -79,7 +79,7 @@ describe('MaintenanceManager', () => {
   });
 
   describe('Condition Degradation', () => {
-    test.skip('should degrade ship condition over time', () => {
+    test('should degrade ship condition over time', () => {
       // Set equal initial conditions to fairly test degradation rates
       mockShip.condition.hull = 1.0;
       mockShip.condition.engines = 1.0;
@@ -87,9 +87,13 @@ describe('MaintenanceManager', () => {
       const initialHull = mockShip.condition.hull;
       const initialEngines = mockShip.condition.engines;
 
-      // Simulate significant time passage for visible degradation
-      const longTimeAgo = Date.now() - (100 * 60 * 60 * 1000);
+      // Mock the time manager to return a specific current time
+      const currentTime = Date.now();
+      const longTimeAgo = currentTime - (100 * 60 * 60 * 1000); // 100 hours ago
       mockShip.condition.lastMaintenance = longTimeAgo;
+      
+      // Mock getCurrentDate to return the expected current time
+      vi.spyOn(timeManager, 'getCurrentDate').mockReturnValue(new Date(currentTime));
 
       maintenanceManager.updateConditions(mockShip);
 
@@ -101,7 +105,7 @@ describe('MaintenanceManager', () => {
       const hullDegradation = initialHull - mockShip.condition.hull;
       const engineDegradation = initialEngines - mockShip.condition.engines;
       
-      // Both should have degraded significantly
+      // Both should have degraded significantly after 100 hours
       expect(hullDegradation).toBeGreaterThan(0.05); // At least 5% degradation
       expect(engineDegradation).toBeGreaterThan(0.05); // At least 5% degradation
       
