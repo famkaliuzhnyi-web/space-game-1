@@ -1,5 +1,5 @@
 import { GameEngine } from '../types';
-import { InputManager, TimeManager, SaveManager, EconomicSystem } from '../systems';
+import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager } from '../systems';
 import { WorldManager } from '../systems/WorldManager';
 import { Station, Planet } from '../types/world';
 
@@ -13,6 +13,7 @@ export class Engine implements GameEngine {
   private timeManager: TimeManager;
   private saveManager: SaveManager;
   private economicSystem: EconomicSystem;
+  private contractManager: ContractManager;
   private animationFrameId: number = 0;
   private camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 };
 
@@ -30,6 +31,7 @@ export class Engine implements GameEngine {
     this.timeManager = new TimeManager();
     this.saveManager = new SaveManager();
     this.economicSystem = new EconomicSystem();
+    this.contractManager = new ContractManager();
     
     // Initialize economics for existing stations
     this.initializeEconomics();
@@ -78,6 +80,9 @@ export class Engine implements GameEngine {
     
     // Update economic system
     this.economicSystem.update(deltaTime * 1000); // Convert to milliseconds for economic system
+    
+    // Update contract system
+    this.contractManager.update(deltaTime * 1000);
 
     // Handle input for camera movement
     if (this.inputManager.isKeyPressed('KeyW') || this.inputManager.isKeyPressed('ArrowUp')) {
@@ -353,6 +358,10 @@ export class Engine implements GameEngine {
 
   getSaveManager(): SaveManager {
     return this.saveManager;
+  }
+
+  getContractManager(): ContractManager {
+    return this.contractManager;
   }
 
   private initializeEconomics(): void {

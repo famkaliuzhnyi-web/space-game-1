@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel } from '../ui';
-import { Market } from '../../types/economy';
+import { NavigationPanel, MarketPanel, ContractPanel } from '../ui';
+import { Market, TradeContract } from '../../types/economy';
 
 interface GameCanvasProps {
   width?: number;
@@ -21,7 +21,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showNavigation, setShowNavigation] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
+  const [showContracts, setShowContracts] = useState(false);
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
+  const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
+  const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
   const [playerCredits, setPlayerCredits] = useState(10000);
 
   useEffect(() => {
@@ -168,6 +171,38 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleOpenContracts = () => {
+    if (engineRef.current) {
+      const contractManager = engineRef.current.getContractManager();
+      const available = contractManager.getAvailableContracts();
+      const playerActive = contractManager.getPlayerContracts('player-1'); // Using placeholder player ID
+      
+      setAvailableContracts(available);
+      setPlayerContracts(playerActive);
+      setShowContracts(true);
+    }
+  };
+
+  const handleAcceptContract = (contractId: string) => {
+    if (engineRef.current) {
+      const contractManager = engineRef.current.getContractManager();
+      const result = contractManager.acceptContract(contractId, 'player-1'); // Using placeholder player ID
+      
+      if (result.success) {
+        // Refresh contract lists
+        const available = contractManager.getAvailableContracts();
+        const playerActive = contractManager.getPlayerContracts('player-1');
+        
+        setAvailableContracts(available);
+        setPlayerContracts(playerActive);
+        
+        console.log('Contract accepted successfully');
+      } else {
+        console.error('Failed to accept contract:', result.error);
+      }
+    }
+  };
+
   const handleNavigate = (targetId: string) => {
     if (engineRef.current) {
       engineRef.current.getWorldManager().navigateToTarget(targetId);
@@ -285,6 +320,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Market (M)
         </button>
+        <button 
+          onClick={handleOpenContracts} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Contracts (C)
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -302,6 +344,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         isVisible={showMarket}
         onClose={() => setShowMarket(false)}
         onTrade={handleTrade}
+        playerCredits={playerCredits}
+      />
+      {/* Contract Panel */}
+      <ContractPanel
+        contracts={availableContracts}
+        playerContracts={playerContracts}
+        isVisible={showContracts}
+        onClose={() => setShowContracts(false)}
+        onAcceptContract={handleAcceptContract}
         playerCredits={playerCredits}
       />
     </div>
