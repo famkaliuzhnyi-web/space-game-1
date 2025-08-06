@@ -21,11 +21,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showNavigation, setShowNavigation] = useState(false);
-  const [showMarket, setShowMarket] = useState(false);
-  const [showContracts, setShowContracts] = useState(false);
-  const [showRouteAnalysis, setShowRouteAnalysis] = useState(false);
-  const [showInventory, setShowInventory] = useState(false);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | null>(null);
+  
+  // Computed panel visibility states for backward compatibility
+  const showNavigation = activePanel === 'navigation';
+  const showMarket = activePanel === 'market';
+  const showContracts = activePanel === 'contracts';
+  const showRouteAnalysis = activePanel === 'routes';
+  const showInventory = activePanel === 'inventory';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -105,12 +108,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Listen for window resize
     window.addEventListener('resize', handleResize);
 
-    // Listen for ESC key to close navigation panel
+    // Listen for ESC key to close active panel
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
-        setShowNavigation(false);
+        setActivePanel(null);
       } else if (event.code === 'KeyN') {
-        setShowNavigation(prev => !prev);
+        setActivePanel(activePanel === 'navigation' ? null : 'navigation');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -154,7 +157,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       if (market) {
         setCurrentMarket(market);
-        setShowMarket(true);
+        setActivePanel('market');
       } else {
         console.error('No market found for current station');
       }
@@ -206,7 +209,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       setAvailableContracts(available);
       setPlayerContracts(playerActive);
-      setShowContracts(true);
+      setActivePanel('contracts');
     }
   };
 
@@ -223,7 +226,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       // Analyze routes
       const analysis = routeAnalyzer.analyzeRoutes(markets, stations);
       setRouteAnalysis(analysis);
-      setShowRouteAnalysis(true);
+      setActivePanel('routes');
       
       console.log('Route analysis opened:', analysis.routes.length, 'routes found');
     }
@@ -340,50 +343,57 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         }}
       />
       
-      {/* Navigation Panel */}
-      <NavigationPanel
-        targets={getNavigationTargets()}
-        onNavigate={handleNavigate}
-        isVisible={showNavigation}
-        onClose={() => setShowNavigation(false)}
-      />
-      
       <div style={{ marginTop: '10px', textAlign: 'center' }}>
         <button onClick={toggleEngine} disabled={!engineRef.current || !!engineError}>
           {isEngineRunning ? 'Pause Engine' : 'Start Engine'}
         </button>
         <button 
-          onClick={() => setShowNavigation(true)} 
+          onClick={() => setActivePanel(activePanel === 'navigation' ? null : 'navigation')} 
           disabled={!engineRef.current || !!engineError}
-          style={{ marginLeft: '10px' }}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'navigation' ? '#4a90e2' : undefined
+          }}
         >
           Navigation (N)
         </button>
         <button 
           onClick={handleOpenMarket} 
           disabled={!engineRef.current || !!engineError}
-          style={{ marginLeft: '10px' }}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'market' ? '#4a90e2' : undefined
+          }}
         >
           Market (M)
         </button>
         <button 
           onClick={handleOpenContracts} 
           disabled={!engineRef.current || !!engineError}
-          style={{ marginLeft: '10px' }}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'contracts' ? '#4a90e2' : undefined
+          }}
         >
           Contracts (C)
         </button>
         <button 
           onClick={handleOpenRouteAnalysis} 
           disabled={!engineRef.current || !!engineError}
-          style={{ marginLeft: '10px' }}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'routes' ? '#4a90e2' : undefined
+          }}
         >
           Routes (R)
         </button>
         <button 
-          onClick={() => setShowInventory(true)} 
+          onClick={() => setActivePanel(activePanel === 'inventory' ? null : 'inventory')} 
           disabled={!engineRef.current || !!engineError}
-          style={{ marginLeft: '10px' }}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'inventory' ? '#4a90e2' : undefined
+          }}
         >
           Inventory (I)
         </button>
@@ -392,7 +402,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       {/* Navigation Panel */}
       <NavigationPanel
         isVisible={showNavigation}
-        onClose={() => setShowNavigation(false)}
+        onClose={() => setActivePanel(null)}
         onNavigate={handleNavigate}
         targets={getNavigationTargets()}
       />
@@ -402,7 +412,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         market={currentMarket}
         stationName="Earth Station Alpha"
         isVisible={showMarket}
-        onClose={() => setShowMarket(false)}
+        onClose={() => setActivePanel(null)}
         onTrade={handleTrade}
         playerCredits={playerCredits}
       />
@@ -411,7 +421,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         contracts={availableContracts}
         playerContracts={playerContracts}
         isVisible={showContracts}
-        onClose={() => setShowContracts(false)}
+        onClose={() => setActivePanel(null)}
         onAcceptContract={handleAcceptContract}
         playerCredits={playerCredits}
       />
@@ -420,7 +430,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       <TradeRoutePanel
         routeAnalysis={routeAnalysis}
         isVisible={showRouteAnalysis}
-        onClose={() => setShowRouteAnalysis(false)}
+        onClose={() => setActivePanel(null)}
         playerCredits={playerCredits}
         currentStationId={engineRef.current?.getWorldManager().getCurrentStation()?.id}
       />
@@ -428,7 +438,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       {/* Player Inventory Panel */}
       <PlayerInventoryPanel
         isVisible={showInventory}
-        onClose={() => setShowInventory(false)}
+        onClose={() => setActivePanel(null)}
         cargoItems={cargoItems}
         cargoCapacity={cargoCapacity}
         cargoUsed={cargoUsed}
