@@ -11,12 +11,13 @@ describe('PlayerManager', () => {
   describe('Player Initialization', () => {
     it('should initialize with default values', () => {
       const player = playerManager.getPlayer();
+      const currentShip = playerManager.getCurrentShip();
       
       expect(player.credits).toBe(10000);
       expect(player.currentStationId).toBe('earth-station');
-      expect(player.ship.cargo.capacity).toBe(100);
-      expect(player.ship.cargo.used).toBe(0);
-      expect(player.ship.cargo.items.size).toBe(0);
+      expect(currentShip.cargo.capacity).toBe(100);
+      expect(currentShip.cargo.used).toBe(0);
+      expect(currentShip.cargo.items.size).toBe(0);
     });
   });
 

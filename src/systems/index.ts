@@ -7,3 +7,4 @@ export { ContractManager } from './ContractManager';
 export { RouteAnalyzer } from './RouteAnalyzer';
 export { PlayerManager } from './PlayerManager';
 export { EquipmentManager } from './EquipmentManager';
+export { ShipStorageManager } from './ShipStorageManager';
