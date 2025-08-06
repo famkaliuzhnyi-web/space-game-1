@@ -244,8 +244,17 @@ Larger story events involving multiple NPCs:
 
 ### Relationship Mechanics
 
-#### Trust Levels
-NPCs develop trust relationships with players:
+#### Faction Relations Scale
+Player-faction relationships are measured on a scale of -25 to +25:
+
+**Hostile (-25 to -6):** Shoot on sight, no services available
+**Forbidden (-5 to -1):** Cannot dock at faction stations, cannot trade
+**Neutral (0 to +5):** Basic services, standard prices, limited missions
+**Friendly (+6 to +15):** Discounts, better missions, access to faction-specific equipment
+**Allied (+16 to +25):** Exclusive contracts, advanced technology access, VIP treatment
+
+#### Individual NPC Trust Levels
+NPCs develop personal trust relationships with players:
 
 **Stranger (0-20):** Basic professional interactions only
 **Acquaintance (21-40):** Limited personal information sharing

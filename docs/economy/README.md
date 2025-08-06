@@ -12,7 +12,7 @@ The game's economy is based on a realistic supply chain simulation where every i
 #### Metallic Ores
 - **Iron Ore:** Basic construction material
 - **Titanium Ore:** Advanced alloys and components
-- **Rare Earth Elements:** High-tech equipment
+- **Rare Elemental Materials:** High-tech equipment
 - **Platinum Group Metals:** Precision instruments
 
 #### Energy Resources
@@ -67,16 +67,28 @@ The game's economy is based on a realistic supply chain simulation where every i
 **Source:** Manufacturing facilities
 
 #### Ship Components
-- **Engine Systems:** Propulsion and maneuvering
-- **Weapon Systems:** Offensive capabilities
-- **Shield Generators:** Defensive systems
-- **Life Support:** Environmental control
+- **Engine System Components:** Propulsion and maneuvering modules
+- **Weapon System Components:** Kinetic weapon modules and magnetic shield generators
+- **Navigation System Components:** Sensor arrays and guidance systems
+- **Life Support Components:** Environmental control modules
+
+#### Ship Hubs
+- **Engine Hubs:** Ship building blocks with slots for engine components
+- **Weapon Hubs:** Ship building blocks with slots for weapon systems
+- **Cargo Hubs:** Ship building blocks providing storage capacity
+- **Living Hubs:** Ship building blocks with interior spaces for crew movement
 
 #### Station Components
-- **Production Modules:** Manufacturing equipment
-- **Habitation Units:** Living spaces
-- **Cargo Systems:** Storage and handling
-- **Defense Systems:** Station protection
+- **Production System Components:** Manufacturing equipment modules
+- **Habitation System Components:** Living space modules
+- **Cargo System Components:** Storage and handling modules
+- **Defense System Components:** Station protection modules
+
+#### Station Hubs
+- **Production Hubs:** Station building blocks with slots for production equipment
+- **Habitation Hubs:** Station building blocks with slots for living modules
+- **Defense Hubs:** Station building blocks with slots for defensive systems
+- **Utility Hubs:** Station building blocks with slots for various station equipment
 
 #### Equipment
 - **Personal Gear:** Character equipment
@@ -88,13 +100,13 @@ The game's economy is based on a realistic supply chain simulation where every i
 **Source:** Assembly facilities and shipyards
 
 #### Vessels
-- **Complete Ships:** Fully assembled spacecraft
-- **Ship Upgrades:** Enhancement packages
-- **Specialized Craft:** Purpose-built vessels
+- **Complete Ships:** Fully assembled spacecraft built from connected hubs
+- **Ship Hub Systems:** Modular building blocks for ship construction
+- **Specialized Components:** Purpose-built equipment for ship hubs
 - **Luxury Items:** High-end consumer goods
 
 #### Infrastructure
-- **Station Modules:** Complete facility sections
+- **Station Hub Systems:** Complete facility building blocks
 - **Defense Platforms:** Military installations
 - **Research Equipment:** Scientific instruments
 - **Industrial Systems:** Complete production lines
@@ -121,9 +133,9 @@ The game's economy is based on a realistic supply chain simulation where every i
 
 ### Contract System
 - **Delivery Missions:** Transport goods between locations
-- **Supply Contracts:** Regular delivery routes
-- **Emergency Orders:** High-priority, time-sensitive deliveries
+- **Time-Limited Deliveries:** High-priority, time-sensitive cargo with deadlines
 - **Bulk Shipping:** Large-volume, low-margin cargo
+- **Specialized Transport:** Cargo requiring specific ship configurations
 
 ## Economic Regions
 
@@ -212,5 +224,58 @@ The game's economy is based on a realistic supply chain simulation where every i
 - **Diversification:** Spreading risk across multiple shipments
 
 ---
+
+## Specific Equipment and Components
+
+### Weapons (Kinetic Only)
+- **Railguns:** High-velocity kinetic projectiles
+- **Gauss Cannons:** Magnetic acceleration weapons
+- **Missile Launchers:** Guided explosive projectiles
+- **Point Defense Systems:** Anti-projectile defensive weapons
+- **Mining Charges:** Controlled explosive devices for asteroid mining
+
+### Engines
+- **Chemical Thrusters:** Basic propulsion systems
+- **Ion Drives:** Efficient long-range propulsion
+- **Fusion Torch Drives:** High-power engines for heavy ships
+- **Maneuvering Thrusters:** Small engines for precise movement
+
+### Magnetic Shield Systems
+- **Light Magnetic Shields:** Deflect small kinetic projectiles (frigates and above)
+- **Heavy Magnetic Shields:** Stop larger kinetic weapons (cruisers and above)
+- **Tactical Shields:** Specialized shields for specific threat types
+
+### Ship Hubs Detailed
+- **Command Hub:** Ship control center with bridge functionality
+- **Engine Hub:** Houses propulsion systems and fuel storage
+- **Weapon Hub:** Mounts kinetic weapons and ammunition storage
+- **Cargo Hub:** Provides storage capacity for goods
+- **Living Hub:** Interior spaces for crew movement and operations
+- **Utility Hub:** Houses life support, power, and other ship systems
+
+### Station Hubs Detailed
+- **Control Hub:** Station command and coordination center
+- **Production Hub:** Manufacturing and processing facilities
+- **Habitation Hub:** Living quarters and social spaces
+- **Docking Hub:** Ship docking and cargo transfer facilities
+- **Defense Hub:** Weapon systems and shield generators
+- **Storage Hub:** Large-scale cargo and resource storage
+
+## Supply Chain Graph
+
+```
+Raw Materials (Tier 1)
+├── Iron Ore → Basic Alloys → Hull Plating → Ship/Station Hubs
+├── Titanium Ore → Advanced Alloys → Precision Parts → Engine Components
+├── Rare Elements → Specialty Alloys → Electronic Components → Navigation Systems
+├── Hydrogen → Fuel Cells → Power Systems → Life Support Components
+└── Organic Materials → Processed Biologics → Life Support → Habitation Systems
+
+Processing Chain Flow:
+Tier 1 (Raw) → Tier 2 (Basic) → Tier 3 (Advanced) → Tier 4 (Components) → Tier 5 (Complete Systems)
+
+Example Complete Chain:
+Iron Ore → Steel Alloy → Hull Plating → Cargo Hub → Complete Trading Ship
+```
 
 *This economic system provides the foundation for the core gameplay loop of logistics and trading in the space RPG.*

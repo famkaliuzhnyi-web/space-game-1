@@ -2,20 +2,22 @@
 
 ## Overview
 
-Ships are constructed using a modular block-based system where each block serves a specific function. Players can design custom ships or modify existing designs by arranging these blocks within structural and size constraints.
+Ships are constructed using a modular "hub-based" system where each hub serves as a building block with specific functions and equipment slots. Players can design custom ships or modify existing designs by connecting these hubs within structural and size constraints. Each hub can have slots for equipment like weapons, engines, or storage, and some hubs provide interior spaces that players can walk through.
 
-## Block Categories
+## Hub Categories
 
-### Core Blocks (Required)
+### Core Hubs (Required)
 
-#### Command Blocks
+#### Command Hubs
 **Function:** Ship control and navigation  
-**Requirements:** Every ship must have exactly one command block
+**Requirements:** Every ship must have exactly one command hub
 
-**Cockpit Block**
+**Cockpit Hub**
 - **Size:** 1x1x1
 - **Mass:** 2 units
 - **Power:** -5 units
+- **Equipment Slots:** 2 (navigation equipment)
+- **Interior:** Pilot station accessible for repairs
 - **Features:** Basic navigation, communication, life support for 1 person
 - **Cost:** 5,000 credits
 

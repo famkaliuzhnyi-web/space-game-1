@@ -1,242 +1,189 @@
-# Factions & Politics
+# Factions & Relations
 
 ## Overview
 
-The Terran Frontier is home to several human factions, each with distinct ideologies, economic models, and territorial claims. These factions compete for resources, trade routes, and political influence while maintaining an uneasy balance of power.
+The galaxy is dominated by several mega corporations competing for resources, trade routes, and market control. Independent systems and pirate groups exist in the spaces between corporate territories, creating a complex web of economic relationships and territorial disputes.
 
 ## Major Factions
 
-### United Nations Colonial Authority (UNCA)
-**Ideology:** Democratic governance and regulated capitalism  
-**Territory:** Core worlds and major trade routes  
-**Population:** ~40% of human space
+### Stellar Industries Corporation
+**Focus:** Heavy manufacturing and infrastructure  
+**Territory:** Industrial systems and asteroid mining operations  
+**Population:** ~30% of inhabited space
 
-#### Government Structure
-- **Colonial Council:** Elected representatives from member systems
-- **Executive Branch:** Appointed administrators and bureaucrats
-- **Judicial System:** Standardized legal framework across territories
-- **Military:** UN Colonial Fleet and local defense forces
+#### Corporate Structure
+- **Board of Directors:** Elected by major shareholders
+- **Industrial Security:** Corporate military forces
+- **Manufacturing Divisions:** Ship building, station construction, heavy equipment
+- **Mining Operations:** Asteroid belts and planetary resource extraction
 
-#### Economic Model
-- **Regulated Market Economy:** Free trade with consumer protections
-- **Corporate Oversight:** Anti-monopoly laws and labor regulations
-- **Social Services:** Healthcare, education, and welfare systems
-- **Infrastructure Investment:** Public funding for transportation and communication
+#### Economic Specialization
+- **Ship Hull Manufacturing:** Primary producer of ship hubs and structural components
+- **Station Construction:** Large-scale infrastructure projects
+- **Raw Material Processing:** Converting ore into basic materials
+- **Heavy Equipment:** Mining gear, industrial machinery, construction tools
 
-#### Political Priorities
-- **Stability and Order:** Maintaining peaceful trade relationships
-- **Economic Growth:** Expanding markets and trade opportunities
-- **Human Rights:** Protecting colonist welfare and freedoms
-- **Territorial Integrity:** Defending claimed systems from expansion
-
-#### Relations
-- **Allied:** Terran Trade Consortium (economic cooperation)
-- **Neutral:** Independent Systems Alliance (diplomatic relations)
-- **Hostile:** Corporate Hegemony (ideological opposition)
-- **Tense:** Frontier Liberation Front (security concerns)
-
-### Corporate Hegemony
-**Ideology:** Corporate oligarchy and unrestricted capitalism  
-**Territory:** Industrial complexes and resource-rich systems  
-**Population:** ~25% of human space
-
-#### Government Structure
-- **Board of Directors:** CEOs of major corporations
-- **Corporate Security:** Private military contractors
-- **Contract Law:** Business agreements supersede civil law
-- **Shareholder Democracy:** Voting power based on stock ownership
-
-#### Economic Model
-- **Laissez-Faire Capitalism:** Minimal regulation and maximum profit
-- **Vertical Integration:** Single corporations controlling entire supply chains
-- **Labor Optimization:** Efficiency over worker welfare
-- **Resource Exploitation:** Aggressive extraction and development
-
-#### Political Priorities
-- **Profit Maximization:** All decisions based on financial returns
-- **Market Expansion:** Acquiring new territories and resources
-- **Regulatory Elimination:** Removing government interference
-- **Competitive Advantage:** Dominating through superior efficiency
-
-#### Relations
-- **Allied:** Independent mining operations (mutual benefit)
-- **Neutral:** Frontier settlements (potential markets)
-- **Hostile:** UNCA (regulatory opposition)
-- **Exploitative:** Smaller factions (economic domination)
-
-### Independent Systems Alliance (ISA)
-**Ideology:** Local autonomy and confederated governance  
-**Territory:** Mid-rim systems and trading hubs  
-**Population:** ~20% of human space
-
-#### Government Structure
-- **System Sovereignty:** Each system governs itself
-- **Alliance Council:** Voluntary cooperation on common issues
-- **Local Militias:** System-based defense forces
-- **Trade Agreements:** Economic cooperation without political integration
-
-#### Economic Model
-- **Mixed Economy:** Combination of private and public enterprise
-- **Local Control:** Systems determine their own economic policies
-- **Cooperative Trade:** Mutual aid and resource sharing
-- **Entrepreneurial Freedom:** Support for small business and innovation
-
-#### Political Priorities
-- **Self-Determination:** Protecting local autonomy from outside control
-- **Economic Cooperation:** Beneficial trade without political subjugation
-- **Mutual Defense:** Collective security against external threats
-- **Cultural Preservation:** Maintaining local traditions and governance
-
-#### Relations
-- **Allied:** Local trading cooperatives (mutual support)
-- **Neutral:** Most factions (diplomatic flexibility)
-- **Wary:** UNCA and Corporate Hegemony (potential threats to autonomy)
-- **Supportive:** Frontier communities (shared values)
-
-### Frontier Liberation Front (FLF)
-**Ideology:** Revolutionary socialism and anti-establishment  
-**Territory:** Outer rim systems and hidden bases  
-**Population:** ~10% of human space
-
-#### Government Structure
-- **Revolutionary Council:** Elected representatives from liberation cells
-- **People's Militias:** Volunteer defense and insurgency forces
-- **Direct Democracy:** Major decisions by popular vote
-- **Collective Leadership:** Rotating positions to prevent power concentration
-
-#### Economic Model
-- **Socialist Economy:** Collective ownership of production means
-- **Resource Sharing:** Distribution based on need rather than wealth
-- **Worker Cooperatives:** Employee-owned and operated enterprises
-- **Anti-Exploitation:** Opposing corporate and colonial extraction
-
-#### Political Priorities
-- **Liberation:** Freeing systems from corporate and colonial control
-- **Economic Justice:** Ensuring fair distribution of resources
-- **Popular Power:** Giving workers and colonists democratic control
-- **Anti-Imperialism:** Resisting expansion by major powers
-
-#### Relations
-- **Allied:** Worker unions and oppressed communities
-- **Sympathetic:** Some Independent Systems (shared anti-establishment sentiment)
-- **Hostile:** Corporate Hegemony (class warfare)
-- **Antagonistic:** UNCA (seen as colonial oppressor)
-
-### Terran Trade Consortium (TTC)
-**Ideology:** Economic cooperation and peaceful commerce  
-**Territory:** Major trade routes and commercial hubs  
-**Population:** ~5% of human space (but high economic influence)
-
-#### Government Structure
-- **Merchant Council:** Representatives from major trading houses
-- **Commercial Courts:** Dispute resolution for trade conflicts
-- **Trade Regulation:** Standards and practices for commerce
-- **Neutral Zones:** Designated areas for safe trade
-
-#### Economic Model
-- **Free Trade:** Minimal barriers to commercial exchange
-- **Standardization:** Common currencies, weights, and measures
-- **Dispute Resolution:** Arbitration services for trading conflicts
-- **Market Intelligence:** Information services for traders
-
-#### Political Priorities
-- **Trade Facilitation:** Removing barriers to commercial activity
-- **Peaceful Relations:** Maintaining stability for business operations
-- **Market Expansion:** Opening new trade opportunities
-- **Commercial Standards:** Establishing fair and reliable trading practices
-
-#### Relations
-- **Allied:** UNCA (economic cooperation)
-- **Neutral:** Most factions (business relationships)
-- **Cooperative:** ISA (mutual trade benefits)
-- **Cautious:** FLF (potential disruption to trade)
-
-## Minor Factions and Organizations
-
-### Pirate Syndicates
-- **Criminal Organizations:** Raiding and black market operations
-- **Territory:** Hidden bases in lawless systems
-- **Activities:** Cargo theft, extortion, and smuggling
-- **Structure:** Loose confederations of independent crews
-
-### Religious Colonies
-- **Spiritual Communities:** Faith-based settlements
-- **Territory:** Isolated systems and monastery stations
-- **Activities:** Agriculture, crafts, and spiritual services
-- **Structure:** Hierarchical religious organizations
-
-### Scientific Expeditions
-- **Research Organizations:** Exploration and discovery missions
-- **Territory:** Mobile fleets and research stations
-- **Activities:** Scientific research and technology development
-- **Structure:** Academic institutions and research cooperatives
-
-### Mercenary Companies
-- **Military Contractors:** Professional soldiers for hire
-- **Territory:** Mobile fleets and contracted bases
-- **Activities:** Security services, military operations, and escort duties
-- **Structure:** Corporate military organizations
-
-## Faction Relationships
-
-### Alliance Patterns
-- **Economic Partnerships:** Trade agreements and mutual benefits
-- **Military Alliances:** Mutual defense and security cooperation
-- **Political Blocs:** Diplomatic coordination on major issues
-- **Cultural Exchanges:** Shared values and social cooperation
-
-### Conflict Sources
-- **Territorial Disputes:** Competing claims on systems and resources
-- **Economic Competition:** Trade route control and market access
-- **Ideological Differences:** Fundamental disagreements on governance
-- **Historical Grievances:** Past conflicts and unresolved disputes
-
-### Neutral Zones
-- **Free Ports:** Systems open to all factions for trade
-- **Diplomatic Stations:** Neutral meeting places for negotiations
-- **Buffer Zones:** Systems between hostile faction territories
-- **Contested Space:** Areas with disputed or unclear control
-
-## Player Faction Standing
-
-### Reputation System
-- **Standing Levels:** From hostile (-100) to allied (+100)
-- **Action Consequences:** Missions and behavior affect reputation
-- **Faction Benefits:** Higher standing unlocks better opportunities
-- **Cross-Faction Effects:** Helping one faction may hurt standing with enemies
-
-### Reputation Effects
-- **Mission Access:** Better standing provides access to exclusive contracts
-- **Pricing:** Friendly factions offer better prices and terms
-- **Security Response:** Faction security forces' behavior toward player
-- **Political Events:** Involvement in faction storylines and major events
-
-### Reputation Management
-- **Balanced Approach:** Maintaining neutral standing with multiple factions
-- **Faction Specialization:** Focusing on one faction for maximum benefits
-- **Reputation Recovery:** Methods to improve damaged standing
-- **Reputation Consequences:** Long-term effects of faction choices
-
-## Political Events
-
-### Inter-Faction Conflicts
-- **Trade Wars:** Economic conflicts affecting commerce
-- **Border Skirmishes:** Military conflicts in contested territories
-- **Diplomatic Crises:** Political tensions threatening stability
-- **Proxy Conflicts:** Factions fighting through third parties
-
-### Internal Faction Politics
-- **Elections:** Democratic processes affecting faction policies
-- **Corporate Mergers:** Business combinations changing power structures
-- **Revolutionary Movements:** Internal challenges to faction leadership
-- **Policy Changes:** New laws and regulations affecting gameplay
-
-### Galaxy-Wide Events
-- **Economic Crises:** System-wide market disruptions
-- **Discovery Events:** New technologies or resources
-- **Natural Disasters:** Events affecting multiple factions
-- **External Threats:** Challenges requiring inter-faction cooperation
+#### Relations with Others
+- **Business Partner:** Quantum Dynamics (technology integration)
+- **Trade Partner:** Galactic Commerce Guild (logistics cooperation)
+- **Competitor:** Nexus Corporation (territorial disputes)
+- **Hostile:** Pirates (attacks on mining operations)
 
 ---
 
-*This faction system provides the political framework for the game's storylines, economics, and player choice consequences.*
+### Quantum Dynamics Corporation
+**Focus:** Advanced technology and research  
+**Territory:** High-tech systems and research stations  
+**Population:** ~20% of inhabited space
+
+#### Corporate Structure
+- **Research Council:** Leading scientists and engineers
+- **Tech Security:** Advanced defensive systems
+- **R&D Divisions:** Weapons, engines, electronics, AI systems
+- **Patent Protection:** Aggressive intellectual property enforcement
+
+#### Economic Specialization
+- **Weapon Systems:** Kinetic weapons and magnetic shield technology
+- **Engine Technology:** Advanced propulsion systems
+- **Electronics:** Navigation, communication, and control systems
+- **Research Services:** Custom technology development
+
+#### Relations with Others
+- **Business Partner:** Stellar Industries (technology licensing)
+- **Trade Partner:** Independent Systems (tech sales)
+- **Competitor:** Galactic Commerce Guild (shipping technology)
+- **Hostile:** Pirates (technology theft prevention)
+
+---
+
+### Galactic Commerce Guild
+**Focus:** Trade, logistics, and financial services  
+**Territory:** Major trade routes and commercial hubs  
+**Population:** ~25% of inhabited space
+
+#### Corporate Structure
+- **Merchant Council:** Elected representatives from trading families
+- **Trade Security:** Escort fleets and route protection
+- **Logistics Network:** Vast cargo transportation system
+- **Financial Services:** Banking, insurance, and credit systems
+
+#### Economic Specialization
+- **Cargo Transportation:** Efficient delivery systems across the galaxy
+- **Financial Services:** Credits, loans, insurance, and trade financing
+- **Market Intelligence:** Economic data and trading opportunities
+- **Route Management:** Optimal shipping lanes and logistics planning
+
+#### Relations with Others
+- **Business Partner:** Stellar Industries (cargo hub construction)
+- **Trade Partner:** Quantum Dynamics (shipping contracts)
+- **Competitor:** Nexus Corporation (trade route control)
+- **Neutral:** Pirates (sometimes pays protection fees)
+
+---
+
+### Nexus Corporation
+**Focus:** Information, communications, and control systems  
+**Territory:** Communication networks and data centers  
+**Population:** ~15% of inhabited space
+
+#### Corporate Structure
+- **Information Board:** Data analysts and network administrators
+- **Cyber Security:** Digital warfare and protection systems
+- **Network Operations:** Galaxy-wide communication infrastructure
+- **Intelligence Division:** Information gathering and analysis
+
+#### Economic Specialization
+- **Communication Networks:** Quantum communication systems
+- **Data Services:** Information storage, processing, and analysis
+- **Cyber Warfare Systems:** Electronic attack and defense capabilities
+- **Intelligence Operations:** Market analysis and strategic planning
+
+#### Relations with Others
+- **Competitor:** All other corporations (information warfare)
+- **Service Provider:** Independent Systems (communication services)
+- **Target:** Pirates (valuable data systems)
+- **Neutral:** Some trade relationships despite competition
+
+---
+
+## Independent Systems
+
+### Independent Colonies Alliance
+**Focus:** Self-governance and local autonomy  
+**Territory:** Scattered independent systems  
+**Population:** ~8% of inhabited space
+
+#### Organization
+- **Colonial Assembly:** Representatives from member systems
+- **Local Defense Forces:** System militia and volunteer fleets
+- **Trade Cooperatives:** Mutual aid and resource sharing
+- **Cultural Preservation:** Maintaining diverse colonial traditions
+
+#### Economic Role
+- **Specialized Production:** Unique local goods and services
+- **Alternative Markets:** Trading outside corporate monopolies
+- **Innovation Hub:** Small-scale experimental technology
+- **Neutral Ground:** Diplomatic meetings and negotiations
+
+#### Relations
+- **Customer:** All corporations (purchases essential goods)
+- **Competitor:** Corporations (challenges monopolistic practices)
+- **Ally:** Other independents (mutual defense agreements)
+- **Target:** Pirates (raids on isolated systems)
+
+---
+
+## Pirates and Criminal Organizations
+
+### The Crimson Fleet
+**Focus:** Organized piracy and black market operations  
+**Territory:** Lawless systems and hidden bases  
+**Population:** ~2% of inhabited space
+
+#### Organization
+- **Pirate Lords:** Leaders of major fleets
+- **Raiding Groups:** Small, fast attack squadrons
+- **Black Market Networks:** Illegal goods distribution
+- **Information Brokers:** Intelligence gathering and sales
+
+#### Economic Role
+- **Raiding Operations:** Attacks on cargo shipments and mining operations
+- **Black Market Trade:** Stolen goods, contraband, and illegal services
+- **Protection Rackets:** "Security services" for vulnerable areas
+- **Salvage Operations:** Recovery of abandoned ships and equipment
+
+#### Relations
+- **Enemy:** All corporations and independents (victim of raids)
+- **Customer:** Some independents (black market goods)
+- **Internal:** Shifting alliances between pirate groups
+- **Neutral:** Occasional temporary agreements with corporations
+
+---
+
+## Faction Relations System
+
+### Reputation Scale
+Relations between player and factions are measured on a scale of -25 to +25:
+
+- **-25 to -6:** Hostile (shoot on sight, no services available)
+- **-5 to -1:** Forbidden (cannot dock, cannot trade)
+- **0 to +5:** Neutral (basic services, standard prices)
+- **+6 to +15:** Friendly (discounts, better missions, faction-specific equipment)
+- **+16 to +25:** Allied (exclusive contracts, advanced technology access)
+
+### Reputation Factors
+- **Trade Volume:** Regular business relationships improve standing
+- **Mission Completion:** Successful deliveries and contracts
+- **Conflict Actions:** Attacking faction ships or stations reduces reputation
+- **Economic Impact:** Large-scale economic activities affect multiple factions
+- **Diplomatic Actions:** Player choices in faction conflicts
+
+### Dynamic Relationships
+- Faction relationships change based on galactic events
+- Economic successes and failures affect inter-faction relations
+- Player actions can influence faction policies and relationships
+- Corporate mergers, hostile takeovers, and alliance shifts create new dynamics
+
+---
+
+*This faction system creates a dynamic political and economic environment where player choices have lasting consequences on galactic relationships and trade opportunities.*

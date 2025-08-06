@@ -2,7 +2,7 @@
 
 ## Overview
 
-Personal equipment enhances the player character's capabilities in various situations encountered throughout the galaxy. Equipment ranges from basic survival gear to advanced technology that enables specialized activities like hacking, combat, and social interaction.
+Personal equipment enhances the player character's capabilities during space-based activities throughout the galaxy. All equipment is designed for use aboard ships, space stations, and orbital facilities. Equipment ranges from basic survival gear to advanced technology that enables specialized activities like hacking, combat, and social interaction in the space environment.
 
 ## Equipment Categories
 

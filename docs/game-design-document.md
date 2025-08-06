@@ -47,6 +47,13 @@ Play as a single character in a living galaxy, piloting various ships to deliver
 
 ## Game Mechanics
 
+### Time System
+- **Time Standard:** All in-game time references use Earth standards (Earth Day, Earth Hour, etc.)
+- **Time Flow:** Real-time progression with time acceleration options
+- **Day/Night Cycle:** 24 Earth Hour cycles affect station operations and NPC availability
+- **Mission Timing:** Time-sensitive deliveries measured in Earth Days/Hours
+- **Production Cycles:** Station manufacturing follows Earth Day schedules
+
 ### Character System
 - **Single Persistent Character:** One player character throughout the game
 - **Skill Progression:** Experience-based improvement in various areas
@@ -55,9 +62,10 @@ Play as a single character in a living galaxy, piloting various ships to deliver
 
 ### Ship Management
 - **Multi-Ship Ownership:** Own and store multiple ships at stations
-- **Modular Construction:** Build ships from component blocks
-- **Specialization:** Different ships optimized for different cargo types
-- **Maintenance:** Ships require upkeep and repairs
+- **Hub-Based Construction:** Build ships from modular "hubs" with equipment slots
+- **Interior Functionality:** Hubs provide interior spaces for crew movement and repair work
+- **Specialization:** Different hub configurations optimized for different cargo types
+- **Manual Maintenance:** Player can walk through ship interior to repair specific broken modules using tools
 
 ### Economic Gameplay
 - **Contract System:** Mission board with various delivery types
@@ -71,6 +79,25 @@ Play as a single character in a living galaxy, piloting various ships to deliver
 - **Station Events:** Social interactions, missions, and story beats
 - **Discovery System:** Find new routes, resources, and opportunities
 
+### Weapons and Defense Systems
+- **Kinetic Weapons Only:** All weapons use kinetic projectiles, no energy weapons
+- **Magnetic Shields:** Larger ships can mount magnetic shields that deflect kinetic projectiles
+- **Shield Mechanics:** Magnetic shields have limited health pool and can be overwhelmed
+- **No Shields for Small Ships:** Smallest ship classes rely only on hull armor
+- **Missile Systems:** Guided explosive projectiles for heavier combat
+
+### Security and Licensing
+- **Sector Restrictions:** Some high-security sectors forbid weapons entirely
+- **Weapon Licenses:** Extremely expensive permits allow armed ships in restricted space
+- **Law Enforcement:** Security forces respond to illegal weapons in protected zones
+- **Pacifist Gameplay:** Game design encourages avoiding combat through economics
+
+### Universe Reset Feature
+- **Save File Transfer:** Start new universe with existing character progression
+- **Selective Transfer:** Choose which elements to carry over (location, relations, etc.)
+- **New Game Plus:** Retain character skills and relationships in fresh economy
+- **Problem Recovery:** Reset universe state while preserving character investment
+
 ## Target Experience
 
 ### Session Length
@@ -81,11 +108,11 @@ Play as a single character in a living galaxy, piloting various ships to deliver
 ### Emotional Journey
 - **Early Game:** Wonder and learning as you explore the economic systems
 - **Mid Game:** Mastery and optimization as you build trade routes
-- **Late Game:** Political intrigue and major faction storylines
+- **Late Game:** Complex faction relationships and major economic storylines
 
 ### Player Rewards
-- **Financial Success:** Growing wealth and business empire
-- **Collection Completion:** Owning different ship types and configurations
+- **Financial Success:** Growing wealth and trading expertise
+- **Collection Completion:** Owning different ship hub configurations and equipment
 - **Story Resolution:** Completing faction storylines and major events
 - **Mastery Achievement:** Optimizing trade routes and supply chains
 
@@ -93,15 +120,15 @@ Play as a single character in a living galaxy, piloting various ships to deliver
 
 ### Unique Selling Points
 1. **Logistics Focus:** Rare emphasis on supply chain management in space games
-2. **Single Character Depth:** Deep character progression over ship collection
-3. **Economic Realism:** Complex, interconnected economy simulation
-4. **Modular Building:** Creative ship construction from functional blocks
+2. **Single Character Depth:** Deep character progression focusing on one pilot
+3. **Economic Realism:** Complex, interconnected economy simulation with kinetic weapons only
+4. **Hub-Based Building:** Creative ship construction from functional building blocks with equipment slots
 
 ### Inspiration Sources
 - **Death Stranding:** Logistics gameplay and route planning
+- **Space Rangers:** Top-down view and detailed universe simulation
+- **Kenshi:** Immersive unforgiving world with attention to detail
 - **X4: Foundations:** Complex economic simulation and station building
-- **Elite Dangerous:** Space trading and faction relationships
-- **EVE Online:** Player-driven economy and faction warfare
 
 ## Development Priorities
 
