@@ -1,5 +1,5 @@
 import { GameEngine } from '../types';
-import { InputManager } from '../systems';
+import { InputManager, TimeManager, SaveManager } from '../systems';
 import { WorldManager } from '../systems/WorldManager';
 import { Station, Planet } from '../types/world';
 
@@ -10,6 +10,8 @@ export class Engine implements GameEngine {
   lastFrameTime: number = 0;
   private inputManager: InputManager;
   private worldManager: WorldManager;
+  private timeManager: TimeManager;
+  private saveManager: SaveManager;
   private animationFrameId: number = 0;
   private camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 };
 
@@ -24,6 +26,8 @@ export class Engine implements GameEngine {
     
     this.inputManager = new InputManager(canvas);
     this.worldManager = new WorldManager();
+    this.timeManager = new TimeManager();
+    this.saveManager = new SaveManager();
     
     // Set up canvas for crisp pixel art
     this.context.imageSmoothingEnabled = false;
@@ -38,11 +42,13 @@ export class Engine implements GameEngine {
     
     this.isRunning = true;
     this.lastFrameTime = performance.now();
+    this.timeManager.start();
     this.gameLoop();
   }
 
   stop(): void {
     this.isRunning = false;
+    this.timeManager.pause();
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
@@ -62,6 +68,9 @@ export class Engine implements GameEngine {
   };
 
   update(deltaTime: number): void {
+    // Update time system
+    this.timeManager.update(deltaTime);
+
     // Handle input for camera movement
     if (this.inputManager.isKeyPressed('KeyW') || this.inputManager.isKeyPressed('ArrowUp')) {
       this.camera.y -= 100 * deltaTime;
@@ -281,6 +290,8 @@ export class Engine implements GameEngine {
   private renderUI(): void {
     const currentSystem = this.worldManager.getCurrentSystem();
     const currentStation = this.worldManager.getCurrentStation();
+    const currentTime = this.timeManager.getCurrentTime();
+    const timeAcceleration = this.timeManager.getTimeAcceleration();
     
     // System info
     this.context.fillStyle = '#ffffff';
@@ -295,6 +306,14 @@ export class Engine implements GameEngine {
     if (currentStation) {
       this.context.fillText(`Docked: ${currentStation.name}`, 10, 70);
       this.context.fillText(`Type: ${currentStation.type}`, 10, 90);
+    }
+    
+    // Time display
+    this.context.font = '14px monospace';
+    this.context.fillText(`Time: ${this.timeManager.formatTime(currentTime)}`, 10, 120);
+    if (timeAcceleration !== 1) {
+      this.context.fillStyle = '#ffaa00';
+      this.context.fillText(`Speed: ${timeAcceleration}x`, 10, 140);
     }
     
     // Controls help
@@ -314,6 +333,14 @@ export class Engine implements GameEngine {
 
   getWorldManager(): WorldManager {
     return this.worldManager;
+  }
+
+  getTimeManager(): TimeManager {
+    return this.timeManager;
+  }
+
+  getSaveManager(): SaveManager {
+    return this.saveManager;
   }
 
   dispose(): void {
