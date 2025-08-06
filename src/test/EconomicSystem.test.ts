@@ -202,7 +202,7 @@ describe('EconomicSystem', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       // Use the test helper to force an update
-      (economicSystem as any).forceUpdate(3600000);
+      (economicSystem as unknown as { forceUpdate: (deltaTime: number) => void }).forceUpdate(3600000);
       
       const updatedMarket = economicSystem.getMarket(testStation.id);
       expect(updatedMarket!.lastUpdate).toBeGreaterThan(initialTimestamp);
@@ -213,7 +213,7 @@ describe('EconomicSystem', () => {
       const commodityId = Array.from(market!.commodities.keys())[0];
       
       // Use the test helper to force an update
-      (economicSystem as any).forceUpdate(3600000);
+      (economicSystem as unknown as { forceUpdate: (deltaTime: number) => void }).forceUpdate(3600000);
       
       const marketCommodity = market!.commodities.get(commodityId)!;
       expect(marketCommodity.priceHistory.length).toBeGreaterThan(0);

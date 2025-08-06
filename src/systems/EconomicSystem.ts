@@ -107,26 +107,31 @@ export class EconomicSystem {
   calculatePrice(commodity: Commodity, market: Market): number {
     let price = commodity.basePrice;
     
-    // Apply demand factors
+    // Apply demand factors with more controlled ranges
     price *= market.demandFactors.stationType;
     price *= (0.5 + market.demandFactors.population);
     price *= (0.8 + market.demandFactors.securityLevel * 0.4);
     
-    // Apply security restrictions for illegal/restricted items
+    // Apply security restrictions for illegal/restricted items (reduced multipliers)
     if (commodity.legalStatus === 'illegal') {
-      price *= 2.0 + (1.0 - market.demandFactors.securityLevel) * 2.0;
+      price *= 1.5 + (1.0 - market.demandFactors.securityLevel) * 1.0; // Max 2.5x for illegal
     } else if (commodity.legalStatus === 'restricted') {
-      price *= 1.2 + (1.0 - market.demandFactors.securityLevel) * 0.8;
+      price *= 1.1 + (1.0 - market.demandFactors.securityLevel) * 0.4; // Max 1.5x for restricted
     }
     
-    // Apply volatility
-    const volatilityFactor = 1.0 + (Math.random() - 0.5) * commodity.volatility;
+    // Apply volatility with more controlled range
+    const volatilityFactor = 1.0 + (Math.random() - 0.5) * commodity.volatility * 0.5;
     price *= volatilityFactor;
     
-    // Apply active economic events
-    price *= this.getEventPriceMultiplier(commodity.id, market.stationId);
+    // Apply active economic events with capped multiplier
+    const eventMultiplier = this.getEventPriceMultiplier(commodity.id, market.stationId);
+    price *= Math.min(2.0, Math.max(0.5, eventMultiplier)); // Cap event effects
     
-    return Math.max(1, Math.round(price));
+    // Ensure final price stays within reasonable bounds (0.2x to 4x base price)
+    const finalPrice = Math.max(commodity.basePrice * 0.2, 
+                               Math.min(commodity.basePrice * 4.0, price));
+    
+    return Math.max(1, Math.round(finalPrice));
   }
 
   /**
@@ -491,12 +496,14 @@ export class EconomicSystem {
     return production ? production.baseRate * production.efficiency : 0;
   }
 
-  private updateProduction(_deltaTime: number): void {
+  private updateProduction(deltaTime: number): void {
     // Update production cycles for all stations
     // Production logic is handled in updateMarket method
+    // deltaTime parameter is reserved for future production cycle implementation
+    void deltaTime;
   }
 
-  private updateEvents(_deltaTime: number): void {
+  private updateEvents(deltaTime: number): void {
     const currentTime = Date.now();
     
     // Remove expired events
@@ -506,6 +513,9 @@ export class EconomicSystem {
     if (Math.random() < 0.01) { // 1% chance per update
       this.generateRandomEvent();
     }
+    
+    // deltaTime parameter is reserved for future event timing implementation
+    void deltaTime;
   }
 
   private generateRandomEvent(): void {
