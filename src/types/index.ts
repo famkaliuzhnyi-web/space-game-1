@@ -1,0 +1,35 @@
+export interface GameEngine {
+  canvas: HTMLCanvasElement;
+  context: CanvasRenderingContext2D;
+  isRunning: boolean;
+  lastFrameTime: number;
+  
+  start(): void;
+  stop(): void;
+  update(deltaTime: number): void;
+  render(): void;
+}
+
+export interface Vector2D {
+  x: number;
+  y: number;
+}
+
+export interface GameEntity {
+  id: string;
+  position: Vector2D;
+  velocity: Vector2D;
+  update(deltaTime: number): void;
+  render(context: CanvasRenderingContext2D): void;
+}
+
+export interface InputState {
+  keys: Record<string, boolean>;
+  mouse: {
+    position: Vector2D;
+    buttons: Record<number, boolean>;
+  };
+  touch: {
+    touches: Vector2D[];
+  };
+}
