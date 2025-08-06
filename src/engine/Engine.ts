@@ -1,5 +1,5 @@
 import { GameEngine } from '../types';
-import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager } from '../systems';
+import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer } from '../systems';
 import { WorldManager } from '../systems/WorldManager';
 import { Station, Planet } from '../types/world';
 
@@ -14,6 +14,7 @@ export class Engine implements GameEngine {
   private saveManager: SaveManager;
   private economicSystem: EconomicSystem;
   private contractManager: ContractManager;
+  private routeAnalyzer: RouteAnalyzer;
   private animationFrameId: number = 0;
   private camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 };
 
@@ -32,6 +33,7 @@ export class Engine implements GameEngine {
     this.saveManager = new SaveManager();
     this.economicSystem = new EconomicSystem();
     this.contractManager = new ContractManager();
+    this.routeAnalyzer = new RouteAnalyzer();
     
     // Initialize economics for existing stations
     this.initializeEconomics();
@@ -362,6 +364,10 @@ export class Engine implements GameEngine {
 
   getContractManager(): ContractManager {
     return this.contractManager;
+  }
+
+  getRouteAnalyzer(): RouteAnalyzer {
+    return this.routeAnalyzer;
   }
 
   private initializeEconomics(): void {
