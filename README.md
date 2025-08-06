@@ -2,93 +2,89 @@
 
 A mobile-friendly space adventure game built with React, TypeScript, and Vite.
 
+## 🎮 Game Features
+
+- **⭐ Star Collection**: Click to collect stars and increase your score
+- **📱 Mobile-Optimized**: Touch-friendly interface with responsive design
+- **🚀 Real-time Scoring**: Watch your score increase as you collect stars
+- **⚡ Lightning Fast**: Built with Vite for instant development and blazing-fast builds
+
+## 🎯 How to Play
+
+1. Click the "Collect Star ⭐" button to earn points
+2. Each click adds 10 points to your score
+3. Try to achieve the highest score possible!
+
+*More gameplay features coming soon!*
+
+## 📚 Documentation
+
+- [🎮 Game Features & Roadmap](docs/GAME_FEATURES.md)
+- [🏗️ Architecture Overview](docs/ARCHITECTURE.md)
+- [🚀 Deployment Guide](docs/DEPLOYMENT.md)
+- [📖 API Documentation](docs/API.md)
+- [🤝 Contributing Guidelines](CONTRIBUTING.md)
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js >= 14.18.0
+- npm or yarn
+
+### Installation & Development
+```bash
+# Clone the repository
+git clone https://github.com/famkaliuzhnyi-web/space-game-1.git
+cd space-game-1
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+```
+
 ## 📱 Mobile-Friendly Branch Previews
 
-This project supports **automatic branch preview deployments** perfect for checking results from your phone!
+This project features **automatic branch preview deployments** perfect for mobile testing!
 
-### How it works:
-- **Every branch** gets its own preview URL when pushed
-- **Pull requests** automatically get deployment comments with:
-  - 🔗 Direct preview link
-  - 📱 QR code for easy mobile access
-  - Mobile-optimized interface
+### ✨ Key Features:
+- 🔄 **Every branch** gets its own preview URL when pushed
+- 📱 **QR codes** in pull request comments for easy mobile access
+- 🚀 **Instant previews** with mobile-optimized interface
+- 🔗 **Direct links** for quick sharing
 
-### Accessing Previews:
-1. Push to any branch or create a pull request
-2. GitHub Actions will build and deploy your branch
-3. Check the PR comment for the mobile-friendly preview URL
-4. Scan the QR code with your phone for instant access! 📱
-
-### Live Deployment:
+### 🌐 Live Deployments:
 - **Main branch**: [https://famkaliuzhnyi-web.github.io/space-game-1/](https://famkaliuzhnyi-web.github.io/space-game-1/)
 - **Branch previews**: `https://famkaliuzhnyi-web.github.io/space-game-1/{branch-name}/`
 
-## Development
+*For detailed setup instructions, see our [Deployment Guide](docs/DEPLOYMENT.md)*
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🛠️ Technology Stack
 
-Currently, two official plugins are available:
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite 4.5
+- **Styling**: CSS3 with modern features
+- **Linting**: ESLint with TypeScript support
+- **Deployment**: GitHub Actions + GitHub Pages
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🤝 Contributing
 
-## Expanding the ESLint configuration
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for:
+- Development setup
+- Code style guidelines
+- Pull request process
+- Issue reporting
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📄 License
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+This project is open source and available under the MIT License.

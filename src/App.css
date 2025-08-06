@@ -1,3 +1,9 @@
+/**
+ * Space Game - Main Application Styles
+ * Mobile-first responsive design with touch optimization
+ */
+
+/* ===== ROOT COMPONENT ===== */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,15 +11,18 @@
   text-align: center;
 }
 
+/* ===== LOGO ANIMATIONS ===== */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -33,10 +42,69 @@
   }
 }
 
+/* ===== GAME COMPONENTS ===== */
+
+/**
+ * Main game content container
+ * Provides spacing and visual separation
+ */
 .card {
   padding: 2em;
 }
 
+/**
+ * Star collection button
+ * Mobile-optimized with proper touch targets
+ */
+.star-button {
+  /* Ensure minimum touch target size for mobile accessibility */
+  min-height: 44px;
+  
+  /* Prevent iOS zoom on double-tap */
+  touch-action: manipulation;
+  
+  /* Remove default tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
+  
+  /* Smooth transitions for interactive feedback */
+  transition: all 0.2s ease;
+}
+
+.star-button:hover {
+  transform: scale(1.05);
+}
+
+.star-button:active {
+  transform: scale(0.95);
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/**
+ * Footer text styling
+ * Muted appearance for secondary information
+ */
 .read-the-docs {
   color: #888;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  #root {
+    padding: 1rem;
+  }
+  
+  .card {
+    padding: 1.5em;
+  }
+}
+
+/* Tablet and larger screens */
+@media (min-width: 769px) {
+  .star-button {
+    /* Larger touch targets on bigger screens */
+    min-height: 48px;
+  }
 }
