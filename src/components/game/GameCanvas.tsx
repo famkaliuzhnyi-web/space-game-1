@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel } from '../ui';
-import { Market, TradeContract } from '../../types/economy';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel } from '../ui';
+import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 
 interface GameCanvasProps {
   width?: number;
@@ -22,9 +22,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [showNavigation, setShowNavigation] = useState(false);
   const [showMarket, setShowMarket] = useState(false);
   const [showContracts, setShowContracts] = useState(false);
+  const [showRouteAnalysis, setShowRouteAnalysis] = useState(false);
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
+  const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
   const [playerCredits, setPlayerCredits] = useState(10000);
 
   useEffect(() => {
@@ -183,6 +185,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleOpenRouteAnalysis = () => {
+    if (engineRef.current) {
+      const routeAnalyzer = engineRef.current.getRouteAnalyzer();
+      const economicSystem = engineRef.current.getEconomicSystem();
+      const worldManager = engineRef.current.getWorldManager();
+      
+      // Get all markets and stations
+      const markets = economicSystem.getAllMarkets();
+      const stations = new Map(worldManager.getAllStations().map(station => [station.id, station]));
+      
+      // Analyze routes
+      const analysis = routeAnalyzer.analyzeRoutes(markets, stations);
+      setRouteAnalysis(analysis);
+      setShowRouteAnalysis(true);
+      
+      console.log('Route analysis opened:', analysis.routes.length, 'routes found');
+    }
+  };
+
   const handleAcceptContract = (contractId: string) => {
     if (engineRef.current) {
       const contractManager = engineRef.current.getContractManager();
@@ -327,6 +348,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Contracts (C)
         </button>
+        <button 
+          onClick={handleOpenRouteAnalysis} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Routes (R)
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -354,6 +382,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onClose={() => setShowContracts(false)}
         onAcceptContract={handleAcceptContract}
         playerCredits={playerCredits}
+      />
+
+      {/* Trade Route Panel */}
+      <TradeRoutePanel
+        routeAnalysis={routeAnalysis}
+        isVisible={showRouteAnalysis}
+        onClose={() => setShowRouteAnalysis(false)}
+        playerCredits={playerCredits}
+        currentStationId={engineRef.current?.getWorldManager().getCurrentStation()?.id}
       />
     </div>
   );
