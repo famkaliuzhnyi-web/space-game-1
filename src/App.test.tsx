@@ -12,6 +12,11 @@ describe('App Component', () => {
     expect(screen.getByText('Welcome to the Space Adventure!')).toBeInTheDocument();
   });
 
+  test('renders launch game button', () => {
+    render(<App />);
+    expect(screen.getByText('🚀 Launch Game')).toBeInTheDocument();
+  });
+
   test('score increases when collect star button is clicked', () => {
     render(<App />);
     const button = screen.getByText(/Collect Star ⭐/);
