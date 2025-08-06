@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
 import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel } from '../ui';
+import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
+import { CargoItem } from '../../types/player';
 
 interface GameCanvasProps {
   width?: number;
@@ -23,11 +25,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [showMarket, setShowMarket] = useState(false);
   const [showContracts, setShowContracts] = useState(false);
   const [showRouteAnalysis, setShowRouteAnalysis] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
   const [routeAnalysis, setRouteAnalysis] = useState<RouteAnalysis | null>(null);
   const [playerCredits, setPlayerCredits] = useState(10000);
+  const [cargoItems, setCargoItems] = useState<CargoItem[]>([]);
+  const [cargoUsed, setCargoUsed] = useState(0);
+  const [cargoCapacity, setCargoCapacity] = useState(100);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -57,6 +63,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         engineRef.current.start();
         setIsEngineRunning(true);
         setIsLoading(false);
+        
+        // Sync player credits from PlayerManager
+        const playerManager = engineRef.current.getPlayerManager();
+        setPlayerCredits(playerManager.getCredits());
+        setCargoItems(playerManager.getCargoManifest());
+        setCargoUsed(playerManager.getCargoUsed());
+        setCargoCapacity(playerManager.getCargoCapacity());
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
         setEngineError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -151,14 +164,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const handleTrade = (commodityId: string, quantity: number, isBuying: boolean) => {
     if (engineRef.current && currentMarket) {
       const economicSystem = engineRef.current.getEconomicSystem();
-      const result = economicSystem.executeTrade(currentMarket.stationId, commodityId, quantity, isBuying);
+      const playerManager = engineRef.current.getPlayerManager();
+      
+      // Use the new integrated trading method
+      const result = economicSystem.executeTradeWithPlayer(
+        currentMarket.stationId, 
+        commodityId, 
+        quantity, 
+        isBuying,
+        playerManager
+      );
       
       if (result.success) {
-        if (isBuying) {
-          setPlayerCredits(prev => prev - (result.totalCost || 0));
-        } else {
-          setPlayerCredits(prev => prev + (result.totalCost || 0));
-        }
+        // Update player data from PlayerManager
+        setPlayerCredits(playerManager.getCredits());
+        setCargoItems(playerManager.getCargoManifest());
+        setCargoUsed(playerManager.getCargoUsed());
+        setCargoCapacity(playerManager.getCargoCapacity());
         
         // Refresh the market data
         const updatedMarket = economicSystem.getMarket(currentMarket.stationId);
@@ -167,8 +189,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         }
         
         console.log(`Trade successful: ${isBuying ? 'Bought' : 'Sold'} ${quantity} ${commodityId} for ${result.totalCost} credits`);
+        console.log(`Player now has ${playerManager.getCredits()} credits`);
+        console.log(`Cargo space: ${playerManager.getCargoUsed()}/${playerManager.getCargoCapacity()}`);
       } else {
         console.error('Trade failed:', result.error);
+        alert(`Trade failed: ${result.error}`);
       }
     }
   };
@@ -355,6 +380,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Routes (R)
         </button>
+        <button 
+          onClick={() => setShowInventory(true)} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Inventory (I)
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -391,6 +423,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onClose={() => setShowRouteAnalysis(false)}
         playerCredits={playerCredits}
         currentStationId={engineRef.current?.getWorldManager().getCurrentStation()?.id}
+      />
+
+      {/* Player Inventory Panel */}
+      <PlayerInventoryPanel
+        isVisible={showInventory}
+        onClose={() => setShowInventory(false)}
+        cargoItems={cargoItems}
+        cargoCapacity={cargoCapacity}
+        cargoUsed={cargoUsed}
+        playerCredits={playerCredits}
+        currentStationName="Earth Station Alpha"
       />
     </div>
   );

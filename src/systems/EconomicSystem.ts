@@ -283,7 +283,91 @@ export class EconomicSystem {
   }
 
   /**
-   * Execute a trade transaction
+   * Execute a trade transaction with player inventory integration
+   */
+  executeTradeWithPlayer(stationId: string, commodityId: string, quantity: number, isBuying: boolean, playerManager: any): {
+    success: boolean;
+    totalCost?: number;
+    pricePerUnit?: number;
+    error?: string;
+  } {
+    const market = this.markets.get(stationId);
+    if (!market) {
+      return { success: false, error: 'Market not found' };
+    }
+
+    const marketCommodity = market.commodities.get(commodityId);
+    if (!marketCommodity) {
+      return { success: false, error: 'Commodity not available' };
+    }
+
+    if (isBuying) {
+      // Player buying from station
+      if (quantity > marketCommodity.available) {
+        return { success: false, error: 'Insufficient supply' };
+      }
+      
+      const pricePerUnit = marketCommodity.currentPrice;
+      const totalCost = pricePerUnit * quantity;
+      
+      // Execute the purchase through PlayerManager
+      const result = playerManager.executeBuy(stationId, commodityId, quantity, pricePerUnit);
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+      
+      // Update market state
+      marketCommodity.available -= quantity;
+      marketCommodity.demand = Math.max(0, marketCommodity.demand - quantity);
+      
+      // Update price history with trade volume
+      if (marketCommodity.priceHistory.length > 0) {
+        const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+        lastPrice.volume += quantity;
+      }
+      
+      // Update supply/demand levels
+      this.updateSupplyDemandLevels(marketCommodity);
+      
+      return {
+        success: true,
+        totalCost,
+        pricePerUnit
+      };
+    } else {
+      // Player selling to station
+      const pricePerUnit = marketCommodity.currentPrice;
+      const totalValue = pricePerUnit * quantity;
+      
+      // Execute the sale through PlayerManager
+      const result = playerManager.executeSell(stationId, commodityId, quantity, pricePerUnit);
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+      
+      // Update market state
+      marketCommodity.available += quantity;
+      marketCommodity.demand += Math.floor(quantity * 0.8); // Stations want more when they buy
+      
+      // Update price history with trade volume
+      if (marketCommodity.priceHistory.length > 0) {
+        const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+        lastPrice.volume += quantity;
+      }
+      
+      // Update supply/demand levels
+      this.updateSupplyDemandLevels(marketCommodity);
+      
+      return {
+        success: true,
+        totalCost: totalValue,
+        pricePerUnit
+      };
+    }
+  }
+
+  /**
+   * Execute a trade transaction (legacy method for compatibility)
    */
   executeTrade(stationId: string, commodityId: string, quantity: number, isBuying: boolean): {
     success: boolean;
@@ -311,8 +395,10 @@ export class EconomicSystem {
       marketCommodity.available -= quantity;
       
       // Update price history with trade volume
-      const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
-      lastPrice.volume += quantity;
+      if (marketCommodity.priceHistory.length > 0) {
+        const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+        lastPrice.volume += quantity;
+      }
       
       return {
         success: true,
@@ -326,8 +412,10 @@ export class EconomicSystem {
       marketCommodity.demand = Math.max(0, marketCommodity.demand - quantity);
       
       // Update price history with trade volume
-      const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
-      lastPrice.volume += quantity;
+      if (marketCommodity.priceHistory.length > 0) {
+        const lastPrice = marketCommodity.priceHistory[marketCommodity.priceHistory.length - 1];
+        lastPrice.volume += quantity;
+      }
       
       return {
         success: true,

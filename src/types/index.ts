@@ -39,3 +39,6 @@ export * from './world';
 
 // Re-export economy types
 export * from './economy';
+
+// Re-export player types
+export * from './player';
