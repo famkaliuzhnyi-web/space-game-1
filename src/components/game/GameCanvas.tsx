@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel } from '../ui';
+import { Market, TradeContract } from '../../types/economy';
 
 interface GameCanvasProps {
   width?: number;
@@ -19,6 +20,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showNavigation, setShowNavigation] = useState(false);
+  const [showMarket, setShowMarket] = useState(false);
+  const [showContracts, setShowContracts] = useState(false);
+  const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
+  const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
+  const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
+  const [playerCredits, setPlayerCredits] = useState(10000);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -121,6 +128,79 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     setIsLoading(true);
     // Force re-mount by changing a key or reloading
     window.location.reload();
+  };
+
+  const handleOpenMarket = () => {
+    if (engineRef.current) {
+      // Get the current station's market (use actual station ID)
+      const economicSystem = engineRef.current.getEconomicSystem();
+      const stationId = 'earth-station'; // This matches the actual station ID in WorldManager
+      const market = economicSystem.getMarket(stationId);
+      
+      if (market) {
+        setCurrentMarket(market);
+        setShowMarket(true);
+      } else {
+        console.error('No market found for current station');
+      }
+    }
+  };
+
+  const handleTrade = (commodityId: string, quantity: number, isBuying: boolean) => {
+    if (engineRef.current && currentMarket) {
+      const economicSystem = engineRef.current.getEconomicSystem();
+      const result = economicSystem.executeTrade(currentMarket.stationId, commodityId, quantity, isBuying);
+      
+      if (result.success) {
+        if (isBuying) {
+          setPlayerCredits(prev => prev - (result.totalCost || 0));
+        } else {
+          setPlayerCredits(prev => prev + (result.totalCost || 0));
+        }
+        
+        // Refresh the market data
+        const updatedMarket = economicSystem.getMarket(currentMarket.stationId);
+        if (updatedMarket) {
+          setCurrentMarket(updatedMarket);
+        }
+        
+        console.log(`Trade successful: ${isBuying ? 'Bought' : 'Sold'} ${quantity} ${commodityId} for ${result.totalCost} credits`);
+      } else {
+        console.error('Trade failed:', result.error);
+      }
+    }
+  };
+
+  const handleOpenContracts = () => {
+    if (engineRef.current) {
+      const contractManager = engineRef.current.getContractManager();
+      const available = contractManager.getAvailableContracts();
+      const playerActive = contractManager.getPlayerContracts('player-1'); // Using placeholder player ID
+      
+      setAvailableContracts(available);
+      setPlayerContracts(playerActive);
+      setShowContracts(true);
+    }
+  };
+
+  const handleAcceptContract = (contractId: string) => {
+    if (engineRef.current) {
+      const contractManager = engineRef.current.getContractManager();
+      const result = contractManager.acceptContract(contractId, 'player-1'); // Using placeholder player ID
+      
+      if (result.success) {
+        // Refresh contract lists
+        const available = contractManager.getAvailableContracts();
+        const playerActive = contractManager.getPlayerContracts('player-1');
+        
+        setAvailableContracts(available);
+        setPlayerContracts(playerActive);
+        
+        console.log('Contract accepted successfully');
+      } else {
+        console.error('Failed to accept contract:', result.error);
+      }
+    }
   };
 
   const handleNavigate = (targetId: string) => {
@@ -233,7 +313,48 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Navigation (N)
         </button>
+        <button 
+          onClick={handleOpenMarket} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Market (M)
+        </button>
+        <button 
+          onClick={handleOpenContracts} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Contracts (C)
+        </button>
       </div>
+
+      {/* Navigation Panel */}
+      <NavigationPanel
+        isVisible={showNavigation}
+        onClose={() => setShowNavigation(false)}
+        onNavigate={handleNavigate}
+        targets={getNavigationTargets()}
+      />
+
+      {/* Market Panel */}
+      <MarketPanel
+        market={currentMarket}
+        stationName="Earth Station Alpha"
+        isVisible={showMarket}
+        onClose={() => setShowMarket(false)}
+        onTrade={handleTrade}
+        playerCredits={playerCredits}
+      />
+      {/* Contract Panel */}
+      <ContractPanel
+        contracts={availableContracts}
+        playerContracts={playerContracts}
+        isVisible={showContracts}
+        onClose={() => setShowContracts(false)}
+        onAcceptContract={handleAcceptContract}
+        playerCredits={playerCredits}
+      />
     </div>
   );
 };

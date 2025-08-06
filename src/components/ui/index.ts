@@ -5,6 +5,8 @@
 
 export { default as NavigationPanel } from './NavigationPanel';
 export { default as InventoryPanel } from './InventoryPanel';
+export { default as MarketPanel } from './MarketPanel';
+export { default as ContractPanel } from './ContractPanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
 export type { InventoryItem, CargoHold } from './InventoryPanel';
 export type { ModalAction } from './Modal';
