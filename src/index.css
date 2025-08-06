@@ -45,6 +45,11 @@ button {
   background-color: #1a1a1a;
   cursor: pointer;
   transition: border-color 0.25s;
+  /* Mobile-friendly touch target */
+  min-height: 44px;
+  min-width: 44px;
+  /* Prevent zoom on double-tap on iOS */
+  touch-action: manipulation;
 }
 button:hover {
   border-color: #646cff;
@@ -52,6 +57,22 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+/* Active state for better mobile feedback */
+button:active {
+  transform: translateY(1px);
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5em;
+  }
+  
+  button {
+    padding: 1em 1.5em;
+    font-size: 1.1em;
+  }
 }
 
 @media (prefers-color-scheme: light) {

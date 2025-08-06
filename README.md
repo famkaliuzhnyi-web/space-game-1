@@ -1,4 +1,29 @@
-# React + TypeScript + Vite
+# React + TypeScript + Vite Space Game 🚀
+
+A mobile-friendly space adventure game built with React, TypeScript, and Vite.
+
+## 📱 Mobile-Friendly Branch Previews
+
+This project supports **automatic branch preview deployments** perfect for checking results from your phone!
+
+### How it works:
+- **Every branch** gets its own preview URL when pushed
+- **Pull requests** automatically get deployment comments with:
+  - 🔗 Direct preview link
+  - 📱 QR code for easy mobile access
+  - Mobile-optimized interface
+
+### Accessing Previews:
+1. Push to any branch or create a pull request
+2. GitHub Actions will build and deploy your branch
+3. Check the PR comment for the mobile-friendly preview URL
+4. Scan the QR code with your phone for instant access! 📱
+
+### Live Deployment:
+- **Main branch**: [https://famkaliuzhnyi-web.github.io/space-game-1/](https://famkaliuzhnyi-web.github.io/space-game-1/)
+- **Branch previews**: `https://famkaliuzhnyi-web.github.io/space-game-1/{branch-name}/`
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
