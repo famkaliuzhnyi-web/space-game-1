@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Ship } from '../../types/player';
 import { ShipStorageManager, ShipYardOffer } from '../../systems/ShipStorageManager';
+import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
 import Modal from './Modal';
+import ShipConstructionPanel from './ShipConstructionPanel';
 
 interface FleetManagementPanelProps {
   isVisible: boolean;
@@ -11,8 +13,11 @@ interface FleetManagementPanelProps {
   ownedShips: Ship[];
   stationId: string;
   stationName: string;
+  stationType?: string;
+  techLevel?: number;
   onSwitchShip: (shipId: string) => void;
   onPurchaseShip: (shipClassId: string) => void;
+  onConstructShip?: (config: ShipConstructionConfig) => void;
   onStoreShip: (shipId: string) => void;
   onRetrieveShip: (shipId: string) => void;
 }
@@ -25,15 +30,19 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
   ownedShips,
   stationId,
   stationName,
+  stationType = 'trade',
+  techLevel = 1,
   onSwitchShip,
   onPurchaseShip,
+  onConstructShip,
   onStoreShip,
   onRetrieveShip
 }) => {
-  const [activeTab, setActiveTab] = useState<'fleet' | 'storage' | 'shipyard'>('fleet');
+  const [activeTab, setActiveTab] = useState<'fleet' | 'storage' | 'shipyard' | 'construction'>('fleet');
   const [shipStorage] = useState(new ShipStorageManager());
   const [availableShips, setAvailableShips] = useState<ShipYardOffer[]>([]);
   const [storedShips, setStoredShips] = useState<any[]>([]);
+  const [showConstructionPanel, setShowConstructionPanel] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
@@ -365,6 +374,112 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
     </div>
   );
 
+  const renderConstructionTab = () => {
+    if (!onConstructShip) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <div style={{
+            textAlign: 'center',
+            color: '#9ca3af',
+            padding: '40px 0',
+            borderRadius: '6px',
+            border: '2px dashed #374151'
+          }}>
+            <div style={{ marginBottom: '10px', fontSize: '24px' }}>🔨</div>
+            <div>Ship Construction Not Available</div>
+            <div style={{ fontSize: '14px', marginTop: '5px' }}>
+              This station does not have construction facilities
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (showConstructionPanel) {
+      return (
+        <ShipConstructionPanel
+          stationId={stationId}
+          stationType={stationType}
+          techLevel={techLevel}
+          playerCredits={playerCredits}
+          onConstructShip={(config) => {
+            onConstructShip(config);
+            setShowConstructionPanel(false);
+          }}
+          onCancel={() => setShowConstructionPanel(false)}
+        />
+      );
+    }
+
+    return (
+      <div style={{ padding: '20px' }}>
+        <h3 style={{ color: '#60a5fa', marginBottom: '15px' }}>Ship Construction</h3>
+        
+        <div style={{ marginBottom: '20px', color: '#9ca3af' }}>
+          Build custom ships with modular equipment systems
+        </div>
+
+        <div style={{
+          backgroundColor: '#1f2937',
+          padding: '25px',
+          borderRadius: '8px',
+          border: '1px solid #374151',
+          textAlign: 'center'
+        }}>
+          <div style={{ marginBottom: '15px', fontSize: '48px' }}>🔨</div>
+          <h4 style={{ color: '#f3f4f6', marginBottom: '10px' }}>Custom Ship Construction</h4>
+          <p style={{ color: '#9ca3af', marginBottom: '20px', lineHeight: '1.5' }}>
+            Design and build ships tailored to your needs. Choose from various ship classes
+            and customize them with specialized equipment for optimal performance.
+          </p>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+            gap: '15px',
+            marginBottom: '25px'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '5px' }}>🚀</div>
+              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Ship Classes</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Multiple hull types</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '5px' }}>⚙️</div>
+              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Modular Design</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Customizable equipment</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '5px' }}>📊</div>
+              <div style={{ color: '#e2e8f0', fontWeight: 'bold' }}>Performance</div>
+              <div style={{ fontSize: '12px', color: '#9ca3af' }}>Real-time statistics</div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowConstructionPanel(true)}
+            style={{
+              padding: '12px 30px',
+              backgroundColor: '#059669',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              margin: '0 auto'
+            }}
+          >
+            🔨 Start Construction
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Modal isOpen={isVisible} onClose={onClose} size="large">
       <div style={{
@@ -410,7 +525,8 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
           {[
             { id: 'fleet', label: 'Fleet', icon: '🚀' },
             { id: 'storage', label: 'Storage', icon: '📦' },
-            { id: 'shipyard', label: 'Shipyard', icon: '🏭' }
+            { id: 'shipyard', label: 'Shipyard', icon: '🏭' },
+            { id: 'construction', label: 'Construction', icon: '🔨' }
           ].map((tab) => (
             <button
               key={tab.id}
@@ -438,6 +554,7 @@ const FleetManagementPanel: React.FC<FleetManagementPanelProps> = ({
           {activeTab === 'fleet' && renderFleetTab()}
           {activeTab === 'storage' && renderStorageTab()}
           {activeTab === 'shipyard' && renderShipyardTab()}
+          {activeTab === 'construction' && renderConstructionTab()}
         </div>
       </div>
     </Modal>
