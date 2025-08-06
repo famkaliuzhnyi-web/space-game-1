@@ -23,6 +23,18 @@ This project supports **automatic branch preview deployments** perfect for check
 - **Main branch**: [https://famkaliuzhnyi-web.github.io/space-game-1/](https://famkaliuzhnyi-web.github.io/space-game-1/)
 - **Branch previews**: `https://famkaliuzhnyi-web.github.io/space-game-1/{branch-name}/`
 
+## 📖 Game Documentation
+
+This project includes comprehensive documentation for a 2D Space RPG with logistics-focused gameplay:
+
+- **[Complete Game Documentation](./docs/README.md)** - Full design specification
+- **[Game Design Document](./docs/game-design-document.md)** - Core vision and mechanics  
+- **[World Structure](./docs/world-structure.md)** - Galaxy, sectors, and stations
+- **[Economic Systems](./docs/economy/README.md)** - Complex supply chain simulation
+- **[Factions & Politics](./docs/factions.md)** - Human faction relationships
+- **[Ship Systems](./docs/ships/ship-classes.md)** - Modular ship building and classes
+- **[Game Systems](./docs/systems/security.md)** - Security, NPCs, cargo, and hacking
+
 ## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
