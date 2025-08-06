@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
+import { NavigationPanel } from '../ui';
 
 interface GameCanvasProps {
   width?: number;
@@ -17,6 +18,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showNavigation, setShowNavigation] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -81,9 +83,20 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     // Listen for window resize
     window.addEventListener('resize', handleResize);
 
+    // Listen for ESC key to close navigation panel
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === 'Escape') {
+        setShowNavigation(false);
+      } else if (event.code === 'KeyN') {
+        setShowNavigation(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('keydown', handleKeyDown);
       if (engineRef.current) {
         engineRef.current.dispose();
         setIsEngineRunning(false);
@@ -108,6 +121,19 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     setIsLoading(true);
     // Force re-mount by changing a key or reloading
     window.location.reload();
+  };
+
+  const handleNavigate = (targetId: string) => {
+    if (engineRef.current) {
+      engineRef.current.getWorldManager().navigateToTarget(targetId);
+    }
+  };
+
+  const getNavigationTargets = () => {
+    if (engineRef.current) {
+      return engineRef.current.getWorldManager().getAvailableTargets();
+    }
+    return [];
   };
 
   return (
@@ -187,9 +213,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           margin: '0 auto',
         }}
       />
+      
+      {/* Navigation Panel */}
+      <NavigationPanel
+        targets={getNavigationTargets()}
+        onNavigate={handleNavigate}
+        isVisible={showNavigation}
+        onClose={() => setShowNavigation(false)}
+      />
+      
       <div style={{ marginTop: '10px', textAlign: 'center' }}>
         <button onClick={toggleEngine} disabled={!engineRef.current || !!engineError}>
           {isEngineRunning ? 'Pause Engine' : 'Start Engine'}
+        </button>
+        <button 
+          onClick={() => setShowNavigation(true)} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ marginLeft: '10px' }}
+        >
+          Navigation (N)
         </button>
       </div>
     </div>
