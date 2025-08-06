@@ -36,3 +36,6 @@ export interface InputState {
 
 // Re-export world types
 export * from './world';
+
+// Re-export economy types
+export * from './economy';
