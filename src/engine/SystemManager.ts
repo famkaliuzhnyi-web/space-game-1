@@ -3,6 +3,7 @@ import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { CharacterManager } from '../systems/CharacterManager';
 import { CharacterProgressionSystem } from '../systems/CharacterProgressionSystem';
 import { SkillSpecializationManager } from '../systems/SkillSpecializationManager';
+import { AchievementManager } from '../systems/AchievementManager';
 import { WorldManager } from '../systems/WorldManager';
 
 /**
@@ -22,6 +23,7 @@ export class SystemManager {
   private characterManager: CharacterManager;
   private characterProgressionSystem: CharacterProgressionSystem;
   private skillSpecializationManager: SkillSpecializationManager;
+  private achievementManager: AchievementManager;
   private maintenanceManager: MaintenanceManager;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -37,12 +39,18 @@ export class SystemManager {
     this.characterManager = new CharacterManager();
     this.characterProgressionSystem = new CharacterProgressionSystem(this.characterManager);
     this.skillSpecializationManager = new SkillSpecializationManager();
+    this.achievementManager = new AchievementManager();
     this.maintenanceManager = new MaintenanceManager(this.timeManager);
     
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
     this.maintenanceManager.setProgressionSystem(this.characterProgressionSystem);
+    
+    // Link achievement manager to progression system for achievement unlocks
+    if ('setAchievementManager' in this.characterProgressionSystem) {
+      (this.characterProgressionSystem as any).setAchievementManager(this.achievementManager);
+    }
     
     // Get faction manager from player manager and link it
     const factionManager = this.playerManager.getFactionManager();
@@ -136,6 +144,10 @@ export class SystemManager {
 
   getMaintenanceManager(): MaintenanceManager {
     return this.maintenanceManager;
+  }
+
+  getAchievementManager(): AchievementManager {
+    return this.achievementManager;
   }
 
   /**

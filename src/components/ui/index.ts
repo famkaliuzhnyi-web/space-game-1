@@ -15,6 +15,7 @@ export { default as HubShipDesigner } from './HubShipDesigner';
 export { default as MaintenancePanel } from './MaintenancePanel';
 export { default as FactionReputationPanel } from './FactionReputationPanel';
 export { default as StationContactsPanel } from './StationContactsPanel';
+export { default as AchievementsPanel } from './AchievementsPanel';
 export { CharacterSheet } from './CharacterSheet';
 export { CharacterCreationPanel } from './CharacterCreationPanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
