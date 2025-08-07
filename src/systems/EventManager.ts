@@ -51,20 +51,20 @@ export class EventManager {
   // private eventTemplates: Map<string, GameEvent> = new Map(); // Will be used for loading event templates
   
   private config: EventConfig = {
-    globalEventRate: 0.1, // Events per minute of game time
-    maxActiveEvents: 5,
+    globalEventRate: 0.8, // Increased from 0.1 - Events per minute of game time
+    maxActiveEvents: 8, // Increased from 5 to allow more concurrent events
     eventCooldowns: {
-      'space_encounter': 300, // 5 minutes
-      'station_event': 600,   // 10 minutes
-      'system_crisis': 1800,  // 30 minutes
-      'emergency_contract': 900 // 15 minutes
+      'space_encounter': 120, // Reduced from 300 - 2 minutes
+      'station_event': 240,   // Reduced from 600 - 4 minutes
+      'system_crisis': 900,   // Reduced from 1800 - 15 minutes
+      'emergency_contract': 300 // Reduced from 900 - 5 minutes
     },
     difficultyScaling: [
-      { playerLevel: 1, threatMultiplier: 0.5, rewardMultiplier: 1.0 },
-      { playerLevel: 5, threatMultiplier: 0.8, rewardMultiplier: 1.2 },
-      { playerLevel: 10, threatMultiplier: 1.0, rewardMultiplier: 1.5 },
-      { playerLevel: 20, threatMultiplier: 1.5, rewardMultiplier: 2.0 },
-      { playerLevel: 50, threatMultiplier: 2.0, rewardMultiplier: 3.0 }
+      { playerLevel: 1, threatMultiplier: 0.3, rewardMultiplier: 1.0 },
+      { playerLevel: 5, threatMultiplier: 0.6, rewardMultiplier: 1.3 },
+      { playerLevel: 10, threatMultiplier: 1.0, rewardMultiplier: 1.8 },
+      { playerLevel: 20, threatMultiplier: 1.8, rewardMultiplier: 2.5 },
+      { playerLevel: 50, threatMultiplier: 2.5, rewardMultiplier: 4.0 }
     ]
   };
   
@@ -100,8 +100,8 @@ export class EventManager {
   public update(_deltaTime: number): void {
     const currentTime = this.timeManager.getCurrentDate().getTime();
     
-    // Check for new events periodically (every 30 seconds of game time)
-    if (currentTime - this.lastEventCheck >= 30000) { // 30 seconds in milliseconds
+    // Check for new events more frequently (every 10 seconds of game time) for better responsiveness
+    if (currentTime - this.lastEventCheck >= 10000) { // 10 seconds in milliseconds
       this.checkForNewEvents();
       this.lastEventCheck = currentTime;
     }
@@ -144,31 +144,40 @@ export class EventManager {
   private calculateEventProbabilities(): Map<string, number> {
     const probabilities = new Map<string, number>();
     const currentStationId = this.playerManager.getCurrentStation();
+    const character = this.playerManager.getCharacter();
+    const playerLevel = character ? character.progression.level : 1;
     
-    // Base probabilities adjusted by context
+    // Enhanced base probability calculation with player level scaling
     const baseProbability = this.config.globalEventRate / 60; // Per second
+    const levelMultiplier = 1 + (playerLevel * 0.1); // 10% increase per level
+    const adjustedBaseProbability = baseProbability * levelMultiplier;
     
     // Space encounters are more likely when traveling (simplified check)
     const isTraveling = !currentStationId; // If no current station, assume traveling
     if (isTraveling) {
-      probabilities.set('space_encounter', baseProbability * 2.0);
+      probabilities.set('space_encounter', adjustedBaseProbability * 3.0); // Increased from 2.0
+      // Add variety to space encounters when traveling
+      probabilities.set('discovery', adjustedBaseProbability * 1.5);
     } else {
-      probabilities.set('space_encounter', baseProbability * 0.1);
+      probabilities.set('space_encounter', adjustedBaseProbability * 0.2); // Reduced when docked
     }
     
-    // Station events only when docked
+    // Station events only when docked, more frequent at higher levels
     if (currentStationId) {
-      probabilities.set('station_event', baseProbability * 1.5);
+      probabilities.set('station_event', adjustedBaseProbability * 2.5); // Increased from 1.5
+      probabilities.set('social_interaction', adjustedBaseProbability * 1.8);
     } else {
       probabilities.set('station_event', 0);
+      probabilities.set('social_interaction', 0);
     }
     
-    // System crises are rare but can happen anywhere
-    probabilities.set('system_crisis', baseProbability * 0.2);
+    // System crises are rare but scale with player level
+    probabilities.set('system_crisis', adjustedBaseProbability * 0.4); // Increased from 0.2
     
-    // Emergency contracts more likely in outer systems (simplified)
-    const isOuterSystem = Math.random() > 0.7; // Placeholder logic
-    probabilities.set('emergency_contract', baseProbability * (isOuterSystem ? 1.5 : 0.8));
+    // Emergency contracts more likely in outer systems and for higher level players
+    const isOuterSystem = Math.random() > 0.6; // Adjusted probability
+    const contractMultiplier = isOuterSystem ? 2.5 : 1.2; // Increased multipliers
+    probabilities.set('emergency_contract', adjustedBaseProbability * contractMultiplier);
     
     return probabilities;
   }
@@ -335,78 +344,415 @@ export class EventManager {
     return baseReward * (1 + playerLevel * 0.2) * (0.8 + Math.random() * 0.4);
   }
   
-  // Event content methods (to be expanded)
+  // Event content methods (enhanced for Phase 5.1)
   private getEncounterTitle(type: string): string {
     const titles = {
-      pirate: 'Pirate Intercept',
-      merchant: 'Merchant Encounter', 
-      derelict: 'Derelict Discovery',
-      patrol: 'Security Patrol',
-      distress: 'Distress Signal'
+      pirate: ['Pirate Ambush', 'Raider Intercept', 'Hostile Blockade', 'Pirate Squadron'][Math.floor(Math.random() * 4)],
+      merchant: ['Trading Vessel', 'Merchant Convoy', 'Commercial Freighter', 'Trade Opportunity'][Math.floor(Math.random() * 4)],
+      derelict: ['Derelict Discovery', 'Abandoned Hulk', 'Ghost Ship', 'Mysterious Wreckage'][Math.floor(Math.random() * 4)],
+      patrol: ['Security Patrol', 'Military Escort', 'Border Guard', 'System Defense'][Math.floor(Math.random() * 4)],
+      distress: ['Distress Signal', 'Emergency Beacon', 'Mayday Call', 'Rescue Request'][Math.floor(Math.random() * 4)]
     };
     return titles[type as keyof typeof titles] || 'Unknown Encounter';
   }
   
   private getEncounterDescription(type: string): string {
     const descriptions = {
-      pirate: 'A hostile vessel has intercepted your ship. They demand tribute.',
-      merchant: 'A friendly merchant vessel hails you with trade opportunities.',
-      derelict: 'You discover an abandoned ship drifting in space.',
-      patrol: 'A security patrol requests to inspect your ship.',
-      distress: 'You receive a distress signal from a nearby ship.'
+      pirate: [
+        'A heavily armed pirate vessel drops out of hyperspace, weapons hot and demanding tribute.',
+        'Multiple raider ships surround your vessel. Their leader hails you with aggressive demands.',
+        'A notorious pirate gang has set up a blockade. They\'re scanning all ships for valuable cargo.',
+        'Warning klaxons sound as a pirate squadron locks weapons on your ship. They want everything you have.'
+      ],
+      merchant: [
+        'A well-maintained trading vessel approaches with a friendly hail and cargo manifest.',
+        'A merchant convoy signals for trade negotiations, offering rare goods from distant systems.',
+        'A corporate freighter requests communication, their captain eager to discuss business opportunities.',
+        'A traveling merchant broadcasts special deals on high-quality equipment and exotic commodities.'
+      ],
+      derelict: [
+        'Long-range sensors detect a powerless ship drifting in the void. No life signs detected.',
+        'An ancient vessel appears on your scanner, its hull scarred by time and unknown battles.',
+        'You discover the twisted wreckage of what was once a magnificent starship, now a tomb in space.',
+        'A ghost ship materializes from the cosmic dust, its empty corridors hiding untold secrets.'
+      ],
+      patrol: [
+        'A military patrol vessel requests immediate compliance with standard security protocols.',
+        'System Defense Forces hail your ship for a routine inspection of cargo and documentation.',
+        'An armed patrol cruiser approaches, their captain demanding answers about your presence here.',
+        'Border guards intercept your vessel, conducting enhanced security sweeps in this contested region.'
+      ],
+      distress: [
+        'A desperate voice crackles through your communications array, pleading for immediate assistance.',
+        'Emergency beacons flood your scanner as a damaged ship fights against system failures.',
+        'A ship in distress broadcasts its final mayday call, life support systems failing rapidly.',
+        'Survivors aboard a crippled vessel send out a rescue request, hoping someone will hear their plea.'
+      ]
     };
-    return descriptions[type as keyof typeof descriptions] || 'An unknown event occurs.';
+    const typeDescriptions = descriptions[type as keyof typeof descriptions];
+    return typeDescriptions ? typeDescriptions[Math.floor(Math.random() * typeDescriptions.length)] : 'An unknown event occurs in space.';
   }
   
-  private getEncounterChoices(_type: string): any[] {
-    // Simplified choices for now - will be expanded
-    return [
-      {
-        id: 'engage',
-        text: 'Engage',
-        description: 'Take action with this encounter'
-      },
-      {
-        id: 'avoid',
-        text: 'Avoid',
-        description: 'Try to avoid this encounter'
-      }
-    ];
+  private getEncounterChoices(type: string): any[] {
+    const character = this.playerManager.getCharacter();
+    const player = this.playerManager.getPlayer();
+    
+    switch (type) {
+      case 'pirate':
+        return [
+          {
+            id: 'pay_tribute',
+            text: '💰 Pay Tribute',
+            description: 'Give them what they want and avoid conflict',
+            requirements: { credits: 1000 },
+            consequences: { credits: -1500, reputation: { 'Security Forces': 2 } }
+          },
+          {
+            id: 'negotiate',
+            text: '🗣️ Negotiate',
+            description: 'Try to talk your way out of this situation',
+            requirements: { skills: { charisma: 15 } },
+            consequences: { credits: -500, experience: 25, reputation: { 'Security Forces': 1 } }
+          },
+          {
+            id: 'fight',
+            text: '⚔️ Fight Back',
+            description: 'Stand your ground and fight for your freedom',
+            consequences: { experience: 50, reputation: { 'Security Forces': 5 } },
+            probability: character?.skills.combat ? Math.min(0.8, character.skills.combat / 20) : 0.3
+          },
+          {
+            id: 'flee',
+            text: '🚀 Attempt Escape',
+            description: 'Try to outrun them with superior piloting',
+            consequences: { experience: 15 },
+            probability: character?.skills.piloting ? Math.min(0.9, character.skills.piloting / 15) : 0.5
+          }
+        ];
+        
+      case 'merchant':
+        return [
+          {
+            id: 'trade',
+            text: '🛒 Open Trade',
+            description: 'Negotiate fair prices for goods and services',
+            consequences: { experience: 10, reputation: { 'Traders Guild': 3 } }
+          },
+          {
+            id: 'info_trade',
+            text: '📊 Trade Information',
+            description: 'Exchange market intelligence and route data',
+            requirements: { skills: { networking: 10 } },
+            consequences: { experience: 20, credits: 200 }
+          },
+          {
+            id: 'escort_offer',
+            text: '🛡️ Offer Escort',
+            description: 'Provide protection in exchange for payment',
+            requirements: { skills: { combat: 12 } },
+            consequences: { credits: 800, experience: 30, reputation: { 'Traders Guild': 5 } }
+          },
+          {
+            id: 'polite_decline',
+            text: '🙏 Politely Decline',
+            description: 'Thank them and continue on your way',
+            consequences: { reputation: { 'Traders Guild': 1 } }
+          }
+        ];
+        
+      case 'derelict':
+        return [
+          {
+            id: 'investigate',
+            text: '🔍 Full Investigation',
+            description: 'Board the vessel and search thoroughly for salvage',
+            consequences: { experience: 40, credits: 2000 },
+            probability: 0.7
+          },
+          {
+            id: 'scan_only',
+            text: '📡 Scanner Sweep',
+            description: 'Use sensors to analyze from a safe distance',
+            requirements: { skills: { investigation: 8 } },
+            consequences: { experience: 20, credits: 500 }
+          },
+          {
+            id: 'salvage_external',
+            text: '🔧 External Salvage',
+            description: 'Strip valuable components from the hull',
+            requirements: { skills: { engineering: 10 } },
+            consequences: { experience: 25, credits: 1200 }
+          },
+          {
+            id: 'report_discovery',
+            text: '📢 Report to Authorities',
+            description: 'Contact system security about the derelict',
+            consequences: { experience: 15, reputation: { 'Security Forces': 8 } }
+          }
+        ];
+        
+      case 'patrol':
+        return [
+          {
+            id: 'comply',
+            text: '✅ Full Compliance',
+            description: 'Submit to inspection and follow all procedures',
+            consequences: { reputation: { 'Security Forces': 3 } }
+          },
+          {
+            id: 'negotiate_inspection',
+            text: '🤝 Limited Inspection',
+            description: 'Negotiate scope of inspection using diplomatic skills',
+            requirements: { skills: { negotiation: 12 } },
+            consequences: { experience: 20, reputation: { 'Security Forces': 2 } }
+          },
+          {
+            id: 'bribe',
+            text: '💸 Discrete Payment',
+            description: 'Offer compensation to expedite the process',
+            requirements: { credits: 800 },
+            consequences: { credits: -800, reputation: { 'Security Forces': -2 } },
+            probability: 0.8
+          },
+          {
+            id: 'show_credentials',
+            text: '📋 Show Credentials',
+            description: 'Present your reputation and trading licenses',
+            requirements: { reputation: { 'Security Forces': 20 } },
+            consequences: { reputation: { 'Security Forces': 1 } }
+          }
+        ];
+        
+      case 'distress':
+        return [
+          {
+            id: 'full_rescue',
+            text: '🚑 Full Rescue Mission',
+            description: 'Mount a complete rescue operation for all survivors',
+            consequences: { credits: -200, experience: 60, reputation: { 'Security Forces': 10, 'Traders Guild': 5 } }
+          },
+          {
+            id: 'emergency_aid',
+            text: '⚡ Emergency Assistance',
+            description: 'Provide critical supplies and temporary repairs',
+            requirements: { skills: { engineering: 8 } },
+            consequences: { credits: -100, experience: 35, reputation: { 'Security Forces': 6 } }
+          },
+          {
+            id: 'call_for_help',
+            text: '📡 Coordinate Rescue',
+            description: 'Contact authorities and coordinate professional rescue',
+            requirements: { skills: { networking: 10 } },
+            consequences: { experience: 25, reputation: { 'Security Forces': 8 } }
+          },
+          {
+            id: 'ignore_distress',
+            text: '❌ Ignore Signal',
+            description: 'Continue on your mission without getting involved',
+            consequences: { reputation: { 'Security Forces': -5, 'Traders Guild': -2 } }
+          }
+        ];
+        
+      default:
+        return [
+          {
+            id: 'engage',
+            text: 'Engage',
+            description: 'Take action with this encounter'
+          },
+          {
+            id: 'avoid',
+            text: 'Avoid', 
+            description: 'Try to avoid this encounter'
+          }
+        ];
+    }
   }
   
   private getStationEventTitle(type: string): string {
     const titles = {
-      social: 'Social Gathering',
-      commercial: 'Business Opportunity',
-      technical: 'Technical Issue',
-      security: 'Security Incident'
+      social: ['Cantina Gathering', 'Cultural Festival', 'Traders\' Social Hour', 'Diplomatic Reception'][Math.floor(Math.random() * 4)],
+      commercial: ['Business Partnership', 'Investment Opportunity', 'Market Speculation', 'Corporate Deal'][Math.floor(Math.random() * 4)],
+      technical: ['Equipment Malfunction', 'System Upgrade', 'Technical Challenge', 'Engineering Crisis'][Math.floor(Math.random() * 4)],
+      security: ['Security Alert', 'Suspicious Activity', 'Investigation Request', 'Safety Protocol'][Math.floor(Math.random() * 4)]
     };
     return titles[type as keyof typeof titles] || 'Station Event';
   }
   
   private getStationEventDescription(type: string): string {
     const descriptions = {
-      social: 'There\'s a social event happening at the station.',
-      commercial: 'A business opportunity has presented itself.',
-      technical: 'Technical difficulties require attention.',
-      security: 'A security situation needs handling.'
+      social: [
+        'A lively gathering in the station cantina offers opportunities to meet influential contacts.',
+        'The station is celebrating a cultural festival with traders from across the sector.',
+        'An exclusive social event brings together the most successful merchants and pilots.',
+        'A diplomatic reception provides a chance to network with faction representatives.'
+      ],
+      commercial: [
+        'A prominent trader approaches with a lucrative business partnership proposal.',
+        'Market speculation creates a unique opportunity for significant profit.',
+        'A corporate executive offers exclusive access to rare trading contracts.',
+        'An investment opportunity promises substantial returns for the right entrepreneur.'
+      ],
+      technical: [
+        'Station maintenance crew requests assistance with a complex technical problem.',
+        'A system malfunction threatens station operations and needs immediate attention.',
+        'An engineering challenge offers a chance to demonstrate your technical expertise.',
+        'Critical station systems require emergency repairs using specialized knowledge.'
+      ],
+      security: [
+        'Station security reports suspicious activity that requires investigation.',
+        'A security alert has the entire station on high alert for potential threats.',
+        'Authorities request assistance with a sensitive investigation.',
+        'New safety protocols create complications for all docked vessels.'
+      ]
     };
-    return descriptions[type as keyof typeof descriptions] || 'Something is happening at the station.';
+    const typeDescriptions = descriptions[type as keyof typeof descriptions];
+    return typeDescriptions ? typeDescriptions[Math.floor(Math.random() * typeDescriptions.length)] : 'Something is happening at the station.';
   }
   
-  private getStationEventChoices(_type: string): any[] {
-    return [
-      {
-        id: 'participate',
-        text: 'Participate',
-        description: 'Get involved in this event'
-      },
-      {
-        id: 'ignore',
-        text: 'Ignore',
-        description: 'Continue with your business'
-      }
-    ];
+  private getStationEventChoices(type: string): any[] {
+    const character = this.playerManager.getCharacter();
+    
+    switch (type) {
+      case 'social':
+        return [
+          {
+            id: 'network_actively',
+            text: '🤝 Network Actively',
+            description: 'Engage with everyone and build valuable connections',
+            requirements: { skills: { charisma: 12 } },
+            consequences: { experience: 30, reputation: { 'Traders Guild': 5 }, credits: 300 }
+          },
+          {
+            id: 'observe_quietly',
+            text: '👁️ Observe Quietly',
+            description: 'Listen carefully and gather valuable information',
+            requirements: { skills: { investigation: 8 } },
+            consequences: { experience: 20, credits: 200 }
+          },
+          {
+            id: 'make_deals',
+            text: '💼 Make Deals',
+            description: 'Focus on immediate business opportunities',
+            requirements: { skills: { negotiation: 10 } },
+            consequences: { experience: 25, credits: 500 }
+          },
+          {
+            id: 'polite_participation',
+            text: '😊 Polite Participation',
+            description: 'Participate respectfully without drawing attention',
+            consequences: { experience: 15, reputation: { 'Traders Guild': 2 } }
+          }
+        ];
+        
+      case 'commercial':
+        return [
+          {
+            id: 'invest_heavily',
+            text: '💰 Major Investment',
+            description: 'Commit significant resources for maximum returns',
+            requirements: { credits: 5000 },
+            consequences: { credits: -5000, experience: 40 },
+            probability: 0.75
+          },
+          {
+            id: 'negotiate_terms',
+            text: '📋 Negotiate Terms',
+            description: 'Use your business skills to improve the deal',
+            requirements: { skills: { negotiation: 15 } },
+            consequences: { credits: 1500, experience: 35, reputation: { 'Traders Guild': 4 } }
+          },
+          {
+            id: 'small_investment',
+            text: '🪙 Small Investment',
+            description: 'Make a conservative investment to test the waters',
+            requirements: { credits: 1000 },
+            consequences: { credits: -1000, experience: 20 },
+            probability: 0.85
+          },
+          {
+            id: 'decline_offer',
+            text: '❌ Decline Respectfully',
+            description: 'Thank them but pass on this opportunity',
+            consequences: { experience: 5, reputation: { 'Traders Guild': 1 } }
+          }
+        ];
+        
+      case 'technical':
+        return [
+          {
+            id: 'lead_solution',
+            text: '🔧 Lead Solution',
+            description: 'Take charge and solve the technical problem yourself',
+            requirements: { skills: { engineering: 18 } },
+            consequences: { credits: 1200, experience: 45, reputation: { 'Industrial Consortium': 8 } }
+          },
+          {
+            id: 'assist_engineers',
+            text: '🛠️ Assist Engineers',
+            description: 'Work alongside the technical team to help solve the issue',
+            requirements: { skills: { engineering: 10 } },
+            consequences: { credits: 600, experience: 30, reputation: { 'Industrial Consortium': 5 } }
+          },
+          {
+            id: 'provide_expertise',
+            text: '🧠 Provide Expertise',
+            description: 'Offer technical knowledge and consultation',
+            requirements: { skills: { engineering: 6 } },
+            consequences: { credits: 300, experience: 20, reputation: { 'Industrial Consortium': 3 } }
+          },
+          {
+            id: 'stay_uninvolved',
+            text: '🚪 Stay Uninvolved',
+            description: 'Remain in your ship and avoid the technical issues',
+            consequences: { reputation: { 'Industrial Consortium': -1 } }
+          }
+        ];
+        
+      case 'security':
+        return [
+          {
+            id: 'full_cooperation',
+            text: '🔍 Full Cooperation',
+            description: 'Provide complete assistance to security forces',
+            consequences: { experience: 25, reputation: { 'Security Forces': 8 } }
+          },
+          {
+            id: 'limited_help',
+            text: '🤏 Limited Assistance',
+            description: 'Help within reason while protecting your interests',
+            requirements: { skills: { negotiation: 12 } },
+            consequences: { experience: 20, reputation: { 'Security Forces': 4 } }
+          },
+          {
+            id: 'investigate_independently',
+            text: '🕵️ Independent Investigation',
+            description: 'Conduct your own investigation using your skills',
+            requirements: { skills: { investigation: 15 } },
+            consequences: { credits: 800, experience: 35, reputation: { 'Security Forces': 6 } }
+          },
+          {
+            id: 'minimal_compliance',
+            text: '📋 Minimal Compliance',
+            description: 'Follow procedures but avoid getting deeply involved',
+            consequences: { experience: 10, reputation: { 'Security Forces': 1 } }
+          }
+        ];
+        
+      default:
+        return [
+          {
+            id: 'participate',
+            text: 'Participate',
+            description: 'Get involved in this event'
+          },
+          {
+            id: 'ignore',
+            text: 'Ignore',
+            description: 'Continue with your business'
+          }
+        ];
+    }
   }
   
   private getCrisisTitle(type: string): string {
@@ -591,15 +937,42 @@ export class EventManager {
     if (!choice.requirements) return true;
     
     const player = this.playerManager.getPlayer();
+    const character = this.playerManager.getCharacter();
     
-    // Check credits
+    // Check credits requirement
     if (choice.requirements.credits && player.credits < choice.requirements.credits) {
       return false;
     }
     
-    // Check reputation (simplified)
+    // Check skill requirements
+    if (choice.requirements.skills && character) {
+      for (const [skillName, requiredLevel] of Object.entries(choice.requirements.skills)) {
+        const playerSkillLevel = character.skills[skillName as keyof typeof character.skills] || 0;
+        if (playerSkillLevel < (requiredLevel as number)) {
+          return false;
+        }
+      }
+    }
+    
+    // Check reputation requirements
     if (choice.requirements.reputation) {
-      // Would check with faction manager
+      const playerReputation = this.playerManager.getPlayerReputation();
+      for (const [factionId, requiredRep] of Object.entries(choice.requirements.reputation)) {
+        const currentRep = this.factionManager.getReputation(playerReputation, factionId);
+        if (currentRep < (requiredRep as number)) {
+          return false;
+        }
+      }
+    }
+    
+    // Check cargo requirements
+    if (choice.requirements.cargo && character) {
+      for (const [commodityId, requiredAmount] of Object.entries(choice.requirements.cargo)) {
+        const currentAmount = player.inventory.find(item => item.id === commodityId)?.quantity || 0;
+        if (currentAmount < (requiredAmount as number)) {
+          return false;
+        }
+      }
     }
     
     return true;
@@ -608,14 +981,20 @@ export class EventManager {
   private applyChoiceConsequences(choice: any): void {
     if (!choice.consequences) return;
     
+    const player = this.playerManager.getPlayer();
+    const character = this.playerManager.getCharacter();
+    
     // Apply credit changes
     if (choice.consequences.credits) {
       this.playerManager.addCredits(choice.consequences.credits);
     }
     
-    // Apply experience
-    if (choice.consequences.experience) {
-      // Would apply experience through character system
+    // Apply experience gain
+    if (choice.consequences.experience && character) {
+      const characterManager = this.playerManager.getCharacterManager();
+      if (characterManager) {
+        characterManager.addExperience(character, choice.consequences.experience, 'Event choice');
+      }
     }
     
     // Apply reputation changes
@@ -628,6 +1007,43 @@ export class EventManager {
           change as number,
           'Event choice'
         );
+      }
+    }
+    
+    // Apply cargo changes
+    if (choice.consequences.cargo) {
+      for (const [commodityId, amount] of Object.entries(choice.consequences.cargo)) {
+        if ((amount as number) > 0) {
+          // Add cargo
+          const existingItem = player.inventory.find(item => item.id === commodityId);
+          if (existingItem) {
+            existingItem.quantity += (amount as number);
+          } else {
+            player.inventory.push({
+              id: commodityId,
+              name: commodityId.replace('_', ' ').toUpperCase(),
+              quantity: amount as number,
+              unitPrice: 100 // Default price
+            });
+          }
+        } else {
+          // Remove cargo
+          const existingItem = player.inventory.find(item => item.id === commodityId);
+          if (existingItem) {
+            existingItem.quantity = Math.max(0, existingItem.quantity + (amount as number));
+            if (existingItem.quantity === 0) {
+              player.inventory = player.inventory.filter(item => item.id !== commodityId);
+            }
+          }
+        }
+      }
+    }
+    
+    // Apply item rewards
+    if (choice.consequences.items) {
+      for (const itemId of choice.consequences.items) {
+        // Add items to player inventory or equipment
+        console.log(`Awarded item: ${itemId}`);
       }
     }
   }
