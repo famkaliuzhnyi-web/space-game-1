@@ -10,7 +10,7 @@ export interface TutorialStep {
   target?: string; // CSS selector for highlighting UI elements
   position?: 'top' | 'bottom' | 'left' | 'right';
   action?: 'click' | 'navigate' | 'wait' | 'input';
-  actionData?: any;
+  actionData?: Record<string, unknown>;
   prerequisites?: string[]; // Required conditions to show this step
   optional?: boolean;
   skipable?: boolean;

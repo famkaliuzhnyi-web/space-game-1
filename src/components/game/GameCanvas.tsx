@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel, CombatPanel, InvestmentPanel, TutorialPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel, CombatPanel, InvestmentPanel, TutorialPanel, NewPlayerGuide } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -687,7 +687,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       
       // Use enhanced interaction system if available
-      let result: { outcome: string; trustChange: number; unlocked?: string[] } | undefined;
+      let result: { outcome: string; trustChange: number; unlocked?: string[] } | boolean;
       if (typeof contactManager.performAdvancedInteraction === 'function') {
         result = contactManager.performAdvancedInteraction(contactId, interactionType as InteractionType, playerSkills);
       } else {
@@ -697,7 +697,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       if (result) {
         // Award social experience for successful interactions
-        if (result && typeof result === 'object' && 'outcome' in result && 'trustChange' in result) {
+        if (typeof result === 'object' && 'outcome' in result && 'trustChange' in result) {
           if (result.outcome === 'success' || result.outcome === 'exceptional') {
             // Award social experience based on trust gained
             progressionSystem.awardSocialExperience('negotiation_success', {
@@ -1221,6 +1221,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           currentSystemId={engineRef.current.getWorldManager().getGalaxy().currentPlayerLocation.systemId}
           isVisible={showNPCs}
           onToggle={() => setShowNPCs(!showNPCs)}
+        />
+      )}
+      
+      {/* New Player Guide - automatically appears for new players */}
+      {engineRef.current && (
+        <NewPlayerGuide
+          tutorialManager={engineRef.current.getTutorialManager()}
+          gameEngine={engineRef.current}
+          onComplete={() => {
+            // Optionally open tutorial panel after guide completion
+            setActivePanel('tutorial');
+          }}
         />
       )}
     </div>

@@ -8,6 +8,7 @@ import {
 } from '../types/tutorial';
 import { PlayerManager } from './PlayerManager';
 import { CharacterManager } from './CharacterManager';
+import { ENHANCED_TUTORIAL_FLOWS } from '../data/enhancedTutorials';
 
 /**
  * TutorialManager handles comprehensive tutorial system for guiding new players
@@ -52,6 +53,12 @@ export class TutorialManager {
    * Initialize all tutorial flows
    */
   private initializeTutorialFlows(): void {
+    // Add enhanced tutorial flows
+    ENHANCED_TUTORIAL_FLOWS.forEach(flow => {
+      this.availableFlows.set(flow.id, flow);
+    });
+
+    // Original tutorial flows (kept for backward compatibility)
     // Basic Tutorial Flow
     this.createBasicTutorialFlow();
     

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './TutorialPanel.css';
 import { 
   TutorialFlow, 
@@ -7,9 +7,11 @@ import {
   TutorialSettings
 } from '../../types/tutorial';
 
+import { TutorialManager } from '../../systems/TutorialManager';
+
 interface TutorialPanelProps {
   isVisible: boolean;
-  tutorialManager: any;
+  tutorialManager: TutorialManager;
   onClose: () => void;
 }
 
@@ -30,19 +32,19 @@ export const TutorialPanel: React.FC<TutorialPanelProps> = ({
     tooltipsEnabled: true
   });
 
-  useEffect(() => {
-    if (!isVisible || !tutorialManager) return;
-    
-    updateData();
-  }, [isVisible, tutorialManager]);
-
-  const updateData = () => {
+  const updateData = useCallback(() => {
     if (!tutorialManager) return;
     
     setTutorialState(tutorialManager.getTutorialState());
     setAvailableFlows(tutorialManager.getAvailableFlows());
     setCurrentStep(tutorialManager.getCurrentStep());
-  };
+  }, [tutorialManager]);
+
+  useEffect(() => {
+    if (!isVisible || !tutorialManager) return;
+    
+    updateData();
+  }, [isVisible, updateData]);
 
   const handleStartTutorial = (flowId: string) => {
     if (tutorialManager.startTutorialFlow(flowId)) {
