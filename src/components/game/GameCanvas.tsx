@@ -7,10 +7,16 @@ import StationContactsPanel from '../ui/StationContactsPanel';
 import { NPCPanel } from './NPCPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
-import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
+import { GameEvent } from '../../types/events';
+import { ShipConstructionConfig, ShipConstructionSystem } from '../../systems/ShipConstructionSystem';
 import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
-import { Contact } from '../../types/contacts';
+import { Contact, InteractionType } from '../../types/contacts';
+
+// Extend Window interface for our custom properties
+interface WindowWithCustomProperties extends Window {
+  eventSyncInterval?: NodeJS.Timeout;
+}
 
 interface GameCanvasProps {
   width?: number;
@@ -64,7 +70,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [ownedShips, setOwnedShips] = useState<Ship[]>([]);
   const [currentShipId, setCurrentShipId] = useState<string>('');
   const [playerReputation, setPlayerReputation] = useState<Map<string, FactionReputation>>(new Map());
-  const [activeEvents, setActiveEvents] = useState<any[]>([]);
+  const [activeEvents, setActiveEvents] = useState<GameEvent[]>([]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -119,7 +125,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         }, 5000);
 
         // Store interval ID for cleanup
-        (window as any).eventSyncInterval = eventSyncInterval;
+        (window as WindowWithCustomProperties).eventSyncInterval = eventSyncInterval;
 
         // Check if character exists, prompt for creation if needed
         const characterManager = engineRef.current.getCharacterManager();
@@ -167,25 +173,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (event.code === 'Escape') {
         setActivePanel(null);
       } else if (event.code === 'KeyN' && !event.shiftKey) {
-        setActivePanel(activePanel === 'navigation' ? null : 'navigation');
+        setActivePanel(prevActivePanel => prevActivePanel === 'navigation' ? null : 'navigation');
       } else if (event.code === 'KeyN' && event.shiftKey) {
-        setShowNPCs(!showNPCs);
+        setShowNPCs(prevShowNPCs => !prevShowNPCs);
       } else if (event.code === 'KeyS') {
-        setActivePanel(activePanel === 'ship' ? null : 'ship');
+        setActivePanel(prevActivePanel => prevActivePanel === 'ship' ? null : 'ship');
       } else if (event.code === 'KeyF') {
-        setActivePanel(activePanel === 'factions' ? null : 'factions');
+        setActivePanel(prevActivePanel => prevActivePanel === 'factions' ? null : 'factions');
       } else if (event.code === 'KeyP') {
         handleOpenContacts();
       } else if (event.code === 'KeyE') {
-        setActivePanel(activePanel === 'events' ? null : 'events');
+        setActivePanel(prevActivePanel => prevActivePanel === 'events' ? null : 'events');
       } else if (event.code === 'KeyL') {
-        setActivePanel(activePanel === 'security' ? null : 'security');
+        setActivePanel(prevActivePanel => prevActivePanel === 'security' ? null : 'security');
       } else if (event.code === 'KeyH') {
-        setActivePanel(activePanel === 'hacking' ? null : 'hacking');
+        setActivePanel(prevActivePanel => prevActivePanel === 'hacking' ? null : 'hacking');
       } else if (event.code === 'KeyG') {
-        setActivePanel(activePanel === 'combat' ? null : 'combat');
+        setActivePanel(prevActivePanel => prevActivePanel === 'combat' ? null : 'combat');
       } else if (event.code === 'KeyI') {
-        setActivePanel(activePanel === 'investment' ? null : 'investment');
+        setActivePanel(prevActivePanel => prevActivePanel === 'investment' ? null : 'investment');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -196,9 +202,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       
       // Clear event sync interval
-      if ((window as any).eventSyncInterval) {
-        clearInterval((window as any).eventSyncInterval);
-        delete (window as any).eventSyncInterval;
+      const windowWithInterval = window as WindowWithCustomProperties;
+      if (windowWithInterval.eventSyncInterval) {
+        clearInterval(windowWithInterval.eventSyncInterval);
+        delete windowWithInterval.eventSyncInterval;
       }
       
       if (engineRef.current) {
@@ -476,7 +483,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const handleConstructShip = (config: ShipConstructionConfig) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
-      const constructionSystem = new (require('../../systems/ShipConstructionSystem').ShipConstructionSystem)();
+      const constructionSystem = new ShipConstructionSystem();
       
       try {
         const cost = constructionSystem.calculateConstructionCost(config);
@@ -680,12 +687,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       
       // Use enhanced interaction system if available
-      let result: any;
+      let result: { outcome: string; trustChange: number; unlocked?: string[] } | undefined;
       if (typeof contactManager.performAdvancedInteraction === 'function') {
-        result = contactManager.performAdvancedInteraction(contactId, interactionType as any, playerSkills);
+        result = contactManager.performAdvancedInteraction(contactId, interactionType as InteractionType, playerSkills);
       } else {
         // Fallback to basic interaction
-        result = contactManager.recordInteraction(contactId, interactionType as any, 'success', 10);
+        result = contactManager.recordInteraction(contactId, interactionType as InteractionType, 'success', 10);
       }
       
       if (result) {
