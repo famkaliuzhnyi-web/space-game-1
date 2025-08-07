@@ -9,6 +9,7 @@ import { HackingManager } from '../systems/HackingManager';
 import { CombatManager } from '../systems/CombatManager';
 import { InvestmentManager } from '../systems/InvestmentManager';
 import { TutorialManager } from '../systems/TutorialManager';
+import { QuestManager } from '../systems/QuestManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -36,6 +37,7 @@ export class SystemManager {
   private combatManager: CombatManager;
   private investmentManager: InvestmentManager;
   private tutorialManager: TutorialManager;
+  private questManager: QuestManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -113,6 +115,15 @@ export class SystemManager {
       this.characterManager
     );
     
+    // Initialize quest manager with required dependencies
+    this.questManager = new QuestManager(
+      this.playerManager.getFactionManager(),
+      this.characterManager,
+      this.playerManager,
+      this.timeManager,
+      this.eventManager
+    );
+    
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
@@ -163,6 +174,9 @@ export class SystemManager {
     
     // Update investment system
     this.investmentManager.updateInvestments();
+    
+    // Update quest system
+    this.questManager.update(deltaTime);
   }
 
   /**
@@ -265,6 +279,10 @@ export class SystemManager {
 
   getTutorialManager(): TutorialManager {
     return this.tutorialManager;
+  }
+
+  getQuestManager(): QuestManager {
+    return this.questManager;
   }
 
   /**

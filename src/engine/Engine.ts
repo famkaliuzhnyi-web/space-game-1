@@ -279,6 +279,10 @@ export class Engine implements GameEngine {
     return this.systemManager.getTutorialManager();
   }
 
+  getQuestManager() {
+    return this.systemManager.getQuestManager();
+  }
+
   /**
    * Clean up all resources and stop the engine.
    * 
