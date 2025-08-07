@@ -48,3 +48,9 @@ export * from './shipHubs';
 
 // Re-export contact and relationship types
 export * from './contacts';
+
+// Re-export character types
+export * from './character';
+
+// Re-export achievement types
+export * from './achievements';
