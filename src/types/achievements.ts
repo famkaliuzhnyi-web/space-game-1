@@ -9,6 +9,7 @@ export type AchievementCategory =
   | 'technical'    // Engineering and maintenance
   | 'social'       // Relationships and networking  
   | 'progression'  // Character advancement
+  | 'equipment'    // Personal equipment and upgrades
   | 'milestone'    // Major game milestones
   | 'special';     // Hidden or event achievements
 
@@ -27,8 +28,8 @@ export interface AchievementRequirement {
 }
 
 export interface AchievementReward {
-  type: 'experience' | 'skill_points' | 'credits' | 'item' | 'title';
-  amount?: number;      // For experience, skill points, credits
+  type: 'experience' | 'skill_points' | 'attribute_points' | 'credits' | 'item' | 'title';
+  amount?: number;      // For experience, skill points, attribute points, credits
   itemId?: string;      // For item rewards
   title?: string;       // For title rewards
 }

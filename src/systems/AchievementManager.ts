@@ -5,15 +5,12 @@
 
 import { 
   Achievement, 
-  AchievementCategory, 
+  AchievementCategory,
   AchievementProgress, 
-  AchievementRarity, 
   AchievementTrigger, 
   AchievementUnlock,
   PlayerAchievements,
-  AchievementNotification,
-  AchievementRequirement,
-  AchievementReward
+  AchievementNotification
 } from '../types/achievements';
 
 interface AchievementManagerSaveData {
@@ -273,6 +270,95 @@ export class AchievementManager {
         ],
         hidden: true,
         points: 150
+      },
+
+      // Phase 4.3: Character Progression Achievements
+      {
+        id: 'level_up',
+        name: 'Level Up!',
+        description: 'Reach character level 2',
+        category: 'progression',
+        rarity: 'common',
+        icon: '⬆️',
+        requirements: [
+          { type: 'stat', key: 'character_level', value: 2, comparison: 'gte' }
+        ],
+        rewards: [
+          { type: 'experience', amount: 100 },
+          { type: 'attribute_points', amount: 1 }
+        ],
+        hidden: false,
+        points: 20
+      },
+      {
+        id: 'skill_specialist',
+        name: 'Skill Specialist',
+        description: 'Reach level 50 in any skill',
+        category: 'progression',
+        rarity: 'uncommon',
+        icon: '🎯',
+        requirements: [
+          { type: 'stat', key: 'max_skill_level', value: 50, comparison: 'gte' }
+        ],
+        rewards: [
+          { type: 'experience', amount: 300 },
+          { type: 'skill_points', amount: 3 }
+        ],
+        hidden: false,
+        points: 40
+      },
+      {
+        id: 'jack_of_trades',
+        name: 'Jack of All Trades',
+        description: 'Have at least 25 in all skill categories',
+        category: 'progression',
+        rarity: 'rare',
+        icon: '🔧',
+        requirements: [
+          { type: 'stat', key: 'min_skill_category', value: 25, comparison: 'gte' }
+        ],
+        rewards: [
+          { type: 'experience', amount: 500 },
+          { type: 'skill_points', amount: 5 }
+        ],
+        hidden: false,
+        points: 75
+      },
+      
+      // Phase 4.3: Equipment and Enhancement Achievements
+      {
+        id: 'well_equipped',
+        name: 'Well Equipped',
+        description: 'Equip personal items in all 4 slots',
+        category: 'equipment',
+        rarity: 'common',
+        icon: '🎒',
+        requirements: [
+          { type: 'stat', key: 'equipped_slots', value: 4, comparison: 'gte' }
+        ],
+        rewards: [
+          { type: 'experience', amount: 150 },
+          { type: 'credits', amount: 1000 }
+        ],
+        hidden: false,
+        points: 25
+      },
+      {
+        id: 'experience_seeker',
+        name: 'Experience Seeker',
+        description: 'Gain 1000 total experience points',
+        category: 'progression',
+        rarity: 'uncommon',
+        icon: '📈',
+        requirements: [
+          { type: 'stat', key: 'total_experience', value: 1000, comparison: 'gte' }
+        ],
+        rewards: [
+          { type: 'skill_points', amount: 2 },
+          { type: 'attribute_points', amount: 1 }
+        ],
+        hidden: false,
+        points: 30
       }
     ];
 
@@ -484,7 +570,7 @@ export class AchievementManager {
   /**
    * Get recently unlocked achievements (within last N unlocks)
    */
-  getRecentUnlocks(count: number = 5): AchievementUnlock[] {
+  getRecentUnlocks(_count: number = 5): AchievementUnlock[] {
     if (!this.playerAchievements.lastUnlocked) {
       return [];
     }

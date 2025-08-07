@@ -450,7 +450,7 @@ describe('PersonalEquipmentManager', () => {
       equipmentManager.equipItem('basic_space_suit', 'suit');
       equipmentManager.damageEquipment('suit', 2.0); // Break it completely
       
-      const enhanced = equipmentManager.calculateEnhancedStats(testAttributes, testSkills);
+      equipmentManager.calculateEnhancedStats(testAttributes, testSkills);
       
       // Should still have some effect (minimum 50% effectiveness for special effects)
       const oxygenValue = equipmentManager.getSpecialEffectValue('oxygenEfficiency');

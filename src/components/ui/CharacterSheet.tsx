@@ -5,17 +5,20 @@
 
 import React, { useState, useEffect } from 'react';
 import { CharacterManager } from '../../systems/CharacterManager';
+import { SkillSpecializationManager } from '../../systems/SkillSpecializationManager';
 import { Character } from '../../types/character';
 import './CharacterSheet.css';
 
 interface CharacterSheetProps {
   characterManager: CharacterManager;
+  skillSpecializationManager?: SkillSpecializationManager;
   onClose?: () => void;
   compact?: boolean; // For showing in sidebar
 }
 
 export const CharacterSheet: React.FC<CharacterSheetProps> = ({
   characterManager,
+  skillSpecializationManager,
   onClose,
   compact = false
 }) => {
@@ -97,68 +100,138 @@ export const CharacterSheet: React.FC<CharacterSheetProps> = ({
     </div>
   );
 
-  const renderSkills = () => (
-    <div className="character-skills">
-      <div className="skills-header">
-        <h4>Skills</h4>
-        {character.progression.skillPoints > 0 && (
-          <span className="available-points-indicator">
-            {character.progression.skillPoints} points available
-          </span>
-        )}
+  const renderSkills = () => {
+    const skillTrees = skillSpecializationManager?.getAllSkillTrees();
+    const playerTrees = skillSpecializationManager?.getPlayerSkillTrees();
+
+    return (
+      <div className="character-skills">
+        <div className="skills-header">
+          <h4>Skills</h4>
+          {character.progression.skillPoints > 0 && (
+            <span className="available-points-indicator">
+              {character.progression.skillPoints} points available
+            </span>
+          )}
+          {skillSpecializationManager && playerTrees && (
+            <span className="skill-tree-points">
+              Skill Tree Points: {playerTrees.availableSkillPoints}
+            </span>
+          )}
+        </div>
+
+        <div className="skill-categories">
+          <div className="skill-category">
+            <h5>Trading</h5>
+            {(['trading', 'negotiation', 'economics'] as const).map(skill => (
+              <div key={skill} className="skill-item">
+                <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                <span className="skill-value">{character.skills[skill]}</span>
+                <div className="skill-bar">
+                  <div 
+                    className="skill-fill"
+                    style={{ width: `${character.skills[skill]}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            
+            {/* Skill Tree Nodes for Trading */}
+            {skillSpecializationManager && skillTrees && (
+              <div className="skill-tree-nodes">
+                {skillTrees
+                  .filter(tree => tree.category === 'trading')
+                  .map(tree => 
+                    tree.nodes
+                      .filter(node => node.category === 'trading')
+                      .slice(0, 3) // Show first 3 nodes as preview
+                      .map(node => (
+                        <div key={node.id} className="skill-node-preview">
+                          <span className="node-icon">{node.icon}</span>
+                          <span className="node-name">{node.name}</span>
+                          <span className="node-rank">{node.currentRank}/{node.maxRank}</span>
+                        </div>
+                      ))
+                  )}
+              </div>
+            )}
+          </div>
+
+          <div className="skill-category">
+            <h5>Technical</h5>
+            {(['engineering', 'piloting', 'navigation'] as const).map(skill => (
+              <div key={skill} className="skill-item">
+                <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                <span className="skill-value">{character.skills[skill]}</span>
+                <div className="skill-bar">
+                  <div 
+                    className="skill-fill"
+                    style={{ width: `${character.skills[skill]}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+            
+            {/* Skill Tree Nodes for Technical */}
+            {skillSpecializationManager && skillTrees && (
+              <div className="skill-tree-nodes">
+                {skillTrees
+                  .filter(tree => tree.category === 'technical')
+                  .map(tree => 
+                    tree.nodes
+                      .filter(node => node.category === 'technical')
+                      .slice(0, 3)
+                      .map(node => (
+                        <div key={node.id} className="skill-node-preview">
+                          <span className="node-icon">{node.icon}</span>
+                          <span className="node-name">{node.name}</span>
+                          <span className="node-rank">{node.currentRank}/{node.maxRank}</span>
+                        </div>
+                      ))
+                  )}
+              </div>
+            )}
+          </div>
+
+          <div className="skill-category">
+            <h5>Combat & Social</h5>
+            {(['combat', 'tactics', 'security', 'networking', 'investigation', 'leadership'] as const).map(skill => (
+              <div key={skill} className="skill-item">
+                <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
+                <span className="skill-value">{character.skills[skill]}</span>
+                <div className="skill-bar">
+                  <div 
+                    className="skill-fill"
+                    style={{ width: `${character.skills[skill]}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* Skill Tree Nodes for Combat & Social */}
+            {skillSpecializationManager && skillTrees && (
+              <div className="skill-tree-nodes">
+                {skillTrees
+                  .filter(tree => tree.category === 'combat' || tree.category === 'social')
+                  .map(tree => 
+                    tree.nodes
+                      .filter(node => node.category === 'combat' || node.category === 'social')
+                      .slice(0, 3)
+                      .map(node => (
+                        <div key={node.id} className="skill-node-preview">
+                          <span className="node-icon">{node.icon}</span>
+                          <span className="node-name">{node.name}</span>
+                          <span className="node-rank">{node.currentRank}/{node.maxRank}</span>
+                        </div>
+                      ))
+                  )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      <div className="skill-categories">
-        <div className="skill-category">
-          <h5>Trading</h5>
-          {(['trading', 'negotiation', 'economics'] as const).map(skill => (
-            <div key={skill} className="skill-item">
-              <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
-              <span className="skill-value">{character.skills[skill]}</span>
-              <div className="skill-bar">
-                <div 
-                  className="skill-fill"
-                  style={{ width: `${character.skills[skill]}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="skill-category">
-          <h5>Technical</h5>
-          {(['engineering', 'piloting', 'navigation'] as const).map(skill => (
-            <div key={skill} className="skill-item">
-              <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
-              <span className="skill-value">{character.skills[skill]}</span>
-              <div className="skill-bar">
-                <div 
-                  className="skill-fill"
-                  style={{ width: `${character.skills[skill]}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="skill-category">
-          <h5>Combat & Social</h5>
-          {(['combat', 'tactics', 'security', 'networking', 'investigation', 'leadership'] as const).map(skill => (
-            <div key={skill} className="skill-item">
-              <span className="skill-name">{skill.charAt(0).toUpperCase() + skill.slice(1)}</span>
-              <span className="skill-value">{character.skills[skill]}</span>
-              <div className="skill-bar">
-                <div 
-                  className="skill-fill"
-                  style={{ width: `${character.skills[skill]}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderEquipment = () => (
     <div className="character-equipment">

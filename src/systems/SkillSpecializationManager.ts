@@ -12,8 +12,6 @@ import {
   SkillAdvancementNotification,
   EnhancedCharacterSkills,
   ActiveSkillBonus,
-  SkillNodeRequirement,
-  SkillNodeEffect,
   SkillCategory
 } from '../types/skillTrees';
 import { CharacterSkills } from '../types/character';

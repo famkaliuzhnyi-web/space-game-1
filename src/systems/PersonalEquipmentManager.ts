@@ -332,22 +332,22 @@ export class PersonalEquipmentManager {
     const specialEffects: Map<string, number> = new Map();
 
     // Process each equipped item
-    Object.entries(this.personalEquipment).forEach(([slot, item]) => {
+    Object.entries(this.personalEquipment).forEach(([_slot, item]) => {
       if (!item) return;
 
       const durabilityMultiplier = item.durability;
       const effects = item.effects;
 
       // Process attribute bonuses
-      const attributeBonuses: (keyof CharacterAttributes)[] = [
+      const attributeBonusKeys = [
         'strengthBonus', 'intelligenceBonus', 'charismaBonus',
         'enduranceBonus', 'dexterityBonus', 'perceptionBonus'
       ];
 
-      attributeBonuses.forEach(bonusKey => {
-        if (effects[bonusKey]) {
+      attributeBonusKeys.forEach(bonusKey => {
+        if (effects[bonusKey as keyof typeof effects]) {
           const attributeName = bonusKey.replace('Bonus', '') as keyof CharacterAttributes;
-          const bonusValue = Math.floor(effects[bonusKey]! * durabilityMultiplier);
+          const bonusValue = Math.floor(effects[bonusKey as keyof typeof effects] as number * durabilityMultiplier);
           
           equipmentAttributeBonus[attributeName] = 
             (equipmentAttributeBonus[attributeName] || 0) + bonusValue;

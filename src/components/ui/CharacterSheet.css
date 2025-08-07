@@ -586,3 +586,66 @@
     flex: 1 0 50%;
   }
 }
+
+/* Phase 4.3: Enhanced Skill Tree Styles */
+.skill-tree-points {
+  font-size: 12px;
+  color: #fbbf24;
+  margin-left: 15px;
+}
+
+.skill-tree-nodes {
+  margin-top: 10px;
+  padding: 10px;
+  background: #2a2a2a;
+  border-radius: 6px;
+  border: 1px solid #444;
+}
+
+.skill-node-preview {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  margin: 4px 0;
+  background: #333;
+  border-radius: 4px;
+  border: 1px solid #555;
+  transition: background-color 0.2s ease;
+}
+
+.skill-node-preview:hover {
+  background: #3a3a3a;
+}
+
+.node-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+.node-name {
+  flex: 1;
+  font-size: 13px;
+  color: #e0e0e0;
+}
+
+.node-rank {
+  font-size: 12px;
+  color: #4ade80;
+  font-weight: bold;
+}
+
+/* Enhanced progression tab styles */
+.character-progression .achievements {
+  margin-top: 20px;
+}
+
+.character-progression .achievements h5 {
+  color: #fbbf24;
+  margin-bottom: 10px;
+}
+
+.no-achievements {
+  color: #888;
+  font-style: italic;
+  margin: 10px 0;
+}
