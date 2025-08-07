@@ -5,15 +5,12 @@
 
 import { 
   Achievement, 
-  AchievementCategory, 
+  AchievementCategory,
   AchievementProgress, 
-  AchievementRarity, 
   AchievementTrigger, 
   AchievementUnlock,
   PlayerAchievements,
-  AchievementNotification,
-  AchievementRequirement,
-  AchievementReward
+  AchievementNotification
 } from '../types/achievements';
 
 interface AchievementManagerSaveData {
@@ -484,7 +481,7 @@ export class AchievementManager {
   /**
    * Get recently unlocked achievements (within last N unlocks)
    */
-  getRecentUnlocks(count: number = 5): AchievementUnlock[] {
+  getRecentUnlocks(_count: number = 5): AchievementUnlock[] {
     if (!this.playerAchievements.lastUnlocked) {
       return [];
     }

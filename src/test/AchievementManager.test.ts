@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { AchievementManager } from '../systems/AchievementManager';
-import { AchievementTrigger, AchievementCategory } from '../types/achievements';
+import { AchievementTrigger } from '../types/achievements';
 
 describe('AchievementManager', () => {
   let achievementManager: AchievementManager;
@@ -96,7 +96,7 @@ describe('AchievementManager', () => {
       
       // Simulate having 25 profitable trades
       const playerStats = { profitable_trades: 25 };
-      const notifications = achievementManager.processAchievementTrigger(trigger, playerStats);
+      achievementManager.processAchievementTrigger(trigger, playerStats);
       
       const savvyTraderProgress = achievementManager.getAchievementProgress('savvy_trader');
       expect(savvyTraderProgress).toBeDefined();
@@ -132,7 +132,7 @@ describe('AchievementManager', () => {
       
       // First trigger
       const playerStats1 = { trade_complete: 1 };
-      const notifications1 = achievementManager.processAchievementTrigger(trigger, playerStats1);
+      achievementManager.processAchievementTrigger(trigger, playerStats1);
       expect(achievementManager.hasAchievement('first_trade')).toBe(true);
       
       // Second trigger - should not unlock again
