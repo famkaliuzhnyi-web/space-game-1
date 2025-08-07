@@ -235,6 +235,10 @@ export class Engine implements GameEngine {
     return this.systemManager.getCharacterManager();
   }
 
+  getSkillSpecializationManager() {
+    return this.systemManager.getSkillSpecializationManager();
+  }
+
   getMaintenanceManager() {
     return this.systemManager.getMaintenanceManager();
   }

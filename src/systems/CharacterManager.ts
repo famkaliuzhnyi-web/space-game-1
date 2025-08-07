@@ -444,4 +444,41 @@ export class CharacterManager {
       return false;
     }
   }
+
+  /**
+   * Phase 4.3: Get character statistics for achievement tracking
+   */
+  getCharacterStats(): Record<string, number> {
+    if (!this.character) return {};
+
+    // Calculate max skill level across all skills
+    const skillValues = Object.values(this.character.skills);
+    const maxSkillLevel = Math.max(...skillValues);
+
+    // Calculate minimum skill level per category for "jack of all trades"
+    const tradingSkills = [this.character.skills.trading, this.character.skills.negotiation, this.character.skills.economics];
+    const technicalSkills = [this.character.skills.engineering, this.character.skills.piloting, this.character.skills.navigation];
+    const combatSocialSkills = [
+      this.character.skills.combat, this.character.skills.tactics, this.character.skills.security,
+      this.character.skills.networking, this.character.skills.investigation, this.character.skills.leadership
+    ];
+
+    const minTradingSkill = Math.min(...tradingSkills);
+    const minTechnicalSkill = Math.min(...technicalSkills);
+    const minCombatSocialSkill = Math.min(...combatSocialSkills);
+    const minSkillCategory = Math.min(minTradingSkill, minTechnicalSkill, minCombatSocialSkill);
+
+    // Count equipped personal equipment slots
+    const equippedSlots = Object.values(this.character.personalEquipment).filter(item => item !== null).length;
+
+    return {
+      character_level: this.character.progression.level,
+      total_experience: this.character.progression.experience,
+      max_skill_level: maxSkillLevel,
+      min_skill_category: minSkillCategory,
+      equipped_slots: equippedSlots,
+      skill_points_earned: this.character.progression.totalSkillPointsSpent + this.character.progression.skillPoints,
+      attribute_points_earned: this.character.progression.totalAttributePointsSpent + this.character.progression.attributePoints
+    };
+  }
 }

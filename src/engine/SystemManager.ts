@@ -2,6 +2,7 @@ import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager
 import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { CharacterManager } from '../systems/CharacterManager';
 import { CharacterProgressionSystem } from '../systems/CharacterProgressionSystem';
+import { SkillSpecializationManager } from '../systems/SkillSpecializationManager';
 import { WorldManager } from '../systems/WorldManager';
 
 /**
@@ -20,6 +21,7 @@ export class SystemManager {
   private playerManager: PlayerManager;
   private characterManager: CharacterManager;
   private characterProgressionSystem: CharacterProgressionSystem;
+  private skillSpecializationManager: SkillSpecializationManager;
   private maintenanceManager: MaintenanceManager;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -34,6 +36,7 @@ export class SystemManager {
     this.playerManager = new PlayerManager();
     this.characterManager = new CharacterManager();
     this.characterProgressionSystem = new CharacterProgressionSystem(this.characterManager);
+    this.skillSpecializationManager = new SkillSpecializationManager();
     this.maintenanceManager = new MaintenanceManager(this.timeManager);
     
     // Link systems that need to communicate
@@ -125,6 +128,10 @@ export class SystemManager {
 
   getCharacterProgressionSystem(): CharacterProgressionSystem {
     return this.characterProgressionSystem;
+  }
+
+  getSkillSpecializationManager(): SkillSpecializationManager {
+    return this.skillSpecializationManager;
   }
 
   getMaintenanceManager(): MaintenanceManager {

@@ -938,6 +938,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       {engineRef.current && showCharacter && (
         <CharacterSheet
           characterManager={engineRef.current.getCharacterManager()}
+          skillSpecializationManager={engineRef.current.getSkillSpecializationManager()}
           onClose={() => setActivePanel(null)}
         />
       )}
