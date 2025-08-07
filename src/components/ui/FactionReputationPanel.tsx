@@ -275,6 +275,10 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
     const benefits = factionManager.getFactionBenefits(reputation.standing);
     const progressWidth = getProgressWidth(reputation.standing);
     const reputationColor = getReputationColor(reputation.standing);
+    
+    // Get enhanced Phase 4.2 relationship data
+    const relationship = factionManager.getFactionRelationship(faction.id);
+    const accessLevelNames = ['None', 'Basic', 'Limited', 'Moderate', 'High', 'Maximum'];
 
     return (
       <div
@@ -289,7 +293,7 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
       >
         {/* Faction Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <div>
+          <div style={{ flex: 1 }}>
             <h3 style={{ 
               color: faction.colors.primary, 
               margin: '0 0 5px 0',
@@ -300,14 +304,32 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
             </h3>
             <p style={{ 
               color: '#9ca3af', 
-              margin: 0, 
+              margin: '0 0 8px 0', 
               fontSize: '14px',
               lineHeight: '1.4'
             }}>
               {faction.description}
             </p>
+            {/* Phase 4.2: Faction Specializations */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {faction.specializations.map(spec => (
+                <span
+                  key={spec}
+                  style={{
+                    backgroundColor: `${faction.colors.primary}20`,
+                    color: faction.colors.primary,
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {spec}
+                </span>
+              ))}
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
+          <div style={{ textAlign: 'right', minWidth: '120px' }}>
             <div style={{ 
               color: reputationColor, 
               fontSize: '24px', 
@@ -428,6 +450,158 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
               ))}
             </div>
           </div>
+        )}
+
+        {/* Phase 4.2: Enhanced Relationship Data */}
+        {relationship && (
+          <>
+            {/* Trust Level and Access Level */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '12px',
+              marginTop: '15px',
+              marginBottom: '15px'
+            }}>
+              <div style={{ 
+                backgroundColor: '#374151', 
+                padding: '12px', 
+                borderRadius: '8px' 
+              }}>
+                <div style={{ 
+                  color: '#9ca3af', 
+                  fontSize: '12px', 
+                  marginBottom: '4px',
+                  fontWeight: '600'
+                }}>
+                  Trust Level
+                </div>
+                <div style={{ 
+                  color: relationship.trustLevel >= 60 ? '#10b981' : 
+                         relationship.trustLevel >= 40 ? '#eab308' : '#ef4444', 
+                  fontSize: '18px', 
+                  fontWeight: 'bold' 
+                }}>
+                  {relationship.trustLevel}/100
+                </div>
+              </div>
+              
+              <div style={{ 
+                backgroundColor: '#374151', 
+                padding: '12px', 
+                borderRadius: '8px' 
+              }}>
+                <div style={{ 
+                  color: '#9ca3af', 
+                  fontSize: '12px', 
+                  marginBottom: '4px',
+                  fontWeight: '600'
+                }}>
+                  Access Level
+                </div>
+                <div style={{ 
+                  color: '#60a5fa', 
+                  fontSize: '18px', 
+                  fontWeight: 'bold' 
+                }}>
+                  {accessLevelNames[relationship.accessLevel]} ({relationship.accessLevel}/5)
+                </div>
+              </div>
+            </div>
+
+            {/* Special Privileges */}
+            {relationship.specialPrivileges.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <h4 style={{ 
+                  color: '#10b981', 
+                  fontSize: '14px', 
+                  margin: '0 0 8px 0',
+                  fontWeight: '600'
+                }}>
+                  ✨ Special Privileges:
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {relationship.specialPrivileges.map(privilege => (
+                    <span
+                      key={privilege}
+                      style={{
+                        backgroundColor: '#065f46',
+                        color: '#6ee7b7',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      {privilege.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Restrictions */}
+            {relationship.restrictions.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <h4 style={{ 
+                  color: '#ef4444', 
+                  fontSize: '14px', 
+                  margin: '0 0 8px 0',
+                  fontWeight: '600'
+                }}>
+                  ⚠️ Restrictions:
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {relationship.restrictions.map(restriction => (
+                    <span
+                      key={restriction}
+                      style={{
+                        backgroundColor: '#7f1d1d',
+                        color: '#fca5a5',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      {restriction.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Territories */}
+            {faction.territories.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <h4 style={{ 
+                  color: '#d1d5db', 
+                  fontSize: '14px', 
+                  margin: '0 0 8px 0',
+                  fontWeight: '600'
+                }}>
+                  🏛️ Controlled Territories:
+                </h4>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {faction.territories.map(territory => (
+                    <span
+                      key={territory}
+                      style={{
+                        backgroundColor: '#374151',
+                        color: '#9ca3af',
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      {territory.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
