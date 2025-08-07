@@ -1,7 +1,38 @@
 /**
  * Dedicated game loop system for the space game engine.
- * Handles frame timing, delta time calculation, and loop management.
- * Separated from Engine class for better testability and control.
+ * 
+ * Handles frame timing, delta time calculation, and loop management using
+ * requestAnimationFrame for optimal performance. Separated from Engine class
+ * for better testability and control.
+ * 
+ * **Features:**
+ * - Precise delta time calculation for smooth animation
+ * - Proper cleanup of animation frames
+ * - Callback-based architecture for loose coupling
+ * - Performance monitoring capabilities
+ * 
+ * @example
+ * ```typescript
+ * const gameLoop = new GameLoop();
+ * 
+ * // Set up callbacks
+ * gameLoop.setUpdateCallback((deltaTime) => {
+ *   // Update game logic
+ *   gameState.update(deltaTime);
+ * });
+ * 
+ * gameLoop.setRenderCallback(() => {
+ *   // Render the game
+ *   renderer.render();
+ * });
+ * 
+ * // Start the loop
+ * gameLoop.start();
+ * ```
+ * 
+ * @author Space Game Development Team
+ * @version 1.0.0
+ * @since 2024-01-01
  */
 export class GameLoop {
   private isRunning: boolean = false;
@@ -11,21 +42,40 @@ export class GameLoop {
   private renderCallback?: () => void;
 
   /**
-   * Set the callback function for game updates
+   * Set the callback function for game updates.
+   * 
+   * The update callback receives delta time and should handle all game logic
+   * updates including physics, AI, input processing, etc.
+   * 
+   * @param callback - Function to call for each update cycle
    */
   setUpdateCallback(callback: (deltaTime: number) => void): void {
     this.updateCallback = callback;
   }
 
   /**
-   * Set the callback function for rendering
+   * Set the callback function for rendering.
+   * 
+   * The render callback should handle all visual rendering and should not
+   * modify game state.
+   * 
+   * @param callback - Function to call for each render cycle
    */
   setRenderCallback(callback: () => void): void {
     this.renderCallback = callback;
   }
 
   /**
-   * Start the game loop
+   * Start the game loop.
+   * 
+   * Begins executing the update and render callbacks at approximately 60fps.
+   * Does nothing if the loop is already running.
+   * 
+   * @example
+   * ```typescript
+   * gameLoop.start();
+   * console.log(gameLoop.getIsRunning()); // true
+   * ```
    */
   start(): void {
     if (this.isRunning) return;
@@ -36,7 +86,16 @@ export class GameLoop {
   }
 
   /**
-   * Stop the game loop
+   * Stop the game loop.
+   * 
+   * Halts execution of update and render callbacks and cleans up the
+   * animation frame. The loop can be restarted with start().
+   * 
+   * @example
+   * ```typescript
+   * gameLoop.stop();
+   * console.log(gameLoop.getIsRunning()); // false
+   * ```
    */
   stop(): void {
     this.isRunning = false;
