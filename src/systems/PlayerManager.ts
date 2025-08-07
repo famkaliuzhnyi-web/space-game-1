@@ -12,8 +12,10 @@ import {
 import { getCommodity } from '../data/commodities';
 import { ShipStorageManager } from './ShipStorageManager';
 import { FactionManager, ReputationChange } from './FactionManager';
+import { ContactFactory } from './ContactManager';
 import { CharacterManager } from './CharacterManager';
 import { Character } from '../types/character';
+import { Contact } from '../types/contacts';
 
 export class PlayerManager implements InventoryManager {
   private player: Player;
@@ -615,6 +617,50 @@ export class PlayerManager implements InventoryManager {
 
   handleMissionReputation(factionId: string, missionType: string, success: boolean): ReputationChange[] {
     return this.factionManager.handleMissionCompletion(this.player.reputation, factionId, missionType, success);
+  }
+
+  /**
+   * Discover and meet contacts at a specific station
+   */
+  discoverStationContacts(stationId: string, stationFactionId: string): Contact[] {
+    const contactManager = this.factionManager.getContactManager();
+    
+    // Check if we already have contacts at this station
+    const existingContacts = contactManager.getContactsAtStation(stationId);
+    
+    // Generate contacts if none exist at this station
+    if (existingContacts.length === 0) {
+      const contactsToGenerate = [
+        { type: 'trade_liaison' as const, chance: 0.9 },
+        { type: 'commander' as const, chance: 0.7 },
+        { type: 'quartermaster' as const, chance: 0.6 },
+        { type: 'dock_supervisor' as const, chance: 0.5 }
+      ];
+
+      const discoveredContacts: Contact[] = [];
+      
+      contactsToGenerate.forEach(({ type, chance }) => {
+        if (Math.random() < chance) {
+          const newContact = contactManager.meetContact(
+            ContactFactory.createStationContact(stationId, stationFactionId, type)
+          );
+          discoveredContacts.push(newContact);
+        }
+      });
+      
+      return discoveredContacts;
+    }
+    
+    return existingContacts;
+  }
+
+  /**
+   * Get all contacts at current station
+   */
+  getCurrentStationContacts(currentStationId?: string): Contact[] {
+    if (!currentStationId) return [];
+    const contactManager = this.factionManager.getContactManager();
+    return contactManager.getContactsAtStation(currentStationId);
   }
 
   // Save/load support

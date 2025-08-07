@@ -3,11 +3,13 @@ import { Engine } from '../../engine';
 import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
+import StationContactsPanel from '../ui/StationContactsPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
 import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
 import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
+import { Contact } from '../../types/contacts';
 
 interface GameCanvasProps {
   width?: number;
@@ -25,9 +27,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
+  const [stationContacts, setStationContacts] = useState<Contact[]>([]);
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -39,6 +42,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showFactionReputation = activePanel === 'factions';
   const showMaintenance = activePanel === 'maintenance';
   const showCharacter = activePanel === 'character';
+  const showContacts = activePanel === 'contacts';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -143,6 +147,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(activePanel === 'ship' ? null : 'ship');
       } else if (event.code === 'KeyF') {
         setActivePanel(activePanel === 'factions' ? null : 'factions');
+      } else if (event.code === 'KeyP') {
+        handleOpenContacts();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -525,6 +531,57 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  // Contact management handlers
+  const handleOpenContacts = () => {
+    if (engineRef.current) {
+      const worldManager = engineRef.current.getWorldManager();
+      const currentStation = worldManager.getCurrentStation();
+      
+      if (currentStation) {
+        const playerManager = engineRef.current.getPlayerManager();
+        const contacts = playerManager.getCurrentStationContacts(currentStation.id);
+        setStationContacts(contacts);
+        setActivePanel('contacts');
+      }
+    }
+  };
+
+  const handleDiscoverContacts = (): Contact[] => {
+    if (engineRef.current) {
+      const worldManager = engineRef.current.getWorldManager();
+      const currentStation = worldManager.getCurrentStation();
+      
+      if (currentStation) {
+        const playerManager = engineRef.current.getPlayerManager();
+        const discoveredContacts = playerManager.discoverStationContacts(currentStation.id, currentStation.faction);
+        setStationContacts(discoveredContacts);
+        return discoveredContacts;
+      }
+    }
+    return [];
+  };
+
+  const handleInteractWithContact = (contactId: string, interactionType: string) => {
+    if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
+      const factionManager = playerManager.getFactionManager();
+      const contactManager = factionManager.getContactManager();
+      
+      // Perform the interaction
+      const result = contactManager.recordInteraction(contactId, interactionType as any, 'success', 10);
+      
+      if (result) {
+        // Update the contacts display
+        const worldManager = engineRef.current.getWorldManager();
+        const currentStation = worldManager.getCurrentStation();
+        if (currentStation) {
+          const contacts = playerManager.getCurrentStationContacts(currentStation.id);
+          setStationContacts(contacts);
+        }
+      }
+    }
+  };
+
   return (
     <div className={`game-canvas-container ${className}`} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Loading state */}
@@ -688,6 +745,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Character (H)
         </button>
         <button 
+          onClick={handleOpenContacts} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'contacts' ? '#4a90e2' : undefined
+          }}
+        >
+          Contacts (P)
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -802,6 +869,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onClose={() => setActivePanel(null)}
         playerReputation={playerReputation}
         factionManager={engineRef.current?.getPlayerManager().getFactionManager()}
+      />
+
+      {/* Station Contacts Panel */}
+      <StationContactsPanel
+        isVisible={showContacts}
+        onClose={() => setActivePanel(null)}
+        currentStation={engineRef.current?.getWorldManager().getCurrentStation() || null}
+        contacts={stationContacts}
+        onDiscoverContacts={handleDiscoverContacts}
+        onInteractWithContact={handleInteractWithContact}
       />
 
       {/* Maintenance Panel */}
