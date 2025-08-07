@@ -9,6 +9,7 @@ import {
   EconomicEvent
 } from '../types/economy';
 import { Station } from '../types/world';
+import { Character } from '../types/character';
 import { COMMODITIES, getCommodity } from '../data/commodities';
 
 export class EconomicSystem {
@@ -105,6 +106,13 @@ export class EconomicSystem {
    * Calculate current price for a commodity at a market
    */
   calculatePrice(commodity: Commodity, market: Market): number {
+    return this.calculatePriceWithCharacterBonus(commodity, market, null);
+  }
+
+  /**
+   * Calculate current price for a commodity at a market with character bonuses
+   */
+  calculatePriceWithCharacterBonus(commodity: Commodity, market: Market, character: Character | null): number {
     let price = commodity.basePrice;
     
     // Apply demand factors with more controlled ranges
@@ -126,6 +134,69 @@ export class EconomicSystem {
     // Apply active economic events with capped multiplier
     const eventMultiplier = this.getEventPriceMultiplier(commodity.id, market.stationId);
     price *= Math.min(2.0, Math.max(0.5, eventMultiplier)); // Cap event effects
+    
+    // Apply character bonuses if character is provided
+    if (character) {
+      const tradingBonus = this.calculateTradingBonus(character);
+      price *= tradingBonus;
+    }
+    
+    // Ensure final price stays within reasonable bounds (0.2x to 4x base price)
+    const finalPrice = Math.max(commodity.basePrice * 0.2, 
+                               Math.min(commodity.basePrice * 4.0, price));
+    
+    return Math.max(1, Math.round(finalPrice));
+  }
+
+  /**
+   * Calculate trading bonus based on character attributes and skills
+   */
+  private calculateTradingBonus(character: Character): number {
+    if (!character || !character.attributes || !character.skills) {
+      return 1.0;
+    }
+
+    // Charisma affects trading prices (1-3% per point above 10)
+    const charismaBonus = 1.0 - (character.attributes.charisma - 10) * 0.02;
+    
+    // Trading skill affects trading prices (0.5-1% per point above 0)
+    const tradingBonus = 1.0 - character.skills.trading * 0.008;
+    
+    // Combine bonuses with reasonable limits
+    const finalBonus = Math.max(0.75, Math.min(1.25, charismaBonus * tradingBonus));
+    
+    return finalBonus;
+  }
+
+  /**
+   * Calculate current price for a commodity at a market with character bonuses (test version without volatility)
+   */
+  calculatePriceWithCharacterBonusStable(commodity: Commodity, market: Market, character: Character | null): number {
+    let price = commodity.basePrice;
+    
+    // Apply demand factors with more controlled ranges
+    price *= market.demandFactors.stationType;
+    price *= (0.5 + market.demandFactors.population);
+    price *= (0.8 + market.demandFactors.securityLevel * 0.4);
+    
+    // Apply security restrictions for illegal/restricted items (reduced multipliers)
+    if (commodity.legalStatus === 'illegal') {
+      price *= 1.5 + (1.0 - market.demandFactors.securityLevel) * 1.0; // Max 2.5x for illegal
+    } else if (commodity.legalStatus === 'restricted') {
+      price *= 1.1 + (1.0 - market.demandFactors.securityLevel) * 0.4; // Max 1.5x for restricted
+    }
+    
+    // Skip volatility for testing
+    
+    // Apply active economic events with capped multiplier
+    const eventMultiplier = this.getEventPriceMultiplier(commodity.id, market.stationId);
+    price *= Math.min(2.0, Math.max(0.5, eventMultiplier)); // Cap event effects
+    
+    // Apply character bonuses if character is provided
+    if (character) {
+      const tradingBonus = this.calculateTradingBonus(character);
+      price *= tradingBonus;
+    }
     
     // Ensure final price stays within reasonable bounds (0.2x to 4x base price)
     const finalPrice = Math.max(commodity.basePrice * 0.2, 
