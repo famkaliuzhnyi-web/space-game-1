@@ -420,7 +420,7 @@ export class HubShipConstructionSystem {
     let shieldStrength = 0;
     let armorValue = 0;
     let crewCapacity = 0;
-    let fuelEfficiencyFactors: number[] = [];
+    const fuelEfficiencyFactors: number[] = [];
 
     design.hubs.forEach(hub => {
       const template = getHubTemplate(hub.templateId);
