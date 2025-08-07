@@ -1,28 +1,74 @@
 import { GameEngine } from '../types';
-import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager } from '../systems';
-import { MaintenanceManager } from '../systems/MaintenanceManager';
-import { CharacterManager } from '../systems/CharacterManager';
-import { WorldManager } from '../systems/WorldManager';
-import { Station, Planet } from '../types/world';
+import { Renderer, Camera } from './Renderer';
+import { GameLoop } from './GameLoop';
+import { InputHandler } from './InputHandler';
+import { SystemManager } from './SystemManager';
 
+/**
+ * Main game engine class with modular architecture.
+ * 
+ * This is the core orchestrator for the space game. It coordinates between the
+ * different subsystems (rendering, input, game logic) and provides a clean
+ * interface for external consumers.
+ * 
+ * **Architecture:**
+ * - `Renderer`: Handles all visual rendering including world objects and UI
+ * - `GameLoop`: Manages frame timing and loop execution 
+ * - `InputHandler`: Processes keyboard/mouse/touch input and camera controls
+ * - `SystemManager`: Dependency injection container for all game systems
+ * 
+ * **Key Design Principles:**
+ * - Single Responsibility: Each component has one focused job
+ * - Dependency Injection: Systems are loosely coupled through interfaces
+ * - Testability: Each module can be unit tested in isolation
+ * - Performance: Optimized rendering and update loops
+ * 
+ * @example
+ * ```typescript
+ * const canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+ * const engine = new Engine(canvas);
+ * 
+ * // Start the game loop
+ * engine.start();
+ * 
+ * // Access game systems
+ * const playerManager = engine.getPlayerManager();
+ * const worldManager = engine.getWorldManager();
+ * 
+ * // Clean up when done
+ * engine.dispose();
+ * ```
+ * 
+ * @author Space Game Development Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
 export class Engine implements GameEngine {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
-  isRunning: boolean = false;
-  lastFrameTime: number = 0;
-  private inputManager: InputManager;
-  private worldManager: WorldManager;
-  private timeManager: TimeManager;
-  private saveManager: SaveManager;
-  private economicSystem: EconomicSystem;
-  private contractManager: ContractManager;
-  private routeAnalyzer: RouteAnalyzer;
-  private playerManager: PlayerManager;
-  private characterManager: CharacterManager;
-  private maintenanceManager: MaintenanceManager;
-  private animationFrameId: number = 0;
-  private camera: { x: number; y: number; zoom: number } = { x: 0, y: 0, zoom: 1 };
+  private camera: Camera = { x: 0, y: 0, zoom: 1 };
+  
+  // Modular components
+  private renderer: Renderer;
+  private gameLoop: GameLoop;
+  private inputHandler: InputHandler;
+  private systemManager: SystemManager;
 
+  /**
+   * Initialize the game engine with a canvas element.
+   * 
+   * Sets up all core systems and prepares the engine for gameplay.
+   * The canvas will be configured for optimal pixel art rendering.
+   * 
+   * @param canvas - HTML canvas element for rendering the game
+   * @throws {Error} If the canvas doesn't support 2D context
+   * 
+   * @example
+   * ```typescript
+   * const canvas = document.getElementById('game') as HTMLCanvasElement;
+   * const engine = new Engine(canvas);
+   * ```
+   */
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     
@@ -32,400 +78,202 @@ export class Engine implements GameEngine {
     }
     this.context = context;
     
-    this.inputManager = new InputManager(canvas);
-    this.worldManager = new WorldManager();
-    this.timeManager = new TimeManager();
-    this.saveManager = new SaveManager();
-    this.economicSystem = new EconomicSystem();
-    this.contractManager = new ContractManager();
-    this.routeAnalyzer = new RouteAnalyzer();
-    this.playerManager = new PlayerManager();
-    this.characterManager = new CharacterManager();
-    this.maintenanceManager = new MaintenanceManager(this.timeManager);
+    // Initialize modular components
+    this.renderer = new Renderer(canvas);
+    this.gameLoop = new GameLoop();
+    this.inputHandler = new InputHandler(canvas);
+    this.systemManager = new SystemManager(canvas);
     
-    // Initialize economics for existing stations
-    this.initializeEconomics();
+    // Set up game loop callbacks
+    this.gameLoop.setUpdateCallback(this.update.bind(this));
+    this.gameLoop.setRenderCallback(this.render.bind(this));
     
-    // Set up canvas for crisp pixel art
-    this.context.imageSmoothingEnabled = false;
+    // Set up input handler
+    this.inputHandler.setClickHandler((worldX, worldY) => {
+      InputHandler.handleWorldClick(worldX, worldY, this.systemManager.getWorldManager());
+    });
     
     // Ensure canvas has a dark background
     this.context.fillStyle = '#0a0a0a';
     this.context.fillRect(0, 0, canvas.width, canvas.height);
   }
 
+  /**
+   * Start the game engine.
+   * 
+   * Begins the main game loop, activates all systems, and starts accepting
+   * input. The game will continue running until stop() is called.
+   * 
+   * @example
+   * ```typescript
+   * engine.start();
+   * // Game is now running...
+   * ```
+   */
   start(): void {
-    if (this.isRunning) return;
+    if (this.gameLoop.getIsRunning()) return;
     
-    this.isRunning = true;
-    this.lastFrameTime = performance.now();
-    this.timeManager.start();
-    this.gameLoop();
+    this.systemManager.startSystems();
+    this.gameLoop.start();
   }
 
+  /**
+   * Stop the game engine.
+   * 
+   * Halts the main game loop and pauses all systems. The engine can be
+   * restarted later with start().
+   * 
+   * @example
+   * ```typescript
+   * engine.stop();
+   * // Game is now paused...
+   * engine.start(); // Resume
+   * ```
+   */
   stop(): void {
-    this.isRunning = false;
-    this.timeManager.pause();
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-    }
+    this.systemManager.stopSystems();
+    this.gameLoop.stop();
   }
 
-  private gameLoop = (): void => {
-    if (!this.isRunning) return;
+  /**
+   * Check if the game engine is currently running.
+   * 
+   * @returns true if the game loop is active, false otherwise
+   */
+  get isRunning(): boolean {
+    return this.gameLoop.getIsRunning();
+  }
 
-    const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastFrameTime) / 1000; // Convert to seconds
-    this.lastFrameTime = currentTime;
+  /**
+   * Get the timestamp of the last frame.
+   * 
+   * @returns Current performance timestamp in milliseconds
+   */
+  get lastFrameTime(): number {
+    return performance.now();
+  }
 
-    this.update(deltaTime);
-    this.render();
-
-    this.animationFrameId = requestAnimationFrame(this.gameLoop);
+  /**
+   * Update all game systems and handle input.
+   * 
+   * Called automatically by the game loop. Updates all game systems and
+   * processes input for camera movement and world interaction.
+   * 
+   * @param deltaTime - Time elapsed since last update in seconds
+   */
+  update = (deltaTime: number): void => {
+    // Update all game systems
+    this.systemManager.updateSystems(deltaTime);
+    
+    // Handle input and update camera
+    this.inputHandler.updateCamera(
+      this.camera, 
+      deltaTime, 
+      this.systemManager.getInputManager()
+    );
   };
 
-  update(deltaTime: number): void {
-    // Update time system
-    this.timeManager.update(deltaTime);
-    
-    // Update economic system
-    this.economicSystem.update(deltaTime * 1000); // Convert to milliseconds for economic system
-    
-    // Update contract system
-    this.contractManager.update(deltaTime * 1000);
+  /**
+   * Render the game using the dedicated renderer.
+   * 
+   * Called automatically by the game loop. Renders all world objects, UI
+   * elements, and effects to the canvas.
+   */
+  render = (): void => {
+    this.renderer.render(
+      this.camera,
+      this.systemManager.getWorldManager(),
+      this.systemManager.getTimeManager()
+    );
+  };
 
-    // Handle input for camera movement
-    if (this.inputManager.isKeyPressed('KeyW') || this.inputManager.isKeyPressed('ArrowUp')) {
-      this.camera.y -= 100 * deltaTime;
-    }
-    if (this.inputManager.isKeyPressed('KeyS') || this.inputManager.isKeyPressed('ArrowDown')) {
-      this.camera.y += 100 * deltaTime;
-    }
-    if (this.inputManager.isKeyPressed('KeyA') || this.inputManager.isKeyPressed('ArrowLeft')) {
-      this.camera.x -= 100 * deltaTime;
-    }
-    if (this.inputManager.isKeyPressed('KeyD') || this.inputManager.isKeyPressed('ArrowRight')) {
-      this.camera.x += 100 * deltaTime;
-    }
-
-    // Handle zoom
-    if (this.inputManager.isKeyPressed('Equal') || this.inputManager.isKeyPressed('NumpadAdd')) {
-      this.camera.zoom = Math.min(this.camera.zoom + deltaTime, 3);
-    }
-    if (this.inputManager.isKeyPressed('Minus') || this.inputManager.isKeyPressed('NumpadSubtract')) {
-      this.camera.zoom = Math.max(this.camera.zoom - deltaTime, 0.1);
-    }
-
-    // Handle mouse/touch input for navigation
-    const mousePos = this.inputManager.getMousePosition();
-    if (this.inputManager.isMouseButtonPressed(0)) { // Left click
-      this.handleClick(mousePos.x, mousePos.y);
-    }
-
-    const touches = this.inputManager.getTouchPositions();
-    if (touches.length === 1) {
-      // Single touch for navigation
-      this.handleClick(touches[0].x, touches[0].y);
-    }
+  // System accessor methods for backward compatibility and external access
+  
+  /**
+   * Get the input management system.
+   * 
+   * @returns InputManager instance for handling keyboard, mouse, and touch input
+   */
+  getInputManager() {
+    return this.systemManager.getInputManager();
   }
 
-  private handleClick(x: number, y: number): void {
-    // Convert screen coordinates to world coordinates
-    const worldX = (x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
-    const worldY = (y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
-
-    // Check if click is on any navigable object
-    const objects = this.worldManager.getAllVisibleObjects();
-    for (const obj of objects) {
-      const distance = Math.sqrt(
-        Math.pow(worldX - obj.position.x, 2) + 
-        Math.pow(worldY - obj.position.y, 2)
-      );
-
-      // Check if click is within object bounds
-      let clickRadius = 20; // Default click radius
-      if (obj.type === 'station') clickRadius = 15;
-      if (obj.type === 'planet' && 'radius' in obj.object) clickRadius = obj.object.radius || 25;
-      if (obj.type === 'star') clickRadius = 30;
-
-      if (distance <= clickRadius) {
-        if (obj.type === 'station' && 'id' in obj.object) {
-          this.worldManager.navigateToTarget(obj.object.id);
-        }
-        break;
-      }
-    }
+  /**
+   * Get the world management system.
+   * 
+   * @returns WorldManager instance for handling galaxy, systems, and navigation
+   */
+  getWorldManager() {
+    return this.systemManager.getWorldManager();
   }
 
-  render(): void {
-    // Clear the canvas
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Set a dark space background
-    this.context.fillStyle = '#0a0a0a';
-    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    // Save context for camera transformations
-    this.context.save();
-    
-    // Apply camera transformations
-    this.context.translate(this.canvas.width / 2, this.canvas.height / 2);
-    this.context.scale(this.camera.zoom, this.camera.zoom);
-    this.context.translate(-this.camera.x, -this.camera.y);
-    
-    // Render background stars
-    this.renderStars();
-    
-    // Render world objects
-    this.renderWorldObjects();
-    
-    // Restore context
-    this.context.restore();
-    
-    // Render UI elements (not affected by camera)
-    this.renderUI();
+  getEconomicSystem() {
+    return this.systemManager.getEconomicSystem();
   }
 
-  private renderStars(): void {
-    this.context.fillStyle = '#ffffff';
-    
-    // Create a star field that moves with camera but feels infinite
-    const starCount = 200;
-    for (let i = 0; i < starCount; i++) {
-      // Use camera position to create parallax effect
-      const parallaxFactor = 0.1;
-      const x = (i * 17 + this.camera.x * parallaxFactor) % 1000 - 500;
-      const y = (i * 31 + this.camera.y * parallaxFactor) % 800 - 400;
-      const size = (i % 3) + 1;
-      
-      this.context.globalAlpha = 0.3 + (i % 7) * 0.1;
-      this.context.fillRect(x, y, size, size);
-    }
-    this.context.globalAlpha = 1;
+  getTimeManager() {
+    return this.systemManager.getTimeManager();
   }
 
-  private renderWorldObjects(): void {
-    const objects = this.worldManager.getAllVisibleObjects();
-    const currentStation = this.worldManager.getCurrentStation();
-
-    objects.forEach(obj => {
-      const { position } = obj;
-      
-      switch (obj.type) {
-        case 'star':
-          this.renderStar(position.x, position.y);
-          break;
-        case 'station': {
-          const isCurrentStation = currentStation?.id === ('id' in obj.object ? obj.object.id : '');
-          if ('id' in obj.object) {
-            this.renderStation(position.x, position.y, obj.object as Station, isCurrentStation);
-          }
-          break;
-        }
-        case 'planet':
-          if ('radius' in obj.object) {
-            this.renderPlanet(position.x, position.y, obj.object as Planet);
-          }
-          break;
-      }
-    });
+  getSaveManager() {
+    return this.systemManager.getSaveManager();
   }
 
-  private renderStar(x: number, y: number): void {
-    // Render star with glow effect
-    this.context.save();
-    
-    // Outer glow
-    const gradient = this.context.createRadialGradient(x, y, 0, x, y, 30);
-    gradient.addColorStop(0, '#ffff99');
-    gradient.addColorStop(0.3, '#ffdd44');
-    gradient.addColorStop(1, 'transparent');
-    
-    this.context.fillStyle = gradient;
-    this.context.fillRect(x - 30, y - 30, 60, 60);
-    
-    // Core
-    this.context.fillStyle = '#ffff99';
-    this.context.fillRect(x - 5, y - 5, 10, 10);
-    
-    this.context.restore();
+  getContractManager() {
+    return this.systemManager.getContractManager();
   }
 
-  private renderStation(x: number, y: number, station: Station, isCurrent: boolean): void {
-    this.context.save();
-    
-    // Station structure
-    this.context.fillStyle = isCurrent ? '#00ff00' : '#aaaaaa';
-    this.context.fillRect(x - 8, y - 3, 16, 6);
-    this.context.fillRect(x - 3, y - 8, 6, 16);
-    
-    // Docking lights
-    this.context.fillStyle = '#00ccff';
-    this.context.fillRect(x - 2, y - 2, 4, 4);
-    
-    // Name label
-    this.context.fillStyle = '#ffffff';
-    this.context.font = '12px monospace';
-    this.context.textAlign = 'center';
-    this.context.fillText(station.name, x, y + 20);
-    
-    this.context.restore();
+  getRouteAnalyzer() {
+    return this.systemManager.getRouteAnalyzer();
   }
 
-  private renderPlanet(x: number, y: number, planet: Planet): void {
-    this.context.save();
-    
-    const radius = planet.radius || 15;
-    
-    // Planet body
-    let color = '#888888';
-    switch (planet.type) {
-      case 'terrestrial':
-        color = planet.habitable ? '#4a90e2' : '#8b4513';
-        break;
-      case 'gas-giant':
-        color = '#daa520';
-        break;
-      case 'ice':
-        color = '#b0e0e6';
-        break;
-      case 'desert':
-        color = '#f4a460';
-        break;
-      case 'ocean':
-        color = '#006994';
-        break;
-    }
-    
-    this.context.fillStyle = color;
-    this.context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    
-    // Simple atmosphere for habitable planets
-    if (planet.habitable) {
-      this.context.strokeStyle = '#87ceeb';
-      this.context.lineWidth = 2;
-      this.context.strokeRect(x - radius - 2, y - radius - 2, (radius + 2) * 2, (radius + 2) * 2);
-    }
-    
-    this.context.restore();
+  getPlayerManager() {
+    return this.systemManager.getPlayerManager();
   }
 
-  private renderUI(): void {
-    const currentSystem = this.worldManager.getCurrentSystem();
-    const currentStation = this.worldManager.getCurrentStation();
-    const currentTime = this.timeManager.getCurrentTime();
-    const timeAcceleration = this.timeManager.getTimeAcceleration();
-    
-    // System info
-    this.context.fillStyle = '#ffffff';
-    this.context.font = '16px monospace';
-    this.context.textAlign = 'left';
-    
-    if (currentSystem) {
-      this.context.fillText(`System: ${currentSystem.name}`, 10, 30);
-      this.context.fillText(`Security: ${currentSystem.securityLevel}/10`, 10, 50);
-    }
-    
-    if (currentStation) {
-      this.context.fillText(`Docked: ${currentStation.name}`, 10, 70);
-      this.context.fillText(`Type: ${currentStation.type}`, 10, 90);
-    }
-    
-    // Time display
-    this.context.font = '14px monospace';
-    this.context.fillText(`Time: ${this.timeManager.formatTime(currentTime)}`, 10, 120);
-    if (timeAcceleration !== 1) {
-      this.context.fillStyle = '#ffaa00';
-      this.context.fillText(`Speed: ${timeAcceleration}x`, 10, 140);
-    }
-    
-    // Controls help
-    this.context.font = '12px monospace';
-    this.context.fillStyle = '#aaaaaa';
-    this.context.textAlign = 'right';
-    this.context.fillText('WASD/Arrows: Move Camera', this.canvas.width - 10, this.canvas.height - 75);
-    this.context.fillText('+/-: Zoom', this.canvas.width - 10, this.canvas.height - 60);
-    this.context.fillText('Click: Navigate', this.canvas.width - 10, this.canvas.height - 45);
-    this.context.fillText('N: Navigation Panel', this.canvas.width - 10, this.canvas.height - 30);
-    this.context.fillText('Touch: Navigate (Mobile)', this.canvas.width - 10, this.canvas.height - 15);
+  getCharacterManager() {
+    return this.systemManager.getCharacterManager();
   }
 
-  getInputManager(): InputManager {
-    return this.inputManager;
+  getMaintenanceManager() {
+    return this.systemManager.getMaintenanceManager();
   }
 
-  getWorldManager(): WorldManager {
-    return this.worldManager;
-  }
-
-  getEconomicSystem(): EconomicSystem {
-    return this.economicSystem;
-  }
-
-  getTimeManager(): TimeManager {
-    return this.timeManager;
-  }
-
-  getSaveManager(): SaveManager {
-    return this.saveManager;
-  }
-
-  getContractManager(): ContractManager {
-    return this.contractManager;
-  }
-
-  getRouteAnalyzer(): RouteAnalyzer {
-    return this.routeAnalyzer;
-  }
-
-  getPlayerManager(): PlayerManager {
-    return this.playerManager;
-  }
-
-  getCharacterManager(): CharacterManager {
-    return this.characterManager;
-  }
-
-  getMaintenanceManager(): MaintenanceManager {
-    return this.maintenanceManager;
-  }
-
-  private initializeEconomics(): void {
-    // Initialize economics for all existing stations
-    const allStations = this.worldManager.getAllStations();
-    for (const station of allStations) {
-      // Find the system this station belongs to
-      const system = this.findSystemForStation(station.id);
-      this.economicSystem.initializeStationEconomics(station, system);
-    }
-  }
-
-  private findSystemForStation(stationId: string): {securityLevel: number} | undefined {
-    // Get the galaxy from WorldManager and find the system containing this station
-    const galaxy = this.worldManager.getGalaxy();
-    for (const sector of galaxy.sectors) {
-      for (const system of sector.systems) {
-        if (system.stations.some(station => station.id === stationId)) {
-          return { securityLevel: system.securityLevel };
-        }
-      }
-    }
-    return undefined;
-  }
-
+  /**
+   * Clean up all resources and stop the engine.
+   * 
+   * Should be called when the engine is no longer needed to prevent
+   * memory leaks and properly dispose of all systems.
+   * 
+   * @example
+   * ```typescript
+   * // When done with the game
+   * engine.dispose();
+   * ```
+   */
   dispose(): void {
-    this.stop();
-    this.inputManager.dispose();
+    this.gameLoop.dispose();
+    this.systemManager.dispose();
   }
 
-  // Utility methods
+  /**
+   * Resize the canvas and maintain quality settings.
+   * 
+   * Should be called when the canvas container is resized to maintain
+   * proper aspect ratio and rendering quality.
+   * 
+   * @param width - New canvas width in pixels
+   * @param height - New canvas height in pixels
+   * 
+   * @example
+   * ```typescript
+   * // Handle window resize
+   * window.addEventListener('resize', () => {
+   *   engine.resizeCanvas(window.innerWidth, window.innerHeight);
+   * });
+   * ```
+   */
   resizeCanvas(width: number, height: number): void {
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.context.imageSmoothingEnabled = false;
-    
-    // Ensure canvas maintains dark background after resize
-    this.context.fillStyle = '#0a0a0a';
-    this.context.fillRect(0, 0, width, height);
+    this.renderer.resizeCanvas(width, height);
   }
 }

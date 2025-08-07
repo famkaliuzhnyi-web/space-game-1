@@ -17,6 +17,11 @@ import {
   CharacterCreationConfig
 } from '../types/character';
 
+interface CharacterManagerSaveData {
+  character: Character;
+  experienceHistory: ExperienceGain[];
+}
+
 export class CharacterManager {
   private character: Character | null = null;
   private experienceHistory: ExperienceGain[] = [];
@@ -407,7 +412,7 @@ export class CharacterManager {
   /**
    * Serialize character data for saving
    */
-  serialize(): any {
+  serialize(): CharacterManagerSaveData | null {
     if (!this.character) return null;
 
     return {
@@ -422,7 +427,7 @@ export class CharacterManager {
   /**
    * Deserialize character data from save
    */
-  deserialize(data: any): boolean {
+  deserialize(data: CharacterManagerSaveData): boolean {
     try {
       if (data.character) {
         this.character = data.character;

@@ -66,7 +66,7 @@ export class RouteAnalyzer {
         ...route,
         riskAdjustedProfit: route.profitPerHour / Math.max(0.1, route.risk)
       }))
-      .sort((a, b) => (b as any).riskAdjustedProfit - (a as any).riskAdjustedProfit)
+      .sort((a, b) => b.riskAdjustedProfit - a.riskAdjustedProfit)
       .slice(0, 20);
 
     const analysis: RouteAnalysis = {
