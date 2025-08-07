@@ -1,4 +1,4 @@
-import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager } from '../systems';
+import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager, EventManager } from '../systems';
 import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { CharacterManager } from '../systems/CharacterManager';
 import { CharacterProgressionSystem } from '../systems/CharacterProgressionSystem';
@@ -25,6 +25,7 @@ export class SystemManager {
   private skillSpecializationManager: SkillSpecializationManager;
   private achievementManager: AchievementManager;
   private maintenanceManager: MaintenanceManager;
+  private eventManager: EventManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -41,6 +42,14 @@ export class SystemManager {
     this.skillSpecializationManager = new SkillSpecializationManager();
     this.achievementManager = new AchievementManager();
     this.maintenanceManager = new MaintenanceManager(this.timeManager);
+    
+    // Initialize event manager with required dependencies
+    this.eventManager = new EventManager(
+      this.timeManager,
+      this.worldManager,
+      this.playerManager,
+      this.playerManager.getFactionManager()
+    );
     
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
@@ -74,6 +83,9 @@ export class SystemManager {
     
     // Update contract system
     this.contractManager.update(deltaTime * 1000);
+    
+    // Update event system
+    this.eventManager.update(deltaTime);
   }
 
   /**
@@ -148,6 +160,10 @@ export class SystemManager {
 
   getAchievementManager(): AchievementManager {
     return this.achievementManager;
+  }
+
+  getEventManager(): EventManager {
+    return this.eventManager;
   }
 
   /**

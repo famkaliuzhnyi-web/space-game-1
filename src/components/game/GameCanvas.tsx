@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -27,7 +27,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [stationContacts, setStationContacts] = useState<Contact[]>([]);
@@ -44,6 +44,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showCharacter = activePanel === 'character';
   const showContacts = activePanel === 'contacts';
   const showAchievements = activePanel === 'achievements';
+  const showEvents = activePanel === 'events';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -56,6 +57,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [ownedShips, setOwnedShips] = useState<Ship[]>([]);
   const [currentShipId, setCurrentShipId] = useState<string>('');
   const [playerReputation, setPlayerReputation] = useState<Map<string, FactionReputation>>(new Map());
+  const [activeEvents, setActiveEvents] = useState<any[]>([]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -96,6 +98,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setOwnedShips(playerManager.getOwnedShips());
         setCurrentShipId(playerManager.getCurrentShipId());
         setPlayerReputation(playerManager.getPlayerReputation());
+
+        // Sync active events from EventManager
+        const eventManager = engineRef.current.getEventManager();
+        setActiveEvents(eventManager.getActiveEvents());
+
+        // Set up periodic sync for events (every 5 seconds)
+        const eventSyncInterval = setInterval(() => {
+          if (engineRef.current) {
+            const eventManager = engineRef.current.getEventManager();
+            setActiveEvents(eventManager.getActiveEvents());
+          }
+        }, 5000);
+
+        // Store interval ID for cleanup
+        (window as any).eventSyncInterval = eventSyncInterval;
 
         // Check if character exists, prompt for creation if needed
         const characterManager = engineRef.current.getCharacterManager();
@@ -150,6 +167,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(activePanel === 'factions' ? null : 'factions');
       } else if (event.code === 'KeyP') {
         handleOpenContacts();
+      } else if (event.code === 'KeyE') {
+        setActivePanel(activePanel === 'events' ? null : 'events');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -158,6 +177,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
+      
+      // Clear event sync interval
+      if ((window as any).eventSyncInterval) {
+        clearInterval((window as any).eventSyncInterval);
+        delete (window as any).eventSyncInterval;
+      }
+      
       if (engineRef.current) {
         engineRef.current.dispose();
         setIsEngineRunning(false);
@@ -582,6 +608,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleEventChoice = (eventId: string, choiceId: string) => {
+    if (engineRef.current) {
+      const eventManager = engineRef.current.getEventManager();
+      const success = eventManager.makeEventChoice(eventId, choiceId);
+      
+      if (success) {
+        // Refresh active events
+        setActiveEvents(eventManager.getActiveEvents());
+        console.log(`Event choice made: ${eventId} -> ${choiceId}`);
+      } else {
+        console.warn(`Failed to make event choice: ${eventId} -> ${choiceId}`);
+      }
+    }
+  };
+
   const handleDiscoverContacts = (): Contact[] => {
     if (engineRef.current) {
       const worldManager = engineRef.current.getWorldManager();
@@ -859,6 +900,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Achievements (A)
         </button>
         <button 
+          onClick={() => setActivePanel(activePanel === 'events' ? null : 'events')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'events' ? '#4a90e2' : undefined
+          }}
+        >
+          Events (E) {activeEvents.length > 0 && `(${activeEvents.length})`}
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -1027,6 +1078,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           isVisible={showAchievements}
           onClose={() => setActivePanel(null)}
           achievementManager={engineRef.current.getAchievementManager()}
+        />
+      )}
+
+      {/* Events Panel */}
+      {engineRef.current && showEvents && (
+        <EventsPanel
+          events={activeEvents}
+          onEventChoice={handleEventChoice}
+          onClose={() => setActivePanel(null)}
         />
       )}
     </div>
