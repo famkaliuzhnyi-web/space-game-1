@@ -16,3 +16,4 @@ export { ContactManager, ContactFactory } from './ContactManager';
 export { CharacterManager } from './CharacterManager';
 export { EventManager } from './EventManager';
 export { NPCAIManager } from './NPCAIManager';
+export { SecurityManager } from './SecurityManager';

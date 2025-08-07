@@ -54,6 +54,7 @@ export * from './economy';
 export * from './events';
 export * from './npc';
 export * from './player';
+export * from './security';
 export * from './shipHubs';
 export * from './skillTrees';
 export * from './world';
