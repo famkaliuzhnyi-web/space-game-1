@@ -119,19 +119,22 @@ describe('CharacterManager', () => {
     });
 
     it('should award experience correctly', () => {
+      const initialLevel = characterManager.getCharacter()!.progression.level;
       const awarded = characterManager.awardExperience(100, 'Test Trade', 'trading');
       
-      expect(awarded).toBe(false); // No level up yet
+      expect(awarded).toBe(true); // Experience was successfully awarded
       const character = characterManager.getCharacter()!;
       expect(character.progression.experience).toBe(100);
+      expect(character.progression.level).toBe(initialLevel); // No level up yet
     });
 
     it('should handle level up correctly', () => {
-      const leveledUp = characterManager.awardExperience(300, 'Big Trade', 'trading');
+      const initialLevel = characterManager.getCharacter()!.progression.level;
+      const awarded = characterManager.awardExperience(300, 'Big Trade', 'trading');
       
-      expect(leveledUp).toBe(true);
+      expect(awarded).toBe(true); // Experience was successfully awarded
       const character = characterManager.getCharacter()!;
-      expect(character.progression.level).toBe(2);
+      expect(character.progression.level).toBe(initialLevel + 1); // Level up occurred
       expect(character.progression.skillPoints).toBe(3); // 3 points per level
       expect(character.progression.attributePoints).toBe(0); // Only every 3 levels
     });

@@ -2,6 +2,11 @@ import { Ship, EquipmentItem, ShipCondition } from '../types/player';
 import { Character } from '../types/character';
 import { TimeManager } from './TimeManager';
 
+// Forward declaration to avoid circular dependency
+interface ICharacterProgressionSystem {
+  awardTechnicalExperience(activity: string, data: {value?: number; complexity?: number}): boolean;
+}
+
 export interface MaintenanceRecord {
   type: 'equipment' | 'hull' | 'engines' | 'cargo' | 'shields';
   equipmentId?: string; // For equipment maintenance
@@ -41,6 +46,7 @@ export interface MaintenanceQuoteItem {
 export class MaintenanceManager {
   private maintenanceHistory: Map<string, MaintenanceRecord[]> = new Map(); // shipId -> records
   private timeManager: TimeManager;
+  private progressionSystem: ICharacterProgressionSystem | null = null;
 
   // Degradation rates per hour for different components
   private static readonly DEGRADATION_RATES = {
@@ -62,6 +68,13 @@ export class MaintenanceManager {
 
   constructor(timeManager: TimeManager) {
     this.timeManager = timeManager;
+  }
+
+  /**
+   * Set the progression system for experience awards (dependency injection)
+   */
+  setProgressionSystem(progressionSystem: ICharacterProgressionSystem): void {
+    this.progressionSystem = progressionSystem;
   }
 
   /**
@@ -455,6 +468,31 @@ export class MaintenanceManager {
     shipRecords.push(...records);
     this.maintenanceHistory.set(ship.id, shipRecords);
 
+    // Award technical experience for maintenance work
+    if (this.progressionSystem && records.length > 0) {
+      const totalCost = records.reduce((sum, record) => sum + record.cost, 0);
+      const complexity = this.calculateMaintenanceComplexity(records);
+      
+      // Award base maintenance experience
+      this.progressionSystem.awardTechnicalExperience('ship_maintenance', { 
+        value: totalCost,
+        complexity: complexity
+      });
+      
+      // Award repair experience for significant repairs (over 50% condition restored)
+      const hasSignificantRepairs = quoteItems.some(item => {
+        const conditionRestored = item.targetCondition - item.currentCondition;
+        return conditionRestored > 0.5;
+      });
+      
+      if (hasSignificantRepairs) {
+        this.progressionSystem.awardTechnicalExperience('ship_repair', { 
+          value: totalCost,
+          complexity: complexity
+        });
+      }
+    }
+
     return records;
   }
 
@@ -511,5 +549,34 @@ export class MaintenanceManager {
     if (data.maintenanceHistory) {
       this.maintenanceHistory = new Map(data.maintenanceHistory);
     }
+  }
+
+  /**
+   * Calculate the complexity of maintenance work for experience calculation
+   */
+  private calculateMaintenanceComplexity(records: MaintenanceRecord[]): number {
+    let complexity = 0;
+    
+    records.forEach(record => {
+      switch (record.type) {
+        case 'hull':
+          complexity += 3; // Hull repair is complex
+          break;
+        case 'engines':
+          complexity += 4; // Engine work is very complex
+          break;
+        case 'shields':
+          complexity += 3; // Shield systems are complex
+          break;
+        case 'cargo':
+          complexity += 2; // Cargo bay work is moderate
+          break;
+        case 'equipment':
+          complexity += 2; // Equipment repair is moderate
+          break;
+      }
+    });
+    
+    return complexity;
   }
 }

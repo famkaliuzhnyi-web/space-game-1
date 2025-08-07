@@ -127,8 +127,11 @@ export class CharacterManager {
     this.experienceHistory.push(experienceGain);
     this.character.progression.experience += amount;
 
-    // Check for level up
-    return this.checkLevelUp();
+    // Check for level up (but don't base success on it)
+    this.checkLevelUp();
+    
+    // Return true if experience was successfully awarded
+    return true;
   }
 
   /**

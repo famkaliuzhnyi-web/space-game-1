@@ -1,15 +1,28 @@
 import { TradeContract } from '../types/economy';
 
+// Forward declaration to avoid circular dependency
+interface ICharacterProgressionSystem {
+  awardTradingExperience(activity: string, data: {value?: number; profitMargin?: number}): boolean;
+}
+
 export class ContractManager {
   private contracts: Map<string, TradeContract> = new Map();
   private contractIdCounter: number = 1;
   private lastGenerationTime: number = 0;
   private generationInterval: number = 1800000; // Generate new contracts every 30 minutes
+  private progressionSystem: ICharacterProgressionSystem | null = null;
 
   constructor() {
     this.lastGenerationTime = Date.now();
     // Generate initial contracts for testing
     this.generateRandomContracts();
+  }
+
+  /**
+   * Set the progression system for experience awards (dependency injection)
+   */
+  setProgressionSystem(progressionSystem: ICharacterProgressionSystem): void {
+    this.progressionSystem = progressionSystem;
   }
 
   /**
@@ -166,6 +179,13 @@ export class ContractManager {
     // Bonus for completing in first 50% of time limit
     if (timeUsedRatio <= 0.5 && contract.bonusReward) {
       totalReward += contract.bonusReward;
+    }
+    
+    // Award contract completion experience
+    if (this.progressionSystem) {
+      this.progressionSystem.awardTradingExperience('contract_complete', { 
+        value: totalReward 
+      });
     }
     
     return { success: true, reward: totalReward };

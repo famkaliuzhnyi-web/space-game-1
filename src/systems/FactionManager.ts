@@ -2,6 +2,11 @@ import { FactionReputation } from '../types/player';
 import { FactionRelationship } from '../types/contacts';
 import { ContactManager, ContactFactory } from './ContactManager';
 
+// Forward declaration to avoid circular dependency
+interface ICharacterProgressionSystem {
+  awardSocialExperience(activity: string, data: {value?: number}): boolean;
+}
+
 export interface FactionInfo {
   id: string;
   name: string;
@@ -37,10 +42,18 @@ export class FactionManager {
   private reputationHistory: ReputationChange[] = [];
   private factionRelationships: Map<string, FactionRelationship> = new Map();
   private contactManager: ContactManager;
+  private progressionSystem: ICharacterProgressionSystem | null = null;
 
   constructor() {
     this.contactManager = new ContactManager();
     this.initializeFactions();
+  }
+
+  /**
+   * Set the progression system for experience awards (dependency injection)
+   */
+  setProgressionSystem(progressionSystem: ICharacterProgressionSystem): void {
+    this.progressionSystem = progressionSystem;
   }
 
   /**
@@ -385,6 +398,13 @@ export class FactionManager {
     });
 
     console.log(`Reputation change: ${faction.name} ${change > 0 ? '+' : ''}${change} (${reason})`);
+    
+    // Award social experience for reputation changes
+    if (this.progressionSystem && Math.abs(change) > 0) {
+      this.progressionSystem.awardSocialExperience('reputation_gain', { 
+        value: Math.abs(change) 
+      });
+    }
     
     return { success: true, newReputation: updatedReputation };
   }
