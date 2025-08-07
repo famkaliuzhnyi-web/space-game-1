@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
@@ -25,8 +25,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
+  const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -37,6 +38,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showShipManagement = activePanel === 'ship';
   const showFactionReputation = activePanel === 'factions';
   const showMaintenance = activePanel === 'maintenance';
+  const showCharacter = activePanel === 'character';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -89,6 +91,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setOwnedShips(playerManager.getOwnedShips());
         setCurrentShipId(playerManager.getCurrentShipId());
         setPlayerReputation(playerManager.getPlayerReputation());
+
+        // Check if character exists, prompt for creation if needed
+        const characterManager = engineRef.current.getCharacterManager();
+        const existingCharacter = characterManager.getCharacter();
+        if (!existingCharacter) {
+          setShowCharacterCreation(true);
+        }
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
         setEngineError(error instanceof Error ? error.message : 'Unknown error occurred');
@@ -669,6 +678,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Factions (F)
         </button>
         <button 
+          onClick={() => setActivePanel(activePanel === 'character' ? null : 'character')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'character' ? '#4a90e2' : undefined
+          }}
+        >
+          Character (H)
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -795,6 +814,28 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           stationId={engineRef.current.getWorldManager().getCurrentStation()?.id || 'earth-station'}
           maintenanceManager={engineRef.current.getMaintenanceManager()}
           onMaintenancePerformed={handleMaintenancePerformed}
+        />
+      )}
+
+      {/* Character Sheet Panel */}
+      {engineRef.current && showCharacter && (
+        <CharacterSheet
+          characterManager={engineRef.current.getCharacterManager()}
+          onClose={() => setActivePanel(null)}
+        />
+      )}
+
+      {/* Character Creation Panel */}
+      {engineRef.current && showCharacterCreation && (
+        <CharacterCreationPanel
+          characterManager={engineRef.current.getCharacterManager()}
+          onComplete={(success) => {
+            setShowCharacterCreation(false);
+            if (success) {
+              setActivePanel('character');
+            }
+          }}
+          onCancel={() => setShowCharacterCreation(false)}
         />
       )}
     </div>
