@@ -27,10 +27,17 @@ describe('TutorialManager', () => {
       
       expect(availableFlows).toBeDefined();
       expect(availableFlows.length).toBeGreaterThan(0);
-      expect(availableFlows[0].id).toBe('basics');
-      expect(availableFlows[0].name).toBe('Welcome to Space');
-      expect(availableFlows[0].category).toBe('basics');
-      expect(availableFlows[0].steps.length).toBe(5);
+      
+      // Find the enhanced basics tutorial (should be first due to priority 1)
+      const enhancedBasics = availableFlows.find(flow => flow.id === 'enhanced-basics');
+      expect(enhancedBasics).toBeDefined();
+      expect(enhancedBasics!.name).toBe('🚀 Space Trading Fundamentals');
+      expect(enhancedBasics!.category).toBe('basics');
+      expect(enhancedBasics!.steps.length).toBeGreaterThan(5); // Enhanced has more steps
+      
+      // Original basics tutorial should still exist
+      const originalBasics = availableFlows.find(flow => flow.id === 'basics');
+      expect(originalBasics).toBeDefined();
     });
 
     it('should start a tutorial flow successfully', () => {
