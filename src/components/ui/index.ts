@@ -21,6 +21,7 @@ export { CharacterSheet } from './CharacterSheet';
 export { CharacterCreationPanel } from './CharacterCreationPanel';
 export { SecurityPanel } from './SecurityPanel';
 export { HackingPanel } from './HackingPanel';
+export { CombatPanel } from './CombatPanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
 export type { InventoryItem, CargoHold } from './InventoryPanel';
 export type { ModalAction } from './Modal';
