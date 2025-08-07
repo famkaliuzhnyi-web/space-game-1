@@ -18,6 +18,12 @@ export interface ShipYardOffer {
   availableCount: number;
 }
 
+interface ShipStorageManagerSaveData {
+  storedShips: Array<[string, ShipStorageSlot]>;
+  shipYards: Array<[string, ShipYardOffer[]]>;
+  lastStorageFeesCollected: number;
+}
+
 export class ShipStorageManager {
   private storedShips: Map<string, ShipStorageSlot> = new Map(); // shipId -> storage slot
   private shipYards: Map<string, ShipYardOffer[]> = new Map(); // stationId -> available ships
@@ -312,7 +318,7 @@ export class ShipStorageManager {
   /**
    * Serialize storage data for save/load
    */
-  serialize(): any {
+  serialize(): ShipStorageManagerSaveData {
     return {
       storedShips: Array.from(this.storedShips.entries()),
       shipYards: Array.from(this.shipYards.entries()),
@@ -323,7 +329,7 @@ export class ShipStorageManager {
   /**
    * Deserialize storage data from save
    */
-  deserialize(data: any): void {
+  deserialize(data: ShipStorageManagerSaveData): void {
     if (data.storedShips) {
       this.storedShips = new Map(data.storedShips);
     }

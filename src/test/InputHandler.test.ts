@@ -162,14 +162,23 @@ describe('InputHandler', () => {
   describe('World Click Handling', () => {
     it('should handle world click with stations', () => {
       const worldManager = new WorldManager();
-      const spy = vi.spyOn(worldManager, 'navigateToTarget').mockImplementation(() => {});
+      const spy = vi.spyOn(worldManager, 'navigateToTarget').mockImplementation(() => true);
       
       // Mock visible objects
       vi.spyOn(worldManager, 'getAllVisibleObjects').mockReturnValue([
         {
           type: 'station',
           position: { x: 10, y: 10 },
-          object: { id: 'test-station' }
+          object: { 
+            id: 'test-station',
+            name: 'Test Station',
+            type: 'trade',
+            position: { x: 10, y: 10 },
+            faction: 'Test Faction',
+            dockingCapacity: 5,
+            services: [],
+            description: 'Test station'
+          }
         }
       ]);
       
@@ -179,14 +188,23 @@ describe('InputHandler', () => {
 
     it('should respect click radius for different object types', () => {
       const worldManager = new WorldManager();
-      const spy = vi.spyOn(worldManager, 'navigateToTarget').mockImplementation(() => {});
+      const spy = vi.spyOn(worldManager, 'navigateToTarget').mockImplementation(() => true);
       
       // Mock visible objects
       vi.spyOn(worldManager, 'getAllVisibleObjects').mockReturnValue([
         {
           type: 'station',
           position: { x: 0, y: 0 },
-          object: { id: 'test-station' }
+          object: { 
+            id: 'test-station',
+            name: 'Test Station',
+            type: 'trade',
+            position: { x: 0, y: 0 },
+            faction: 'Test Faction',
+            dockingCapacity: 5,
+            services: [],
+            description: 'Test station'
+          }
         }
       ]);
       
