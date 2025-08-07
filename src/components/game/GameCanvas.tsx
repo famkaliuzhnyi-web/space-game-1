@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -28,7 +28,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showNPCs, setShowNPCs] = useState(false);
@@ -48,6 +48,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showAchievements = activePanel === 'achievements';
   const showEvents = activePanel === 'events';
   const showSecurity = activePanel === 'security';
+  const showHacking = activePanel === 'hacking';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -176,6 +177,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(activePanel === 'events' ? null : 'events');
       } else if (event.code === 'KeyL') {
         setActivePanel(activePanel === 'security' ? null : 'security');
+      } else if (event.code === 'KeyH') {
+        setActivePanel(activePanel === 'hacking' ? null : 'hacking');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -927,6 +930,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Security (L)
         </button>
         <button 
+          onClick={() => setActivePanel(activePanel === 'hacking' ? null : 'hacking')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'hacking' ? '#4a90e2' : undefined
+          }}
+        >
+          Hacking (H)
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -1112,6 +1125,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         <SecurityPanel
           securityManager={engineRef.current.getSecurityManager()}
           currentLocation={engineRef.current.getWorldManager().getCurrentSystem()?.id || 'unknown'}
+        />
+      )}
+
+      {/* Hacking Panel */}
+      {engineRef.current && showHacking && (
+        <HackingPanel
+          hackingManager={engineRef.current.getHackingManager()}
+          onClose={() => setActivePanel(null)}
+          onCreditsChange={() => {
+            // Update player credits display
+            setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
+          }}
         />
       )}
 
