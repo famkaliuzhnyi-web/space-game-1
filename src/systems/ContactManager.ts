@@ -292,6 +292,232 @@ export class ContactManager {
   }
 
   /**
+   * Enhanced Phase 4.2: Discover contacts through referrals
+   */
+  discoverContactsViaReferral(existingContactId: string, targetFactionId?: string): Contact[] {
+    const existingContact = this.getContact(existingContactId);
+    if (!existingContact || existingContact.trustLevel < 40 || !existingContact.stationId) {
+      return []; // Need good relationship for referrals and valid station
+    }
+
+    const discoveredContacts: Contact[] = [];
+    const connectionLimit = Math.floor(existingContact.role.influence / 3); // More influential contacts know more people
+    
+    for (let i = 0; i < connectionLimit; i++) {
+      const contactData = ContactFactory.createStationContact(
+        existingContact.stationId,
+        targetFactionId || existingContact.factionId,
+        this.getRandomContactType()
+      );
+      
+      const newContact = this.meetContact({
+        ...contactData,
+        biography: `${contactData.biography} Introduced by ${existingContact.name}.`
+      });
+      
+      // Create network connection
+      this.createNetworkConnection(existingContactId, newContact.id);
+      
+      // Referral bonus - start with higher trust
+      newContact.trustLevel = Math.min(50, 15 + Math.floor(existingContact.trustLevel * 0.3));
+      newContact.relationship = this.calculateRelationshipLevel(newContact.trustLevel);
+      
+      discoveredContacts.push(newContact);
+    }
+    
+    return discoveredContacts;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Advanced contact interaction with more outcomes
+   */
+  performAdvancedInteraction(
+    contactId: string,
+    interactionType: InteractionType,
+    playerSkills?: { charisma?: number; reputation?: number }
+  ): { outcome: InteractionOutcome; trustChange: number; unlocked?: string[] } {
+    const contact = this.getContact(contactId);
+    if (!contact) {
+      return { outcome: 'failure', trustChange: 0 };
+    }
+
+    // Enhanced interaction calculation with player skills
+    let baseChance = this.calculateBaseInteractionChance(contact, interactionType);
+    
+    if (playerSkills) {
+      // Charisma improves all interactions
+      if (playerSkills.charisma) {
+        baseChance += (playerSkills.charisma - 10) * 2; // Each point above 10 adds 2% chance
+      }
+      
+      // Reputation with contact's faction helps
+      if (playerSkills.reputation) {
+        baseChance += Math.max(0, playerSkills.reputation / 5); // Positive reputation helps
+      }
+    }
+
+    // Determine outcome with more possibilities
+    const roll = Math.random() * 100;
+    let outcome: InteractionOutcome;
+    let trustChange = 0;
+
+    if (roll < baseChance * 0.1) {
+      outcome = 'exceptional';
+      trustChange = this.getBaseTrustChangeForType(interactionType) * 2;
+    } else if (roll < baseChance) {
+      outcome = 'success';
+      trustChange = this.getBaseTrustChangeForType(interactionType);
+    } else if (roll < baseChance + 30) {
+      outcome = 'neutral';
+      trustChange = Math.round(this.getBaseTrustChangeForType(interactionType) * 0.3);
+    } else {
+      outcome = 'failure';
+      trustChange = -Math.abs(Math.round(this.getBaseTrustChangeForType(interactionType) * 0.7));
+    }
+
+    // Apply personality modifiers
+    const personalityBonus = this.calculatePersonalityBonusForInteraction(contact, interactionType);
+    trustChange += personalityBonus;
+
+    // Record the interaction
+    this.recordInteraction(contactId, interactionType, outcome, trustChange);
+
+    // Check for unlocked services or opportunities
+    const unlocked = this.checkForUnlocks(contact, interactionType, outcome);
+
+    return { outcome, trustChange, unlocked };
+  }
+
+  /**
+   * Calculate base interaction chance (helper method)
+   */
+  private calculateBaseInteractionChance(contact: Contact, interactionType: InteractionType): number {
+    let baseChance = 50; // Start with 50% base chance
+    
+    // Adjust based on current relationship level
+    switch (contact.relationship.id) {
+      case 'hostile': baseChance = 10; break;
+      case 'enemy': baseChance = 20; break;
+      case 'disliked': baseChance = 30; break;
+      case 'neutral': baseChance = 50; break;
+      case 'liked': baseChance = 70; break;
+      case 'friend': baseChance = 80; break;
+      case 'ally': baseChance = 90; break;
+      default: baseChance = 50;
+    }
+    
+    // Adjust based on interaction type difficulty
+    switch (interactionType) {
+      case 'greeting': baseChance += 20; break;
+      case 'social_chat': baseChance += 10; break;
+      case 'favor': baseChance -= 10; break;
+      case 'business_deal': baseChance -= 5; break;
+      case 'contract_negotiation': baseChance -= 15; break;
+    }
+    
+    return Math.max(5, Math.min(95, baseChance)); // Keep between 5-95%
+  }
+
+  /**
+   * Get base trust change for interaction type (helper method)
+   */
+  private getBaseTrustChangeForType(interactionType: InteractionType): number {
+    switch (interactionType) {
+      case 'greeting': return 3;
+      case 'social_chat': return 2;
+      case 'favor': return 8;
+      case 'business_deal': return 6;
+      case 'contract_negotiation': return 10;
+      default: return 3;
+    }
+  }
+
+  /**
+   * Calculate personality bonus for interaction (helper method)
+   */
+  private calculatePersonalityBonusForInteraction(contact: Contact, interactionType: InteractionType): number {
+    let bonus = 0;
+    
+    contact.personalityTraits.forEach(trait => {
+      switch (trait.id) {
+        case 'friendly':
+          if (interactionType === 'greeting' || interactionType === 'social_chat') {
+            bonus += trait.interactionModifier * 10; // Convert to trust points
+          }
+          break;
+        case 'business-minded':
+          if (interactionType === 'business_deal' || interactionType === 'contract_negotiation') {
+            bonus += trait.interactionModifier * 10;
+          }
+          break;
+        case 'suspicious':
+          bonus += trait.interactionModifier * 10; // Usually negative
+          break;
+      }
+    });
+    
+    return Math.round(bonus);
+  }
+
+  /**
+   * Enhanced Phase 4.2: Check for service/opportunity unlocks
+   */
+  private checkForUnlocks(contact: Contact, interactionType: InteractionType, outcome: InteractionOutcome): string[] {
+    const unlocked: string[] = [];
+    
+    // High-trust interactions can unlock special services
+    if (contact.trustLevel >= 60 && outcome === 'exceptional') {
+      switch (contact.role.id) {
+        case 'station_commander':
+          if (interactionType === 'favor') {
+            unlocked.push('priority_docking', 'station_intel');
+          }
+          break;
+        case 'trade_liaison':
+          if (interactionType === 'business_deal') {
+            unlocked.push('bulk_discounts', 'market_intel');
+          }
+          break;
+        case 'quartermaster':
+          if (interactionType === 'favor') {
+            unlocked.push('equipment_access', 'maintenance_priority');
+          }
+          break;
+      }
+    }
+    
+    // Network connections can be unlocked
+    if (contact.trustLevel >= 40 && outcome !== 'failure') {
+      const connections = this.socialNetwork.networkConnections.get(contact.id) || [];
+      if (connections.length === 0) {
+        unlocked.push('network_introductions');
+      }
+    }
+    
+    return unlocked;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Get random contact type for variety
+   */
+  private getRandomContactType(): 'commander' | 'trade_liaison' | 'quartermaster' | 'dock_supervisor' {
+    const types = ['commander', 'trade_liaison', 'quartermaster', 'dock_supervisor'] as const;
+    const weights = [0.15, 0.4, 0.25, 0.2]; // Trade liaisons are most common
+    
+    const random = Math.random();
+    let sum = 0;
+    
+    for (let i = 0; i < types.length; i++) {
+      sum += weights[i];
+      if (random <= sum) {
+        return types[i];
+      }
+    }
+    
+    return 'trade_liaison';
+  }
+
+  /**
    * Serialize contact manager state
    */
   serialize(): any {
@@ -324,8 +550,191 @@ export class ContactManager {
 
 /**
  * Contact factory for creating default contacts at stations
+ * Enhanced for Phase 4.2 with more diverse contact generation
  */
 export class ContactFactory {
+  /**
+   * Enhanced Phase 4.2: Create diverse contacts based on station characteristics
+   */
+  static createEnhancedStationContacts(
+    stationId: string, 
+    factionId: string,
+    stationType: string = 'trading',
+    playerReputation?: number
+  ): Omit<Contact, 'id' | 'metAt' | 'lastInteraction' | 'interactionCount' | 'trustLevel' | 'relationship'>[] {
+    const contacts: Omit<Contact, 'id' | 'metAt' | 'lastInteraction' | 'interactionCount' | 'trustLevel' | 'relationship'>[] = [];
+    
+    // Base contacts based on station type
+    switch (stationType) {
+      case 'military':
+        contacts.push(
+          this.createStationContact(stationId, factionId, 'commander'),
+          this.createStationContact(stationId, factionId, 'quartermaster')
+        );
+        break;
+      case 'industrial':
+        contacts.push(
+          this.createStationContact(stationId, factionId, 'trade_liaison'),
+          this.createStationContact(stationId, factionId, 'dock_supervisor')
+        );
+        break;
+      case 'research':
+        contacts.push(
+          this.createStationContact(stationId, factionId, 'commander'),
+          this.createSpecializedContact(stationId, factionId, 'research_director')
+        );
+        break;
+      default: // trading station
+        contacts.push(
+          this.createStationContact(stationId, factionId, 'trade_liaison'),
+          this.createStationContact(stationId, factionId, 'dock_supervisor')
+        );
+    }
+    
+    // Add reputation-based contacts
+    if (playerReputation && playerReputation >= 40) {
+      contacts.push(this.createSpecializedContact(stationId, factionId, 'information_broker'));
+    }
+    
+    if (playerReputation && playerReputation >= 60) {
+      contacts.push(this.createSpecializedContact(stationId, factionId, 'faction_representative'));
+    }
+    
+    return contacts;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Create specialized contacts with unique services
+   */
+  static createSpecializedContact(
+    stationId: string, 
+    factionId: string, 
+    specialType: string
+  ): Omit<Contact, 'id' | 'metAt' | 'lastInteraction' | 'interactionCount' | 'trustLevel' | 'relationship'> {
+    const specialRoles = {
+      'research_director': {
+        roleId: 'research_director',
+        name: ['Dr. Sarah Chen', 'Dr. Marcus Webb', 'Dr. Elena Rodriguez', 'Dr. James Anderson'][Math.floor(Math.random() * 4)],
+        specialties: ['Advanced Technology', 'Research Grants', 'Prototype Access'],
+        services: [
+          {
+            id: 'prototype_access',
+            name: 'Prototype Equipment Access',
+            description: 'Access to experimental technology',
+            cost: 15000,
+            requirements: [
+              { type: 'trust' as const, value: 'trust', minimum: 70 },
+              { type: 'reputation' as const, value: 'reputation', minimum: 50 }
+            ],
+            availability: 'conditional' as const
+          }
+        ]
+      },
+      'information_broker': {
+        roleId: 'information_broker',
+        name: ['Shadow', 'Intel', 'Network', 'Cipher'][Math.floor(Math.random() * 4)],
+        specialties: ['Market Intelligence', 'Route Information', 'Competitor Analysis'],
+        services: [
+          {
+            id: 'competitor_intelligence',
+            name: 'Competitor Intelligence',
+            description: 'Detailed information about competing traders',
+            cost: 8000,
+            requirements: [
+              { type: 'trust' as const, value: 'trust', minimum: 60 }
+            ],
+            availability: 'conditional' as const
+          }
+        ]
+      },
+      'faction_representative': {
+        roleId: 'faction_representative',
+        name: ['Ambassador Sterling', 'Envoy Harrison', 'Representative Clarke', 'Delegate Morgan'][Math.floor(Math.random() * 4)],
+        specialties: ['Faction Relations', 'Diplomatic Missions', 'Territory Access'],
+        services: [
+          {
+            id: 'diplomatic_immunity',
+            name: 'Diplomatic Immunity',
+            description: 'Temporary protection in hostile territory',
+            cost: 25000,
+            requirements: [
+              { type: 'trust' as const, value: 'trust', minimum: 80 },
+              { type: 'reputation' as const, value: 'reputation', minimum: 70 }
+            ],
+            availability: 'conditional' as const
+          }
+        ]
+      }
+    };
+
+    const roleData = specialRoles[specialType as keyof typeof specialRoles];
+    if (!roleData) {
+      return this.createStationContact(stationId, factionId, 'trade_liaison');
+    }
+
+    // Create custom role or use existing one
+    const role = CONTACT_ROLES.find(r => r.id === roleData.roleId) || {
+      id: roleData.roleId,
+      name: roleData.roleId.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      influence: 8,
+      description: `A specialized contact with unique services and connections.`
+    };
+
+    // Enhanced personality traits for specialized contacts
+    const traits = this.getEnhancedTraits(specialType);
+
+    return {
+      name: roleData.name,
+      factionId,
+      stationId,
+      role,
+      specialties: roleData.specialties,
+      personalityTraits: traits,
+      services: roleData.services,
+      biography: this.generateEnhancedBiography(roleData.name, role, factionId, specialType)
+    };
+  }
+
+  /**
+   * Enhanced Phase 4.2: Get personality traits based on contact specialization
+   */
+  private static getEnhancedTraits(specialType: string): typeof PERSONALITY_TRAITS[0][] {
+    const specializedTraits = {
+      'research_director': ['methodical', 'innovative'],
+      'information_broker': ['secretive', 'opportunistic'],
+      'faction_representative': ['diplomatic', 'influential']
+    };
+
+    const baseTraits = specializedTraits[specialType as keyof typeof specializedTraits] || [];
+    const additionalTraits = this.getRandomTraits(2 - baseTraits.length);
+    
+    // Convert string traits to proper trait objects
+    const traitObjects = baseTraits.map(traitName => 
+      PERSONALITY_TRAITS.find(t => t.id === traitName) || PERSONALITY_TRAITS[0]
+    );
+    
+    return [...traitObjects, ...additionalTraits];
+  }
+
+  /**
+   * Enhanced Phase 4.2: Generate rich biographies for specialized contacts
+   */
+  private static generateEnhancedBiography(name: string, role: any, factionId: string, specialType?: string): string {
+    const baseBio = this.generateBiography(name, role, factionId);
+    
+    const specializations = {
+      'research_director': `${name} leads cutting-edge research initiatives and has connections throughout the scientific community.`,
+      'information_broker': `${name} operates in the shadows, trading in secrets and intelligence across multiple sectors.`,
+      'faction_representative': `${name} serves as a key diplomatic liaison and can facilitate access to restricted faction resources.`
+    };
+
+    if (specialType && specializations[specialType as keyof typeof specializations]) {
+      return `${baseBio} ${specializations[specialType as keyof typeof specializations]}`;
+    }
+
+    return baseBio;
+  }
+
   /**
    * Create a default contact for a station based on faction
    */

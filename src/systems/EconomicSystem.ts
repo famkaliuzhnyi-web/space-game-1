@@ -149,6 +149,47 @@ export class EconomicSystem {
   }
 
   /**
+   * Enhanced Phase 4.2: Calculate price with faction reputation bonuses
+   */
+  calculatePriceWithFactionBonus(
+    commodity: Commodity, 
+    market: Market, 
+    character: Character | null, 
+    factionManager: any,
+    playerReputation: Map<string, any>
+  ): number {
+    // Start with character-adjusted price
+    let price = this.calculatePriceWithCharacterBonus(commodity, market, character);
+    
+    if (factionManager && playerReputation) {
+      // Get the station's controlling faction (simplified - could use market.factionId if available)
+      const stationFactionId = market.stationId.includes('traders') ? 'traders-guild' : 
+                              market.stationId.includes('earth') ? 'earth-federation' :
+                              market.stationId.includes('outer') ? 'outer-colonies' : 'traders-guild';
+      
+      const reputation = playerReputation.get(stationFactionId);
+      if (reputation) {
+        const factionBenefits = factionManager.getFactionBenefits(reputation.standing);
+        
+        if (factionBenefits && factionBenefits.tradingDiscount) {
+          // Apply trading discount (positive values are discounts, negative are markups)
+          const discountMultiplier = 1.0 - (factionBenefits.tradingDiscount / 100);
+          price *= Math.max(0.5, Math.min(1.5, discountMultiplier)); // Cap at 50% discount to 50% markup
+        }
+        
+        // Check for faction restrictions
+        const restrictions = factionManager.getFactionRestrictions(playerReputation, stationFactionId);
+        if (restrictions && restrictions.tradingRestrictions.length > 0) {
+          // Apply penalty for restricted trading
+          price *= 1.2; // 20% markup for restricted traders
+        }
+      }
+    }
+    
+    return Math.max(1, Math.round(price));
+  }
+
+  /**
    * Calculate trading bonus based on character attributes and skills
    */
   private calculateTradingBonus(character: Character): number {
