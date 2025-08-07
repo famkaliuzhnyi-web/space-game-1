@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { SecurityManager } from '../../systems/SecurityManager';
-import { LegalStatus, SecurityLevel, CriminalOffense, Warrant, LawEnforcementUnit, SecurityEvent } from '../../types/security';
 
 interface SecurityPanelProps {
   securityManager: SecurityManager;
@@ -99,7 +98,7 @@ export const SecurityPanel: React.FC<SecurityPanelProps> = ({ securityManager, c
         <p>No active warrants.</p>
       ) : (
         <div className="warrant-list">
-          {warrants.map((warrant, index) => (
+          {warrants.map((warrant) => (
             <div key={warrant.id} className={`warrant-item priority-${warrant.priority}`}>
               <div className="warrant-header">
                 <span className={`priority-badge ${warrant.priority}`}>
@@ -128,7 +127,7 @@ export const SecurityPanel: React.FC<SecurityPanelProps> = ({ securityManager, c
         <p>No criminal record.</p>
       ) : (
         <div className="crime-list">
-          {crimeHistory.slice(-10).reverse().map((crime, index) => (
+          {crimeHistory.slice(-10).reverse().map((crime) => (
             <div key={crime.id} className={`crime-item status-${crime.status}`}>
               <div className="crime-header">
                 <span className="crime-type">{crime.crimeType.replace('-', ' ')}</span>
@@ -158,7 +157,7 @@ export const SecurityPanel: React.FC<SecurityPanelProps> = ({ securityManager, c
         <p>No law enforcement units detected in this area.</p>
       ) : (
         <div className="enforcement-list">
-          {lawEnforcement.map((unit, index) => (
+          {lawEnforcement.map((unit) => (
             <div key={unit.id} className={`enforcement-unit status-${unit.status}`}>
               <div className="unit-header">
                 <span className={`unit-type ${unit.type}`}>{unit.type.toUpperCase()}</span>
@@ -181,7 +180,7 @@ export const SecurityPanel: React.FC<SecurityPanelProps> = ({ securityManager, c
           <p>No recent security activity.</p>
         ) : (
           <div className="event-list">
-            {securityEvents.map((event, index) => (
+            {securityEvents.map((event) => (
               <div key={event.id} className={`event-item type-${event.type}`}>
                 <div className="event-header">
                   <span className="event-type">{event.type.replace('_', ' ').toUpperCase()}</span>
