@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FactionReputation } from '../../types/player';
 import { FactionInfo, FactionManager } from '../../systems/FactionManager';
+import { Contact } from '../../types/contacts';
 import Modal from './Modal';
 
 interface FactionReputationPanelProps {
@@ -8,14 +9,18 @@ interface FactionReputationPanelProps {
   onClose: () => void;
   playerReputation: Map<string, FactionReputation>;
   factionManager?: FactionManager;
+  playerCredits?: number;
 }
 
 const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
   isVisible,
   onClose,
   playerReputation,
-  factionManager
+  factionManager,
+  playerCredits = 0
 }) => {
+  const [activeTab, setActiveTab] = useState<'factions' | 'contacts' | 'history'>('factions');
+
   if (!isVisible || !factionManager) return null;
 
   const factions = factionManager.getFactions();
@@ -36,6 +41,231 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
 
   const formatStanding = (standing: number): string => {
     return standing > 0 ? `+${standing}` : `${standing}`;
+  };
+
+  const renderContactCard = (contact: Contact) => {
+    const availableServices = factionManager.getContactManager().getAvailableServices(
+      contact.id, 
+      playerReputation, 
+      playerCredits
+    );
+    const recentInteractions = factionManager.getContactManager().getRecentInteractions(contact.id, 3);
+
+    return (
+      <div
+        key={contact.id}
+        style={{
+          backgroundColor: '#1f2937',
+          border: '1px solid #374151',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '12px'
+        }}
+      >
+        {/* Contact Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ 
+              color: '#f3f4f6', 
+              margin: '0 0 4px 0',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              {contact.name}
+            </h4>
+            <p style={{ 
+              color: '#9ca3af', 
+              margin: '0 0 8px 0', 
+              fontSize: '13px'
+            }}>
+              {contact.role.name} • {factionManager.getFaction(contact.factionId)?.name}
+            </p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+              {contact.specialties.map(specialty => (
+                <span
+                  key={specialty}
+                  style={{
+                    backgroundColor: '#374151',
+                    color: '#d1d5db',
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    fontSize: '11px'
+                  }}
+                >
+                  {specialty}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', minWidth: '80px' }}>
+            <div style={{ 
+              color: getTrustColor(contact.trustLevel), 
+              fontSize: '18px', 
+              fontWeight: 'bold',
+              marginBottom: '2px'
+            }}>
+              {contact.trustLevel}
+            </div>
+            <div style={{ 
+              color: getTrustColor(contact.trustLevel), 
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {contact.relationship.name}
+            </div>
+          </div>
+        </div>
+
+        {/* Trust Progress Bar */}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{
+            width: '100%',
+            height: '6px',
+            backgroundColor: '#374151',
+            borderRadius: '3px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${contact.trustLevel}%`,
+              height: '100%',
+              backgroundColor: getTrustColor(contact.trustLevel),
+              transition: 'width 0.3s ease-in-out'
+            }} />
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            fontSize: '10px', 
+            color: '#6b7280',
+            marginTop: '2px'
+          }}>
+            <span>0</span>
+            <span>Trust Level</span>
+            <span>100</span>
+          </div>
+        </div>
+
+        {/* Stats Row */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))', 
+          gap: '8px',
+          marginBottom: '12px',
+          fontSize: '11px'
+        }}>
+          <div style={{ textAlign: 'center', padding: '6px', backgroundColor: '#374151', borderRadius: '4px' }}>
+            <div style={{ color: '#9ca3af' }}>Interactions</div>
+            <div style={{ color: '#f3f4f6', fontWeight: 'bold' }}>{contact.interactionCount}</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '6px', backgroundColor: '#374151', borderRadius: '4px' }}>
+            <div style={{ color: '#9ca3af' }}>Services</div>
+            <div style={{ color: '#f3f4f6', fontWeight: 'bold' }}>{availableServices.length}</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: '6px', backgroundColor: '#374151', borderRadius: '4px' }}>
+            <div style={{ color: '#9ca3af' }}>Influence</div>
+            <div style={{ color: '#f3f4f6', fontWeight: 'bold' }}>{contact.role.influence}/10</div>
+          </div>
+        </div>
+
+        {/* Personality Traits */}
+        {contact.personalityTraits.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ color: '#d1d5db', fontSize: '12px', marginBottom: '4px', fontWeight: '600' }}>Personality:</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+              {contact.personalityTraits.map(trait => (
+                <span
+                  key={trait.id}
+                  style={{
+                    backgroundColor: trait.interactionModifier > 0 ? '#065f46' : '#7f1d1d',
+                    color: trait.interactionModifier > 0 ? '#10b981' : '#ef4444',
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    fontSize: '10px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {trait.name} ({trait.interactionModifier > 0 ? '+' : ''}{Math.round(trait.interactionModifier * 100)}%)
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Available Services */}
+        {availableServices.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ color: '#d1d5db', fontSize: '12px', marginBottom: '6px', fontWeight: '600' }}>Available Services:</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {availableServices.slice(0, 3).map(service => (
+                <div
+                  key={service.id}
+                  style={{
+                    backgroundColor: '#065f46',
+                    color: '#6ee7b7',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>{service.name}</span>
+                  <span>{service.cost.toLocaleString()} CR</span>
+                </div>
+              ))}
+              {availableServices.length > 3 && (
+                <div style={{ 
+                  color: '#9ca3af', 
+                  fontSize: '10px', 
+                  textAlign: 'center' 
+                }}>
+                  +{availableServices.length - 3} more services
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Interactions */}
+        {recentInteractions.length > 0 && (
+          <div>
+            <div style={{ color: '#d1d5db', fontSize: '12px', marginBottom: '6px', fontWeight: '600' }}>Recent Activity:</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {recentInteractions.slice(0, 2).map((interaction, index) => (
+                <div
+                  key={index}
+                  style={{
+                    fontSize: '10px',
+                    color: '#9ca3af',
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                  }}
+                >
+                  <span>
+                    {interaction.type.replace('_', ' ')} ({interaction.outcome})
+                  </span>
+                  <span style={{ 
+                    color: interaction.trustChange > 0 ? '#10b981' : '#ef4444' 
+                  }}>
+                    {interaction.trustChange > 0 ? '+' : ''}{interaction.trustChange}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const getTrustColor = (trustLevel: number): string => {
+    if (trustLevel >= 80) return '#10b981'; // green - friend+
+    if (trustLevel >= 60) return '#22c55e'; // lighter green - ally
+    if (trustLevel >= 40) return '#84cc16'; // lime - associate
+    if (trustLevel >= 20) return '#eab308'; // yellow - acquaintance
+    if (trustLevel >= 10) return '#a3a3a3'; // gray - neutral
+    return '#ef4444'; // red - low trust
   };
 
   const renderFactionCard = (faction: FactionInfo) => {
@@ -246,27 +476,51 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
           borderBottom: '1px solid #374151',
           backgroundColor: '#1f2937'
         }}>
-          <div style={{
-            padding: '15px 20px',
-            backgroundColor: '#374151',
-            color: '#f3f4f6',
-            borderBottom: '2px solid #60a5fa',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
+          <div 
+            onClick={() => setActiveTab('factions')}
+            style={{
+              padding: '15px 20px',
+              backgroundColor: activeTab === 'factions' ? '#374151' : 'transparent',
+              color: activeTab === 'factions' ? '#f3f4f6' : '#9ca3af',
+              borderBottom: activeTab === 'factions' ? '2px solid #60a5fa' : '2px solid transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
             <span>🏛️</span>
             Factions
           </div>
-          <div style={{
-            padding: '15px 20px',
-            color: '#9ca3af',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
+          <div 
+            onClick={() => setActiveTab('contacts')}
+            style={{
+              padding: '15px 20px',
+              backgroundColor: activeTab === 'contacts' ? '#374151' : 'transparent',
+              color: activeTab === 'contacts' ? '#f3f4f6' : '#9ca3af',
+              borderBottom: activeTab === 'contacts' ? '2px solid #60a5fa' : '2px solid transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>👥</span>
+            Contacts ({factionManager.getContactManager().getContactsByRelationship().length})
+          </div>
+          <div 
+            onClick={() => setActiveTab('history')}
+            style={{
+              padding: '15px 20px',
+              backgroundColor: activeTab === 'history' ? '#374151' : 'transparent',
+              color: activeTab === 'history' ? '#f3f4f6' : '#9ca3af',
+              borderBottom: activeTab === 'history' ? '2px solid #60a5fa' : '2px solid transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
             <span>📜</span>
             Recent Activity
           </div>
@@ -278,15 +532,117 @@ const FactionReputationPanel: React.FC<FactionReputationPanelProps> = ({
           overflow: 'auto',
           padding: '20px'
         }}>
-          <div style={{ marginBottom: '20px' }}>
-            <p style={{ color: '#9ca3af', margin: '0 0 20px 0', lineHeight: '1.6' }}>
-              Your standing with the major factions affects trade prices, contract availability, 
-              and access to special equipment. Complete missions and trade to improve relationships.
-            </p>
-          </div>
+          {activeTab === 'factions' && (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: '#9ca3af', margin: '0 0 20px 0', lineHeight: '1.6' }}>
+                  Your standing with the major factions affects trade prices, contract availability, 
+                  and access to special equipment. Complete missions and trade to improve relationships.
+                </p>
+              </div>
+              {/* Faction Cards */}
+              {factions.map(renderFactionCard)}
+            </>
+          )}
 
-          {/* Faction Cards */}
-          {factions.map(renderFactionCard)}
+          {activeTab === 'contacts' && (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: '#9ca3af', margin: '0 0 20px 0', lineHeight: '1.6' }}>
+                  Build personal relationships with individual contacts to access unique services, 
+                  gain insider information, and unlock special opportunities.
+                </p>
+              </div>
+              {/* Contact Cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {factionManager.getContactManager().getContactsByRelationship().length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    color: '#6b7280', 
+                    padding: '40px 20px',
+                    backgroundColor: '#1f2937',
+                    borderRadius: '12px',
+                    border: '1px dashed #374151'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>👋</div>
+                    <h3 style={{ margin: '0 0 8px 0', color: '#9ca3af' }}>No Contacts Yet</h3>
+                    <p style={{ margin: '0', fontSize: '14px' }}>
+                      Visit stations and interact with NPCs to start building your contact network.
+                    </p>
+                  </div>
+                ) : (
+                  factionManager.getContactManager().getContactsByRelationship().map(renderContactCard)
+                )}
+              </div>
+            </>
+          )}
+
+          {activeTab === 'history' && (
+            <>
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: '#9ca3af', margin: '0 0 20px 0', lineHeight: '1.6' }}>
+                  Recent reputation changes and significant interactions with factions and contacts.
+                </p>
+              </div>
+              {/* Reputation History */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {factionManager.getReputationHistory(20).map((change, index) => {
+                  const faction = factionManager.getFaction(change.factionId);
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        backgroundColor: '#1f2937',
+                        border: '1px solid #374151',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <div>
+                        <div style={{ 
+                          color: '#f3f4f6', 
+                          fontSize: '14px', 
+                          fontWeight: '600',
+                          marginBottom: '2px'
+                        }}>
+                          {faction?.name || 'Unknown Faction'}
+                        </div>
+                        <div style={{ color: '#9ca3af', fontSize: '12px' }}>
+                          {change.reason} • {new Date(change.timestamp).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div style={{
+                        color: change.change > 0 ? '#10b981' : '#ef4444',
+                        fontSize: '16px',
+                        fontWeight: 'bold'
+                      }}>
+                        {change.change > 0 ? '+' : ''}{change.change}
+                      </div>
+                    </div>
+                  );
+                })}
+                {factionManager.getReputationHistory().length === 0 && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    color: '#6b7280', 
+                    padding: '40px 20px',
+                    backgroundColor: '#1f2937',
+                    borderRadius: '12px',
+                    border: '1px dashed #374151'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📜</div>
+                    <h3 style={{ margin: '0 0 8px 0', color: '#9ca3af' }}>No History Yet</h3>
+                    <p style={{ margin: '0', fontSize: '14px' }}>
+                      Your reputation changes and interactions will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </Modal>
