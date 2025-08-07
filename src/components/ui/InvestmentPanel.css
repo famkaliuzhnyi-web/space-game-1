@@ -1,0 +1,677 @@
+.investment-panel {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.panel-header {
+  background: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.4rem;
+}
+
+.panel-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.panel-tabs button {
+  padding: 0.5rem 1rem;
+  background: var(--color-button-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.panel-tabs button:hover {
+  background: var(--color-button-secondary-hover);
+}
+
+.panel-tabs button.active {
+  background: var(--color-button-primary);
+  color: var(--color-button-text);
+}
+
+.panel-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+/* Portfolio Tab Styles */
+.portfolio-summary {
+  margin-bottom: 2rem;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.summary-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.summary-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.summary-card .value {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+.summary-card .value.positive {
+  color: var(--color-success);
+}
+
+.summary-card .value.negative {
+  color: var(--color-danger);
+}
+
+.portfolio-details {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+}
+
+.risk-analysis {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.risk-analysis h4,
+.active-investments h4 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.risk-info,
+.diversification {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.active-investments {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.investment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.investment-item {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.investment-info h5 {
+  margin: 0 0 0.25rem 0;
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.investment-type {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.investment-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.investment-metrics span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.investment-metrics .positive {
+  color: var(--color-success);
+}
+
+.investment-metrics .negative {
+  color: var(--color-danger);
+}
+
+.investment-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.status.active {
+  color: var(--color-success);
+}
+
+.status.pending {
+  color: var(--color-warning);
+}
+
+.status.completed {
+  color: var(--color-info);
+}
+
+.status.failed {
+  color: var(--color-danger);
+}
+
+/* Opportunities Tab Styles */
+.opportunities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.opportunity-item {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.opportunity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.opportunity-header h5 {
+  margin: 0;
+  color: var(--color-text);
+  flex: 1;
+}
+
+.opportunity-details p {
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.opportunity-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.metric {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.opportunity-requirements {
+  margin-bottom: 1rem;
+}
+
+.opportunity-requirements h6 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text);
+}
+
+.opportunity-requirements ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.opportunity-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.invest-btn {
+  padding: 0.5rem 1rem;
+  background: var(--color-button-primary);
+  border: 1px solid var(--color-button-primary);
+  border-radius: 4px;
+  color: var(--color-button-text);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.invest-btn:hover {
+  background: var(--color-button-primary-hover);
+}
+
+/* Investment Modal */
+.investment-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 2rem;
+  min-width: 400px;
+  max-width: 500px;
+}
+
+.modal-content h4,
+.modal-content h5 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+}
+
+.amount-input {
+  margin-bottom: 1rem;
+}
+
+.amount-input label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.amount-input input {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  font-family: var(--font-mono);
+}
+
+.amount-range {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.investment-projection {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.projection-metric {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  padding: 0.5rem 1rem;
+  background: var(--color-button-primary);
+  border: 1px solid var(--color-button-primary);
+  border-radius: 4px;
+  color: var(--color-button-text);
+  cursor: pointer;
+}
+
+.confirm-btn:disabled {
+  background: var(--color-button-disabled);
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  padding: 0.5rem 1rem;
+  background: var(--color-button-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* Speculation Tab Styles */
+.speculations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.speculation-item {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.speculation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.speculation-header h5 {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.position.long {
+  color: var(--color-success);
+  font-weight: bold;
+}
+
+.position.short {
+  color: var(--color-danger);
+  font-weight: bold;
+}
+
+.speculation-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.speculation-metrics,
+.risk-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sentiment.bullish {
+  color: var(--color-success);
+}
+
+.sentiment.bearish {
+  color: var(--color-danger);
+}
+
+.sentiment.neutral {
+  color: var(--color-text-secondary);
+}
+
+.expiration {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.no-speculations {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-secondary);
+}
+
+/* Analysis Tab Styles */
+.supply-chains {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.supply-chain {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.supply-chain h5 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.chain-nodes {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 1rem 0;
+}
+
+.chain-node {
+  background: var(--color-panel-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1rem;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+.node-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.node-header h6 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.tier {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.node-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.node-connections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.success {
+  color: var(--color-success);
+}
+
+.warning {
+  color: var(--color-warning);
+}
+
+.danger {
+  color: var(--color-danger);
+}
+
+/* Warfare Tab Styles */
+.warfare-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.market-influence,
+.warfare-actions {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.market-influence h5,
+.warfare-actions h5 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.warfare-warning {
+  color: var(--color-warning);
+  font-style: italic;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid var(--color-warning);
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.warfare-btn {
+  padding: 0.75rem 1rem;
+  background: var(--color-button-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text);
+  cursor: not-allowed;
+  opacity: 0.6;
+  text-align: left;
+}
+
+.warfare-btn small {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .investment-panel {
+    width: 95%;
+    height: 85vh;
+  }
+  
+  .portfolio-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .opportunity-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .speculation-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .warfare-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .investment-panel {
+    width: 98%;
+    height: 90vh;
+  }
+  
+  .panel-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .panel-tabs button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .summary-cards {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  
+  .investment-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .opportunity-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .chain-nodes {
+    flex-direction: column;
+  }
+  
+  .chain-node {
+    min-width: auto;
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel, CombatPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel, CombatPanel, InvestmentPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -28,7 +28,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showNPCs, setShowNPCs] = useState(false);
@@ -50,6 +50,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showSecurity = activePanel === 'security';
   const showHacking = activePanel === 'hacking';
   const showCombat = activePanel === 'combat';
+  const showInvestment = activePanel === 'investment';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -182,6 +183,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(activePanel === 'hacking' ? null : 'hacking');
       } else if (event.code === 'KeyG') {
         setActivePanel(activePanel === 'combat' ? null : 'combat');
+      } else if (event.code === 'KeyI') {
+        setActivePanel(activePanel === 'investment' ? null : 'investment');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -953,6 +956,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Combat (G)
         </button>
         <button 
+          onClick={() => setActivePanel(activePanel === 'investment' ? null : 'investment')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'investment' ? '#4a90e2' : undefined
+          }}
+        >
+          Investment (I)
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -1162,6 +1175,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             // Update player credits display
             setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
           }}
+        />
+      )}
+
+      {/* Investment Panel */}
+      {engineRef.current && showInvestment && (
+        <InvestmentPanel
+          isVisible={showInvestment}
+          investmentManager={engineRef.current.getInvestmentManager()}
+          playerManager={engineRef.current.getPlayerManager()}
         />
       )}
 

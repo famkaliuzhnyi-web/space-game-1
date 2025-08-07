@@ -7,6 +7,7 @@ import { AchievementManager } from '../systems/AchievementManager';
 import { WorldManager } from '../systems/WorldManager';
 import { HackingManager } from '../systems/HackingManager';
 import { CombatManager } from '../systems/CombatManager';
+import { InvestmentManager } from '../systems/InvestmentManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -32,6 +33,7 @@ export class SystemManager {
   private securityManager: SecurityManager;
   private hackingManager: HackingManager;
   private combatManager: CombatManager;
+  private investmentManager: InvestmentManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -94,6 +96,15 @@ export class SystemManager {
       this.eventManager
     );
     
+    // Initialize investment manager with required dependencies
+    this.investmentManager = new InvestmentManager(
+      this.timeManager,
+      this.worldManager,
+      this.playerManager,
+      this.playerManager.getFactionManager(),
+      this.economicSystem
+    );
+    
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
@@ -141,6 +152,9 @@ export class SystemManager {
     
     // Update combat system
     this.combatManager.update();
+    
+    // Update investment system
+    this.investmentManager.updateInvestments();
   }
 
   /**
@@ -235,6 +249,10 @@ export class SystemManager {
 
   getCombatManager(): CombatManager {
     return this.combatManager;
+  }
+
+  getInvestmentManager(): InvestmentManager {
+    return this.investmentManager;
   }
 
   /**
