@@ -606,6 +606,13 @@ export class PlayerManager implements InventoryManager {
     return this.player.reputation;
   }
 
+  /**
+   * Enhanced Phase 4.2: Get reputation for a specific faction
+   */
+  getReputationForFaction(factionId: string): import('../types/player').FactionReputation | undefined {
+    return this.player.reputation.get(factionId);
+  }
+
   modifyFactionReputation(factionId: string, change: number, reason: string): ReputationChange[] {
     const result = this.factionManager.modifyReputation(this.player.reputation, factionId, change, reason);
     return result.success ? [{ factionId, change, reason, timestamp: Date.now() }] : [];
@@ -620,7 +627,7 @@ export class PlayerManager implements InventoryManager {
   }
 
   /**
-   * Discover and meet contacts at a specific station
+   * Enhanced Phase 4.2: Discover and meet contacts at a specific station
    */
   discoverStationContacts(stationId: string, stationFactionId: string): Contact[] {
     const contactManager = this.factionManager.getContactManager();
@@ -630,20 +637,23 @@ export class PlayerManager implements InventoryManager {
     
     // Generate contacts if none exist at this station
     if (existingContacts.length === 0) {
-      const contactsToGenerate = [
-        { type: 'trade_liaison' as const, chance: 0.9 },
-        { type: 'commander' as const, chance: 0.7 },
-        { type: 'quartermaster' as const, chance: 0.6 },
-        { type: 'dock_supervisor' as const, chance: 0.5 }
-      ];
+      const playerReputation = this.getReputationForFaction(stationFactionId);
+      const stationType = this.determineStationType(stationId);
+      
+      // Use enhanced contact generation
+      const contactsToGenerate = ContactFactory.createEnhancedStationContacts(
+        stationId, 
+        stationFactionId, 
+        stationType,
+        playerReputation?.standing
+      );
 
       const discoveredContacts: Contact[] = [];
       
-      contactsToGenerate.forEach(({ type, chance }) => {
-        if (Math.random() < chance) {
-          const newContact = contactManager.meetContact(
-            ContactFactory.createStationContact(stationId, stationFactionId, type)
-          );
+      contactsToGenerate.forEach(contactData => {
+        // Some contacts might require reputation to discover
+        if (this.canDiscoverContact(contactData, playerReputation?.standing || 0)) {
+          const newContact = contactManager.meetContact(contactData);
           discoveredContacts.push(newContact);
         }
       });
@@ -652,6 +662,38 @@ export class PlayerManager implements InventoryManager {
     }
     
     return existingContacts;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Determine station type for better contact generation
+   */
+  private determineStationType(stationId: string): string {
+    // This could be enhanced to use actual station data
+    // For now, use simple heuristics based on station ID
+    if (stationId.includes('military') || stationId.includes('defense')) return 'military';
+    if (stationId.includes('industrial') || stationId.includes('mining')) return 'industrial';
+    if (stationId.includes('research') || stationId.includes('lab')) return 'research';
+    return 'trading';
+  }
+
+  /**
+   * Enhanced Phase 4.2: Check if player can discover certain contacts
+   */
+  private canDiscoverContact(contactData: any, playerReputation: number): boolean {
+    // Special contacts require reputation
+    if (contactData.role?.id === 'research_director' && playerReputation < 30) return false;
+    if (contactData.role?.id === 'information_broker' && playerReputation < 40) return false;
+    if (contactData.role?.id === 'faction_representative' && playerReputation < 60) return false;
+    
+    return true;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Discover contacts through referrals from existing contacts
+   */
+  discoverContactsViaReferral(existingContactId: string, targetFactionId?: string): Contact[] {
+    const contactManager = this.factionManager.getContactManager();
+    return contactManager.discoverContactsViaReferral(existingContactId, targetFactionId);
   }
 
   /**

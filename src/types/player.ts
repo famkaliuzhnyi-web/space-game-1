@@ -104,6 +104,7 @@ export interface FactionReputation {
   standing: number; // -100 to 100
   rank: string;
   missions: number; // Completed missions for this faction
+  lastUpdated?: number; // Enhanced Phase 4.2: Timestamp for reputation decay
 }
 
 export interface PlayerStatistics {

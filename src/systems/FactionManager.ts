@@ -367,7 +367,8 @@ export class FactionManager {
     const updatedReputation: FactionReputation = {
       ...currentRep,
       standing: newStanding,
-      rank: newRank
+      rank: newRank,
+      lastUpdated: Date.now() // Enhanced Phase 4.2: Track when reputation was last updated
     };
 
     playerReputation.set(factionId, updatedReputation);
@@ -414,14 +415,27 @@ export class FactionManager {
     const contractAccess: string[] = [];
     const equipmentAccess: string[] = [];
 
-    // Calculate benefits based on standing
-    if (standing >= 20) {
-      tradingDiscount = Math.min(20, Math.floor(standing / 4)); // Up to 20% discount
-      serviceDiscount = Math.min(15, Math.floor(standing / 5)); // Up to 15% discount
+    // Enhanced reputation-based benefits (Phase 4.2)
+    if (standing >= 15) {
+      tradingDiscount = Math.min(25, Math.floor(standing / 3)); // Up to 25% discount
+      serviceDiscount = Math.min(20, Math.floor(standing / 4)); // Up to 20% discount
     }
 
-    if (standing >= 40) {
-      contractAccess.push('priority-contracts');
+    // Progressive contract access
+    if (standing >= 20) contractAccess.push('standard-contracts');
+    if (standing >= 40) contractAccess.push('priority-contracts');
+    if (standing >= 60) contractAccess.push('exclusive-contracts');
+    if (standing >= 80) contractAccess.push('faction-missions');
+
+    // Progressive equipment access
+    if (standing >= 25) equipmentAccess.push('faction-gear');
+    if (standing >= 50) equipmentAccess.push('advanced-tech');
+    if (standing >= 75) equipmentAccess.push('experimental-tech');
+
+    // Negative reputation consequences
+    if (standing < -20) {
+      tradingDiscount = Math.max(-30, Math.floor(standing / 2)); // Up to 30% markup
+      serviceDiscount = Math.max(-25, Math.floor(standing / 3)); // Up to 25% markup
     }
 
     if (standing >= 60) {
@@ -605,6 +619,179 @@ export class FactionManager {
     }
 
     return changes;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Check if player can access faction territory
+   */
+  canAccessTerritory(playerReputation: Map<string, FactionReputation>, factionId: string, stationId: string): { canAccess: boolean; reason?: string } {
+    const faction = this.factions.get(factionId);
+    if (!faction) {
+      return { canAccess: true }; // Default access for unknown factions
+    }
+
+    // Check if this station is in faction's controlled territory
+    if (!faction.territories.includes(stationId)) {
+      return { canAccess: true }; // Not controlled territory
+    }
+
+    const reputation = playerReputation.get(factionId);
+    if (!reputation) {
+      return { canAccess: true, reason: 'No reputation record' };
+    }
+
+    // Territory access based on reputation
+    if (reputation.standing < -40) {
+      return { canAccess: false, reason: `Banned from ${faction.name} territory` };
+    }
+    
+    if (reputation.standing < -20) {
+      return { canAccess: true, reason: 'Restricted access - limited services' };
+    }
+
+    return { canAccess: true };
+  }
+
+  /**
+   * Enhanced Phase 4.2: Get faction influence at station
+   */
+  getFactionInfluence(stationId: string): { primary: string; secondary?: string; influences: Record<string, number> } {
+    const influences: Record<string, number> = {};
+    let primaryFaction = '';
+    let secondaryFaction = '';
+    let maxInfluence = 0;
+    let secondMaxInfluence = 0;
+
+    // Calculate faction influence at station
+    for (const [factionId, faction] of this.factions.entries()) {
+      let influence = 0;
+      
+      // Base influence from territories
+      if (faction.territories.includes(stationId)) {
+        influence += faction.influence * 0.8; // 80% of base influence in own territory
+      }
+      
+      // Influence from nearby territories (simplified - could be enhanced with distance calculations)
+      const nearbyTerritories = faction.territories.filter(t => t !== stationId);
+      influence += nearbyTerritories.length * (faction.influence * 0.1);
+      
+      influences[factionId] = influence;
+      
+      if (influence > maxInfluence) {
+        secondMaxInfluence = maxInfluence;
+        secondaryFaction = primaryFaction;
+        maxInfluence = influence;
+        primaryFaction = factionId;
+      } else if (influence > secondMaxInfluence) {
+        secondMaxInfluence = influence;
+        secondaryFaction = factionId;
+      }
+    }
+
+    return {
+      primary: primaryFaction,
+      secondary: secondaryFaction || undefined,
+      influences
+    };
+  }
+
+  /**
+   * Enhanced Phase 4.2: Calculate dynamic reputation decay
+   */
+  processReputationDecay(playerReputation: Map<string, FactionReputation>): ReputationChange[] {
+    const changes: ReputationChange[] = [];
+    const now = Date.now();
+    
+    for (const [factionId, reputation] of playerReputation.entries()) {
+      const faction = this.factions.get(factionId);
+      if (!faction) continue;
+      
+      const daysSinceLastInteraction = Math.floor((now - (reputation.lastUpdated || now)) / (1000 * 60 * 60 * 24));
+      
+      // Only process decay if it's been more than 7 days
+      if (daysSinceLastInteraction > 7) {
+        let decayRate = 0;
+        
+        // Higher reputation decays faster (people expect more)
+        if (reputation.standing > 60) decayRate = -0.5;
+        else if (reputation.standing > 30) decayRate = -0.3;
+        else if (reputation.standing > 0) decayRate = -0.1;
+        
+        // Negative reputation slowly improves (people forget)
+        if (reputation.standing < -30) decayRate = 0.2;
+        else if (reputation.standing < 0) decayRate = 0.1;
+        
+        if (decayRate !== 0) {
+          const weeksPassed = Math.floor(daysSinceLastInteraction / 7);
+          const totalDecay = Math.round(decayRate * weeksPassed);
+          
+          if (Math.abs(totalDecay) >= 1) {
+            const result = this.modifyReputation(
+              playerReputation,
+              factionId,
+              totalDecay,
+              'Time-based reputation decay'
+            );
+            
+            if (result.success) {
+              changes.push({
+                factionId,
+                change: totalDecay,
+                reason: 'Reputation decay over time',
+                timestamp: now
+              });
+            }
+          }
+        }
+      }
+    }
+    
+    return changes;
+  }
+
+  /**
+   * Enhanced Phase 4.2: Get faction-specific restrictions
+   */
+  getFactionRestrictions(playerReputation: Map<string, FactionReputation>, factionId: string): {
+    tradingRestrictions: string[];
+    serviceRestrictions: string[];
+    accessRestrictions: string[];
+  } {
+    const restrictions = {
+      tradingRestrictions: [] as string[],
+      serviceRestrictions: [] as string[],
+      accessRestrictions: [] as string[]
+    };
+
+    const reputation = playerReputation.get(factionId);
+    const faction = this.factions.get(factionId);
+    
+    if (!reputation || !faction) return restrictions;
+
+    // Apply restrictions based on reputation
+    if (reputation.standing < -60) {
+      restrictions.accessRestrictions.push('Banned from all faction facilities');
+      restrictions.tradingRestrictions.push('No trading permitted');
+      restrictions.serviceRestrictions.push('No services available');
+    } else if (reputation.standing < -40) {
+      restrictions.tradingRestrictions.push('Limited to basic commodities');
+      restrictions.serviceRestrictions.push('No repairs or maintenance');
+      restrictions.accessRestrictions.push('Escort required in faction territory');
+    } else if (reputation.standing < -20) {
+      restrictions.tradingRestrictions.push('Higher prices for all goods');
+      restrictions.serviceRestrictions.push('Basic services only');
+    }
+
+    // Faction-specific restrictions based on specializations
+    if (faction.specializations.includes('military') && reputation.standing < 0) {
+      restrictions.tradingRestrictions.push('No weapons or military equipment');
+    }
+    
+    if (faction.specializations.includes('research') && reputation.standing < 20) {
+      restrictions.tradingRestrictions.push('No access to advanced technology');
+    }
+
+    return restrictions;
   }
 
   /**

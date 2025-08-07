@@ -564,13 +564,50 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const handleInteractWithContact = (contactId: string, interactionType: string) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
+      const characterManager = engineRef.current.getCharacterManager();
       const factionManager = playerManager.getFactionManager();
       const contactManager = factionManager.getContactManager();
       
-      // Perform the interaction
-      const result = contactManager.recordInteraction(contactId, interactionType as any, 'success', 10);
+      // Get player skills for enhanced interaction
+      const character = characterManager.getCharacter();
+      const playerSkills = {
+        charisma: character?.attributes.charisma || 10,
+        reputation: 0 // Could add faction-specific reputation here
+      };
+      
+      // Get the contact to determine faction reputation
+      const contact = contactManager.getContact(contactId);
+      if (contact) {
+        const factionReputation = playerManager.getReputationForFaction(contact.factionId);
+        if (factionReputation) {
+          playerSkills.reputation = factionReputation.standing;
+        }
+      }
+      
+      // Use enhanced interaction system if available
+      let result: any;
+      if (typeof contactManager.performAdvancedInteraction === 'function') {
+        result = contactManager.performAdvancedInteraction(contactId, interactionType as any, playerSkills);
+      } else {
+        // Fallback to basic interaction
+        result = contactManager.recordInteraction(contactId, interactionType as any, 'success', 10);
+      }
       
       if (result) {
+        // Show interaction feedback for advanced interaction results
+        if (result && typeof result === 'object' && 'outcome' in result && 'trustChange' in result) {
+          const outcomeText = result.outcome === 'exceptional' ? '🌟 Exceptional!' : 
+                             result.outcome === 'success' ? '✅ Success!' :
+                             result.outcome === 'neutral' ? '➖ Neutral' : '❌ Failed';
+          
+          console.log(`Interaction result: ${outcomeText} (Trust change: ${result.trustChange > 0 ? '+' : ''}${result.trustChange})`);
+          
+          // Show unlocked services if any
+          if (result.unlocked && result.unlocked.length > 0) {
+            console.log(`🔓 Unlocked: ${result.unlocked.join(', ')}`);
+          }
+        }
+        
         // Update the contacts display
         const worldManager = engineRef.current.getWorldManager();
         const currentStation = worldManager.getCurrentStation();
@@ -578,6 +615,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const contacts = playerManager.getCurrentStationContacts(currentStation.id);
           setStationContacts(contacts);
         }
+        
+        // Update reputation display if needed
+        setPlayerReputation(playerManager.getPlayerReputation());
       }
     }
   };
