@@ -170,16 +170,20 @@ describe('EventManager', () => {
   });
 
   describe('Event Configuration', () => {
-    it('should use default configuration values', () => {
+    it('should use enhanced configuration values for Phase 5.1', () => {
       const state = eventManager.getState();
       const config = state.config;
       
-      expect(config.globalEventRate).toBe(0.1);
-      expect(config.maxActiveEvents).toBe(5);
+      expect(config.globalEventRate).toBe(0.8); // Enhanced from 0.1
+      expect(config.maxActiveEvents).toBe(8); // Enhanced from 5
       expect(config.eventCooldowns).toHaveProperty('space_encounter');
       expect(config.eventCooldowns).toHaveProperty('station_event');
       expect(config.eventCooldowns).toHaveProperty('system_crisis');
       expect(config.eventCooldowns).toHaveProperty('emergency_contract');
+      
+      // Check enhanced cooldown values
+      expect(config.eventCooldowns['space_encounter']).toBe(120); // Reduced from 300
+      expect(config.eventCooldowns['station_event']).toBe(240); // Reduced from 600
     });
   });
 
