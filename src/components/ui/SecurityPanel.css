@@ -1,0 +1,624 @@
+.security-panel {
+  background: rgba(20, 25, 35, 0.95);
+  border: 2px solid rgba(100, 200, 255, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  color: #e0e0e0;
+}
+
+.panel-header {
+  border-bottom: 1px solid rgba(100, 200, 255, 0.3);
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.panel-header h2 {
+  margin: 0 0 15px 0;
+  color: #64c8ff;
+  font-size: 18px;
+}
+
+.panel-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.panel-tabs button {
+  background: rgba(40, 50, 65, 0.8);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  color: #c0c0c0;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.panel-tabs button:hover {
+  background: rgba(60, 70, 85, 0.9);
+  color: #64c8ff;
+}
+
+.panel-tabs button.active {
+  background: rgba(100, 200, 255, 0.2);
+  color: #64c8ff;
+  border-color: #64c8ff;
+}
+
+.panel-content {
+  min-height: 300px;
+}
+
+/* Legal Status Styles */
+.legal-status {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 14px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.status-badge.clean {
+  background: rgba(0, 200, 100, 0.2);
+  color: #00c864;
+  border: 1px solid #00c864;
+}
+
+.status-badge.suspected {
+  background: rgba(255, 200, 0, 0.2);
+  color: #ffc800;
+  border: 1px solid #ffc800;
+}
+
+.status-badge.wanted {
+  background: rgba(255, 150, 0, 0.2);
+  color: #ff9600;
+  border: 1px solid #ff9600;
+}
+
+.status-badge.criminal {
+  background: rgba(255, 100, 0, 0.2);
+  color: #ff6400;
+  border: 1px solid #ff6400;
+}
+
+.status-badge.fugitive {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff3232;
+  border: 1px solid #ff3232;
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-item .label {
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+.status-item .value {
+  color: #e0e0e0;
+  font-weight: bold;
+}
+
+.faction-status {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.faction-status h4 {
+  margin: 0 0 10px 0;
+  color: #64c8ff;
+  font-size: 16px;
+}
+
+.faction-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 8px;
+  background: rgba(40, 45, 55, 0.8);
+  border-radius: 4px;
+}
+
+.faction-name {
+  text-transform: capitalize;
+  color: #c0c0c0;
+}
+
+/* Security Level Styles */
+.security-level {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.security-info {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.security-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.security-badge.level-1 {
+  background: rgba(0, 200, 100, 0.2);
+  color: #00c864;
+  border: 1px solid #00c864;
+}
+
+.security-badge.level-2 {
+  background: rgba(100, 200, 255, 0.2);
+  color: #64c8ff;
+  border: 1px solid #64c8ff;
+}
+
+.security-badge.level-3 {
+  background: rgba(255, 200, 0, 0.2);
+  color: #ffc800;
+  border: 1px solid #ffc800;
+}
+
+.security-badge.level-4 {
+  background: rgba(255, 150, 0, 0.2);
+  color: #ff9600;
+  border: 1px solid #ff9600;
+}
+
+.security-badge.level-5 {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff3232;
+  border: 1px solid #ff3232;
+}
+
+.security-info h4 {
+  margin: 0 0 10px 0;
+  color: #64c8ff;
+  font-size: 18px;
+}
+
+.security-info p {
+  color: #a0a0a0;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.security-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(40, 45, 55, 0.8);
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.characteristics ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.characteristics li {
+  padding: 5px 0;
+  color: #c0c0c0;
+  border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+}
+
+.characteristics li:last-child {
+  border-bottom: none;
+}
+
+/* Warrants Styles */
+.warrants {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.warrant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.warrant-item {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid transparent;
+}
+
+.warrant-item.priority-low {
+  border-left-color: #ffc800;
+}
+
+.warrant-item.priority-medium {
+  border-left-color: #ff9600;
+}
+
+.warrant-item.priority-high {
+  border-left-color: #ff6400;
+}
+
+.warrant-item.priority-critical {
+  border-left-color: #ff3232;
+}
+
+.warrant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.priority-badge {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.priority-badge.low {
+  background: rgba(255, 200, 0, 0.2);
+  color: #ffc800;
+}
+
+.priority-badge.medium {
+  background: rgba(255, 150, 0, 0.2);
+  color: #ff9600;
+}
+
+.priority-badge.high {
+  background: rgba(255, 100, 0, 0.2);
+  color: #ff6400;
+}
+
+.priority-badge.critical {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff3232;
+}
+
+.bounty {
+  color: #64c8ff;
+  font-weight: bold;
+}
+
+.warrant-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+/* Crime History Styles */
+.crime-history {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.crime-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crime-item {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid transparent;
+}
+
+.crime-item.status-reported {
+  border-left-color: #ffc800;
+}
+
+.crime-item.status-investigating {
+  border-left-color: #ff9600;
+}
+
+.crime-item.status-charged {
+  border-left-color: #ff6400;
+}
+
+.crime-item.status-convicted {
+  border-left-color: #ff3232;
+}
+
+.crime-item.status-dismissed {
+  border-left-color: #00c864;
+}
+
+.crime-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.crime-type {
+  color: #64c8ff;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.crime-date {
+  color: #a0a0a0;
+  font-size: 12px;
+}
+
+.crime-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+/* Law Enforcement Styles */
+.law-enforcement {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.enforcement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.enforcement-unit {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+  border-left: 4px solid transparent;
+}
+
+.enforcement-unit.status-patrolling {
+  border-left-color: #00c864;
+}
+
+.enforcement-unit.status-investigating {
+  border-left-color: #ffc800;
+}
+
+.enforcement-unit.status-pursuing {
+  border-left-color: #ff9600;
+}
+
+.enforcement-unit.status-engaged {
+  border-left-color: #ff3232;
+}
+
+.unit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.unit-type {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  background: rgba(100, 200, 255, 0.2);
+  color: #64c8ff;
+}
+
+.unit-status {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.unit-status.patrolling {
+  background: rgba(0, 200, 100, 0.2);
+  color: #00c864;
+}
+
+.unit-status.investigating {
+  background: rgba(255, 200, 0, 0.2);
+  color: #ffc800;
+}
+
+.unit-status.pursuing {
+  background: rgba(255, 150, 0, 0.2);
+  color: #ff9600;
+}
+
+.unit-status.engaged {
+  background: rgba(255, 50, 50, 0.2);
+  color: #ff3232;
+}
+
+.unit-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+.security-events {
+  background: rgba(30, 35, 45, 0.7);
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.security-events h4 {
+  margin: 0 0 15px 0;
+  color: #64c8ff;
+  font-size: 16px;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-item {
+  background: rgba(40, 45, 55, 0.8);
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 3px solid transparent;
+}
+
+.event-item.type-crime_detected {
+  border-left-color: #ff6400;
+}
+
+.event-item.type-warrant_issued {
+  border-left-color: #ff3232;
+}
+
+.event-item.type-arrest_attempt {
+  border-left-color: #ffc800;
+}
+
+.event-item.type-conviction {
+  border-left-color: #00c864;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.event-type {
+  color: #64c8ff;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.event-time {
+  color: #a0a0a0;
+  font-size: 12px;
+}
+
+.event-location,
+.event-participants {
+  color: #a0a0a0;
+  font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .security-panel {
+    padding: 15px;
+    max-height: 500px;
+  }
+  
+  .panel-tabs {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .panel-tabs button {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .security-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .warrant-header,
+  .crime-header,
+  .unit-header,
+  .event-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+
+/* Scrollbar Styles */
+.security-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.security-panel::-webkit-scrollbar-track {
+  background: rgba(40, 45, 55, 0.5);
+  border-radius: 4px;
+}
+
+.security-panel::-webkit-scrollbar-thumb {
+  background: rgba(100, 200, 255, 0.3);
+  border-radius: 4px;
+}
+
+.security-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 200, 255, 0.5);
+}
+
+/* Animation */
+.panel-content > div {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

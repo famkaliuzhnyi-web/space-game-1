@@ -19,6 +19,7 @@ export { default as AchievementsPanel } from './AchievementsPanel';
 export { default as EventsPanel } from './EventsPanel';
 export { CharacterSheet } from './CharacterSheet';
 export { CharacterCreationPanel } from './CharacterCreationPanel';
+export { SecurityPanel } from './SecurityPanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
 export type { InventoryItem, CargoHold } from './InventoryPanel';
 export type { ModalAction } from './Modal';
