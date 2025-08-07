@@ -1,4 +1,5 @@
 import { Ship, EquipmentItem, ShipCondition } from '../types/player';
+import { Character } from '../types/character';
 import { TimeManager } from './TimeManager';
 
 export interface MaintenanceRecord {
@@ -275,19 +276,65 @@ export class MaintenanceManager {
    * Calculate maintenance cost for ship components
    */
   private calculateMaintenanceCost(type: 'hull' | 'engines' | 'cargo' | 'shields', condition: number): number {
+    return this.calculateMaintenanceCostWithCharacter(type, condition, null);
+  }
+
+  /**
+   * Calculate maintenance cost for ship components with character bonuses
+   */
+  calculateMaintenanceCostWithCharacter(type: 'hull' | 'engines' | 'cargo' | 'shields', condition: number, character: Character | null): number {
     const baseCost = MaintenanceManager.MAINTENANCE_COSTS[type];
     const repairNeeded = 1.0 - condition;
-    return baseCost * repairNeeded;
+    let cost = baseCost * repairNeeded;
+    
+    // Apply character engineering skill bonus
+    if (character && character.skills && character.skills.engineering) {
+      const engineeringBonus = this.calculateEngineeringBonus(character);
+      cost *= engineeringBonus;
+    }
+    
+    return cost;
   }
 
   /**
    * Calculate maintenance cost for equipment
    */
   private calculateEquipmentMaintenanceCost(equipment: EquipmentItem): number {
+    return this.calculateEquipmentMaintenanceCostWithCharacter(equipment, null);
+  }
+
+  /**
+   * Calculate maintenance cost for equipment with character bonuses
+   */
+  calculateEquipmentMaintenanceCostWithCharacter(equipment: EquipmentItem, character: Character | null): number {
     const baseCost = MaintenanceManager.MAINTENANCE_COSTS.equipment;
     const typeMultiplier = this.getEquipmentMaintenanceCostMultiplier(equipment.type);
     const repairNeeded = 1.0 - equipment.condition;
-    return baseCost * typeMultiplier * repairNeeded;
+    let cost = baseCost * typeMultiplier * repairNeeded;
+    
+    // Apply character engineering skill bonus
+    if (character && character.skills && character.skills.engineering) {
+      const engineeringBonus = this.calculateEngineeringBonus(character);
+      cost *= engineeringBonus;
+    }
+    
+    return cost;
+  }
+
+  /**
+   * Calculate engineering bonus for maintenance costs
+   */
+  private calculateEngineeringBonus(character: Character): number {
+    // Engineering skill reduces maintenance costs (1% per skill point)
+    const engineeringBonus = 1.0 - (character.skills.engineering * 0.01);
+    
+    // Intelligence also helps with maintenance efficiency (0.5% per point above 10)
+    const intelligenceBonus = 1.0 - Math.max(0, character.attributes.intelligence - 10) * 0.005;
+    
+    // Combine bonuses, ensure minimum cost is 50% of normal
+    const finalBonus = Math.max(0.5, engineeringBonus * intelligenceBonus);
+    
+    return finalBonus;
   }
 
   /**
