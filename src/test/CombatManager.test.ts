@@ -17,7 +17,7 @@ const mockTimeManager = {
 
 const mockWorldManager = {
   getAllStations: vi.fn(() => [
-    { id: 'test-station', name: 'Test Station', faction: 'Test Faction' }
+    { id: 'test-station', name: 'Test Station', faction: 'Test Faction', systemId: 'test-system' }
   ]),
   getSystem: vi.fn(() => ({ controllingFaction: 'Test Faction' })),
   getGalaxy: vi.fn(() => ({ currentPlayerLocation: { systemId: 'test-system' } }))
@@ -27,7 +27,7 @@ const mockPlayerManager = {
   getCredits: vi.fn(() => 10000),
   spendCredits: vi.fn(() => true),
   addCredits: vi.fn(),
-  getCurrentSystem: vi.fn(() => 'test-system'),
+  getCurrentStation: vi.fn(() => 'test-station'),
   getPlayerShip: vi.fn(() => ({
     id: 'player-ship',
     name: 'Player Ship',
@@ -65,6 +65,12 @@ describe('CombatManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Re-setup default mock behavior after clearing
+    (mockPlayerManager.spendCredits as any).mockReturnValue(true);
+    (mockPlayerManager.getCredits as any).mockReturnValue(10000);
+    (mockPlayerManager.getCurrentStation as any).mockReturnValue('test-station');
+    
     combatManager = new CombatManager(
       mockTimeManager,
       mockWorldManager,
@@ -305,13 +311,15 @@ describe('CombatManager', () => {
     });
 
     test('should handle license expiry', () => {
-      // Mock expired timestamp
-      (mockTimeManager.getCurrentTimestamp as any).mockReturnValue(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      // First set current time for license purchase
+      const currentTime = Date.now();
+      (mockTimeManager.getCurrentTimestamp as any).mockReturnValue(currentTime);
       
       combatManager.purchaseWeaponLicense('commercial');
       
-      // Reset to current time and check if license is expired
-      (mockTimeManager.getCurrentTimestamp as any).mockReturnValue(Date.now());
+      // Now set time to future to make license expired
+      const expiredTime = currentTime + 400 * 24 * 60 * 60 * 1000; // 400 days later (commercial license is 365 days)
+      (mockTimeManager.getCurrentTimestamp as any).mockReturnValue(expiredTime);
       
       const canUseWeapon = combatManager.canUseWeapon('plasma-cannon-mk2', 'test-location');
       expect(canUseWeapon).toBe(false);
@@ -331,7 +339,7 @@ describe('CombatManager', () => {
     });
 
     test('should fail to trigger encounter without current system', () => {
-      (mockPlayerManager.getCurrentSystem as any).mockReturnValue(null);
+      (mockPlayerManager.getCurrentStation as any).mockReturnValue(null);
       
       const encounter = combatManager.triggerRandomEncounter();
       
@@ -407,6 +415,11 @@ describe('CombatManager', () => {
       const serialized = combatManager.serialize();
       expect(serialized).toBeDefined();
       expect(serialized.combatState).toBeDefined();
+      
+      // Re-setup mocks for the new instance
+      (mockPlayerManager.spendCredits as any).mockReturnValue(true);
+      (mockPlayerManager.getCredits as any).mockReturnValue(10000);
+      (mockPlayerManager.getCurrentStation as any).mockReturnValue('test-station');
       
       // Create new combat manager and deserialize
       const newCombatManager = new CombatManager(
