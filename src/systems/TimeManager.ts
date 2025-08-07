@@ -102,6 +102,13 @@ export class TimeManager {
   }
 
   /**
+   * Get the current game time as a timestamp (milliseconds since epoch)
+   */
+  getCurrentTimestamp(): number {
+    return this.getCurrentDate().getTime();
+  }
+
+  /**
    * Schedule an event to occur at a specific game time
    */
   scheduleEvent(event: Omit<TimeEvent, 'id'>): string {

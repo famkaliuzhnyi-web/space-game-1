@@ -1,4 +1,4 @@
-import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager, EventManager } from '../systems';
+import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager, EventManager, NPCAIManager } from '../systems';
 import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { CharacterManager } from '../systems/CharacterManager';
 import { CharacterProgressionSystem } from '../systems/CharacterProgressionSystem';
@@ -26,6 +26,7 @@ export class SystemManager {
   private achievementManager: AchievementManager;
   private maintenanceManager: MaintenanceManager;
   private eventManager: EventManager;
+  private npcAIManager: NPCAIManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -49,6 +50,13 @@ export class SystemManager {
       this.worldManager,
       this.playerManager,
       this.playerManager.getFactionManager()
+    );
+    
+    // Initialize NPC AI manager with required dependencies
+    this.npcAIManager = new NPCAIManager(
+      this.timeManager,
+      this.worldManager,
+      this.playerManager
     );
     
     // Link systems that need to communicate
@@ -86,6 +94,9 @@ export class SystemManager {
     
     // Update event system
     this.eventManager.update(deltaTime);
+    
+    // Update NPC AI system
+    this.npcAIManager.update(deltaTime);
   }
 
   /**
@@ -164,6 +175,10 @@ export class SystemManager {
 
   getEventManager(): EventManager {
     return this.eventManager;
+  }
+
+  getNPCAIManager(): NPCAIManager {
+    return this.npcAIManager;
   }
 
   /**
