@@ -46,11 +46,12 @@ export * from './player';
 // Re-export ship hub types
 export * from './shipHubs';
 
-// Re-export contact and relationship types
-export * from './contacts';
-
-// Re-export character types
-export * from './character';
-
-// Re-export achievement types
+// Re-export all types for easy importing
 export * from './achievements';
+export * from './character';
+export * from './contacts';  
+export * from './economy';
+export * from './player';
+export * from './shipHubs';
+export * from './skillTrees';
+export * from './world';
