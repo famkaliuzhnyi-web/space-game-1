@@ -5,6 +5,7 @@ import { CharacterProgressionSystem } from '../systems/CharacterProgressionSyste
 import { SkillSpecializationManager } from '../systems/SkillSpecializationManager';
 import { AchievementManager } from '../systems/AchievementManager';
 import { WorldManager } from '../systems/WorldManager';
+import { HackingManager } from '../systems/HackingManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -28,6 +29,7 @@ export class SystemManager {
   private eventManager: EventManager;
   private npcAIManager: NPCAIManager;
   private securityManager: SecurityManager;
+  private hackingManager: HackingManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -67,6 +69,16 @@ export class SystemManager {
       this.playerManager,
       this.playerManager.getFactionManager(),
       this.npcAIManager
+    );
+    
+    // Initialize hacking manager with required dependencies
+    this.hackingManager = new HackingManager(
+      this.timeManager,
+      this.worldManager,
+      this.playerManager,
+      this.playerManager.getFactionManager(),
+      this.securityManager,
+      this.characterManager
     );
     
     // Link systems that need to communicate
@@ -110,6 +122,9 @@ export class SystemManager {
     
     // Update security system
     this.securityManager.update();
+    
+    // Update hacking system
+    this.hackingManager.update();
   }
 
   /**
@@ -196,6 +211,10 @@ export class SystemManager {
 
   getSecurityManager(): SecurityManager {
     return this.securityManager;
+  }
+
+  getHackingManager(): HackingManager {
+    return this.hackingManager;
   }
 
   /**

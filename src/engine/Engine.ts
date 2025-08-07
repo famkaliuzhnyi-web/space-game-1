@@ -259,6 +259,10 @@ export class Engine implements GameEngine {
     return this.systemManager.getSecurityManager();
   }
 
+  getHackingManager() {
+    return this.systemManager.getHackingManager();
+  }
+
   getCharacterProgressionSystem() {
     return this.systemManager.getCharacterProgressionSystem();
   }
