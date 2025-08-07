@@ -25,6 +25,7 @@ export interface ActivityData {
  */
 export class CharacterProgressionSystem {
   private characterManager: CharacterManager;
+  private achievementManager?: any; // AchievementManager reference
   private experienceSources: Map<string, ExperienceSource> = new Map();
   
   constructor(characterManager: CharacterManager) {
@@ -92,11 +93,18 @@ export class CharacterProgressionSystem {
       experience *= Math.min(2, profitMultiplier); // Cap at 2x
     }
 
-    return this.characterManager.awardExperience(
+    const result = this.characterManager.awardExperience(
       Math.floor(experience), 
       source.description, 
       source.category
     );
+
+    // Trigger achievement checks if experience was awarded
+    if (result) {
+      this.triggerAchievementChecks(activity, Math.floor(experience), source.category);
+    }
+
+    return result;
   }
 
   /**
@@ -120,11 +128,18 @@ export class CharacterProgressionSystem {
       experience *= Math.min(2, valueMultiplier); // Cap at 2x
     }
 
-    return this.characterManager.awardExperience(
+    const result = this.characterManager.awardExperience(
       Math.floor(experience), 
       source.description, 
       source.category
     );
+
+    // Trigger achievement checks if experience was awarded
+    if (result) {
+      this.triggerAchievementChecks(activity, Math.floor(experience), source.category);
+    }
+
+    return result;
   }
 
   /**
@@ -143,11 +158,18 @@ export class CharacterProgressionSystem {
       experience *= Math.min(2, socialMultiplier); // Cap at 2x
     }
 
-    return this.characterManager.awardExperience(
+    const result = this.characterManager.awardExperience(
       Math.floor(experience), 
       source.description, 
       source.category
     );
+
+    // Trigger achievement checks if experience was awarded
+    if (result) {
+      this.triggerAchievementChecks(activity, Math.floor(experience), source.category);
+    }
+
+    return result;
   }
 
   /**
@@ -166,11 +188,18 @@ export class CharacterProgressionSystem {
       experience *= Math.min(2, riskMultiplier); // Cap at 2x
     }
 
-    return this.characterManager.awardExperience(
+    const result = this.characterManager.awardExperience(
       Math.floor(experience), 
       source.description, 
       source.category
     );
+
+    // Trigger achievement checks if experience was awarded
+    if (result) {
+      this.triggerAchievementChecks(activity, Math.floor(experience), source.category);
+    }
+
+    return result;
   }
 
   /**
@@ -237,5 +266,42 @@ export class CharacterProgressionSystem {
       skillPoints: character.progression.skillPoints,
       attributePoints: character.progression.attributePoints
     };
+  }
+
+  /**
+   * Set achievement manager for triggering achievements on experience gain
+   */
+  setAchievementManager(achievementManager: any): void {
+    this.achievementManager = achievementManager;
+  }
+
+  /**
+   * Trigger achievement checks when experience is awarded
+   */
+  private triggerAchievementChecks(activity: string, _experienceGained: number, _category: string): void {
+    if (!this.achievementManager) return;
+
+    // Map activity to achievement triggers
+    const activityMap: { [key: string]: string } = {
+      'trade_buy': 'trade_complete',
+      'trade_sell': 'trade_complete', 
+      'contract_complete': 'contract_complete',
+      'ship_repair': 'ship_repair',
+      'ship_maintenance': 'ship_maintenance',
+      'contact_made': 'contact_made',
+      'system_visit': 'system_visit'
+    };
+
+    const achievementKey = activityMap[activity];
+    if (achievementKey && typeof this.achievementManager.triggerAction === 'function') {
+      this.achievementManager.triggerAction(achievementKey, 1);
+    }
+
+    // Trigger experience-based achievements
+    const character = this.characterManager.getCharacter();
+    if (character && typeof this.achievementManager.triggerAction === 'function') {
+      this.achievementManager.triggerAction('experience_gained', character.progression.experience);
+      this.achievementManager.triggerAction('level_reached', character.progression.level);
+    }
   }
 }

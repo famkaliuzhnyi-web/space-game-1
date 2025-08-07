@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -27,7 +27,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [stationContacts, setStationContacts] = useState<Contact[]>([]);
@@ -43,6 +43,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showMaintenance = activePanel === 'maintenance';
   const showCharacter = activePanel === 'character';
   const showContacts = activePanel === 'contacts';
+  const showAchievements = activePanel === 'achievements';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -203,6 +204,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (engineRef.current && currentMarket) {
       const economicSystem = engineRef.current.getEconomicSystem();
       const playerManager = engineRef.current.getPlayerManager();
+      const progressionSystem = engineRef.current.getCharacterProgressionSystem();
       
       // Use the new integrated trading method
       const result = economicSystem.executeTradeWithPlayer(
@@ -214,6 +216,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       );
       
       if (result.success) {
+        // Award experience for trading activity
+        const activity = isBuying ? 'trade_buy' : 'trade_sell';
+        const tradeValue = result.totalCost || 0;
+        const profitMargin = 0; // Simple implementation - could be enhanced later
+        
+        progressionSystem.awardTradingExperience(activity, {
+          value: tradeValue,
+          profitMargin: profitMargin
+        });
+        
         // Update player data from PlayerManager
         setPlayerCredits(playerManager.getCredits());
         setCargoItems(playerManager.getCargoManifest());
@@ -308,7 +320,31 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const handleNavigate = (targetId: string) => {
     if (engineRef.current) {
-      engineRef.current.getWorldManager().navigateToTarget(targetId);
+      const worldManager = engineRef.current.getWorldManager();
+      const progressionSystem = engineRef.current.getCharacterProgressionSystem();
+      
+      // Track previous location for first-visit detection
+      const previousLocation = worldManager.getCurrentSystem();
+      
+      // Navigate to target
+      worldManager.navigateToTarget(targetId);
+      
+      // Award exploration experience for visiting new systems
+      const currentLocation = worldManager.getCurrentSystem();
+      if (currentLocation && currentLocation.id !== previousLocation?.id) {
+        // Award system visit experience
+        progressionSystem.awardExplorationExperience('system_visit', {
+          riskLevel: currentLocation.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1 // Lower security = higher risk = more XP
+        });
+        
+        // If this is a station, award additional discovery experience
+        const currentStation = worldManager.getCurrentStation();
+        if (currentStation) {
+          progressionSystem.awardExplorationExperience('station_discovery', {
+            riskLevel: currentLocation.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1
+          });
+        }
+      }
     }
   };
 
@@ -565,6 +601,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
       const characterManager = engineRef.current.getCharacterManager();
+      const progressionSystem = engineRef.current.getCharacterProgressionSystem();
       const factionManager = playerManager.getFactionManager();
       const contactManager = factionManager.getContactManager();
       
@@ -594,6 +631,23 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       
       if (result) {
+        // Award social experience for successful interactions
+        if (result && typeof result === 'object' && 'outcome' in result && 'trustChange' in result) {
+          if (result.outcome === 'success' || result.outcome === 'exceptional') {
+            // Award social experience based on trust gained
+            progressionSystem.awardSocialExperience('negotiation_success', {
+              value: Math.abs(result.trustChange) // Use absolute trust change as experience value
+            });
+            
+            // Award contact experience for first-time meetings (high trust gain might indicate new contact)
+            if (result.trustChange >= 15) {
+              progressionSystem.awardSocialExperience('contact_made', {
+                value: result.trustChange
+              });
+            }
+          }
+        }
+        
         // Show interaction feedback for advanced interaction results
         if (result && typeof result === 'object' && 'outcome' in result && 'trustChange' in result) {
           const outcomeText = result.outcome === 'exceptional' ? '🌟 Exceptional!' : 
@@ -795,6 +849,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Contacts (P)
         </button>
         <button 
+          onClick={() => setActivePanel(activePanel === 'achievements' ? null : 'achievements')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            marginLeft: '10px',
+            backgroundColor: activePanel === 'achievements' ? '#4a90e2' : undefined
+          }}
+        >
+          Achievements (A)
+        </button>
+        <button 
           onClick={handleOpenMaintenance} 
           disabled={!engineRef.current || !!engineError || !currentShip}
           style={{ 
@@ -954,6 +1018,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             }
           }}
           onCancel={() => setShowCharacterCreation(false)}
+        />
+      )}
+
+      {/* Achievements Panel */}
+      {engineRef.current && showAchievements && (
+        <AchievementsPanel
+          isVisible={showAchievements}
+          onClose={() => setActivePanel(null)}
+          achievementManager={engineRef.current.getAchievementManager()}
         />
       )}
     </div>

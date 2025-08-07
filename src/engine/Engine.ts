@@ -243,6 +243,14 @@ export class Engine implements GameEngine {
     return this.systemManager.getMaintenanceManager();
   }
 
+  getAchievementManager() {
+    return this.systemManager.getAchievementManager();
+  }
+
+  getCharacterProgressionSystem() {
+    return this.systemManager.getCharacterProgressionSystem();
+  }
+
   /**
    * Clean up all resources and stop the engine.
    * 
