@@ -43,6 +43,7 @@ import { EventManager } from './EventManager';
  */
 export class CombatManager {
   private timeManager: TimeManager;
+  private worldManager: WorldManager;
   private playerManager: PlayerManager;
 
   // System state
@@ -57,7 +58,7 @@ export class CombatManager {
 
   constructor(
     timeManager: TimeManager,
-    _worldManager: WorldManager,
+    worldManager: WorldManager,
     playerManager: PlayerManager,
     _factionManager: FactionManager,
     _securityManager: SecurityManager,
@@ -65,6 +66,7 @@ export class CombatManager {
     _eventManager: EventManager
   ) {
     this.timeManager = timeManager;
+    this.worldManager = worldManager;
     this.playerManager = playerManager;
 
     // Initialize combat state
@@ -734,6 +736,9 @@ export class CombatManager {
     // Get weapon (simplified - would select from actor's equipped weapons)
     const weapon = this.weaponDatabase.get('pulse-laser-mk1')!;
     
+    // Track weapon fired (regardless of hit/miss)
+    this.combatState.stats.weaponsFired++;
+    
     // Calculate hit chance
     const distance = this.calculateDistance(actor.position, target.position);
     const baseAccuracy = weapon.stats.accuracy;
@@ -759,7 +764,6 @@ export class CombatManager {
     // Apply damage to target
     const damageResult = this.applyDamage(target, finalDamage, weapon.damageType);
     
-    this.combatState.stats.weaponsFired++;
     this.combatState.stats.damageDealt += finalDamage;
 
     return {
@@ -1345,8 +1349,15 @@ export class CombatManager {
    * Start random encounter
    */
   triggerRandomEncounter(): CombatEncounter | null {
-    // Simplified - use a default system if getCurrentSystem doesn't exist
-    const currentSystem = 'default-system';
+    // Get current system from player's current station via world manager
+    const currentStation = this.playerManager.getCurrentStation();
+    if (!currentStation) {
+      return null;
+    }
+    
+    // Use the galaxy's current player location for the system
+    const galaxy = this.worldManager.getGalaxy();
+    const currentSystem = galaxy.currentPlayerLocation.systemId || 'default-system';
     
     const encounterTypes: EncounterType[] = ['pirate-attack', 'patrol-inspection', 'bounty-hunter'];
     const randomType = encounterTypes[Math.floor(Math.random() * encounterTypes.length)];
