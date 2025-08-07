@@ -45,3 +45,6 @@ export * from './player';
 
 // Re-export ship hub types
 export * from './shipHubs';
+
+// Re-export contact and relationship types
+export * from './contacts';
