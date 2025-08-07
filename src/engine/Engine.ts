@@ -247,6 +247,10 @@ export class Engine implements GameEngine {
     return this.systemManager.getAchievementManager();
   }
 
+  getEventManager() {
+    return this.systemManager.getEventManager();
+  }
+
   getCharacterProgressionSystem() {
     return this.systemManager.getCharacterProgressionSystem();
   }

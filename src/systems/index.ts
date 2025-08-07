@@ -14,3 +14,4 @@ export { MaintenanceManager } from './MaintenanceManager';
 export { FactionManager } from './FactionManager';
 export { ContactManager, ContactFactory } from './ContactManager';
 export { CharacterManager } from './CharacterManager';
+export { EventManager } from './EventManager';
