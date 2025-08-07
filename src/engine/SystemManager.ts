@@ -8,6 +8,7 @@ import { WorldManager } from '../systems/WorldManager';
 import { HackingManager } from '../systems/HackingManager';
 import { CombatManager } from '../systems/CombatManager';
 import { InvestmentManager } from '../systems/InvestmentManager';
+import { TutorialManager } from '../systems/TutorialManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -34,6 +35,7 @@ export class SystemManager {
   private hackingManager: HackingManager;
   private combatManager: CombatManager;
   private investmentManager: InvestmentManager;
+  private tutorialManager: TutorialManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -103,6 +105,12 @@ export class SystemManager {
       this.playerManager,
       this.playerManager.getFactionManager(),
       this.economicSystem
+    );
+    
+    // Initialize tutorial manager with required dependencies
+    this.tutorialManager = new TutorialManager(
+      this.playerManager,
+      this.characterManager
     );
     
     // Link systems that need to communicate
@@ -253,6 +261,10 @@ export class SystemManager {
 
   getInvestmentManager(): InvestmentManager {
     return this.investmentManager;
+  }
+
+  getTutorialManager(): TutorialManager {
+    return this.tutorialManager;
   }
 
   /**
