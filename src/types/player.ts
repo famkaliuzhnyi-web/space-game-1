@@ -9,6 +9,7 @@ export interface Player {
   contracts: string[]; // Active contract IDs
   achievements: string[]; // Achievement IDs
   statistics: PlayerStatistics;
+  characterId?: string; // Optional character ID - if present, character system is active
 }
 
 // Backward compatibility - accessing current ship

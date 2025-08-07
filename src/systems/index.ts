@@ -12,3 +12,4 @@ export { ShipConstructionSystem } from './ShipConstructionSystem';
 export { HubShipConstructionSystem } from './HubShipConstructionSystem';
 export { MaintenanceManager } from './MaintenanceManager';
 export { FactionManager } from './FactionManager';
+export { CharacterManager } from './CharacterManager';
