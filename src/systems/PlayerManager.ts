@@ -17,18 +17,31 @@ import { CharacterManager } from './CharacterManager';
 import { Character } from '../types/character';
 import { Contact } from '../types/contacts';
 
+// Forward declaration to avoid circular dependency
+interface ICharacterProgressionSystem {
+  awardTradingExperience(activity: string, data: {value?: number; profitMargin?: number}): boolean;
+}
+
 export class PlayerManager implements InventoryManager {
   private player: Player;
   private transactions: TradeTransaction[] = [];
   private shipStorage: ShipStorageManager;
   private factionManager: FactionManager;
   private characterManager: CharacterManager;
+  private progressionSystem: ICharacterProgressionSystem | null = null;
 
   constructor(playerId: string = 'player-1', playerName: string = 'Captain') {
     this.shipStorage = new ShipStorageManager();
     this.factionManager = new FactionManager();
     this.characterManager = new CharacterManager();
     this.player = this.createDefaultPlayer(playerId, playerName);
+  }
+
+  /**
+   * Set the progression system for experience awards (dependency injection)
+   */
+  setProgressionSystem(progressionSystem: ICharacterProgressionSystem): void {
+    this.progressionSystem = progressionSystem;
   }
 
   private createDefaultPlayer(id: string, name: string): Player {
@@ -421,6 +434,20 @@ export class PlayerManager implements InventoryManager {
     // Update statistics
     this.player.statistics.totalTradeValue += totalCost;
 
+    // Award trading experience
+    if (this.progressionSystem) {
+      this.progressionSystem.awardTradingExperience('trade_buy', { 
+        value: totalCost 
+      });
+      
+      // High-value trade bonus (over 5000 credits)
+      if (totalCost > 5000) {
+        this.progressionSystem.awardTradingExperience('high_value_trade', { 
+          value: totalCost 
+        });
+      }
+    }
+
     return { success: true };
   }
 
@@ -466,6 +493,31 @@ export class PlayerManager implements InventoryManager {
 
     // Update statistics
     this.player.statistics.totalTradeValue += totalEarnings;
+
+    // Award trading experience
+    if (this.progressionSystem) {
+      const profitMargin = averageCost > 0 ? ((pricePerUnit - averageCost) / averageCost) * 100 : 0;
+      
+      this.progressionSystem.awardTradingExperience('trade_sell', { 
+        value: totalEarnings,
+        profitMargin: profitMargin
+      });
+      
+      // Profitable trade bonus (over 10% profit)
+      if (profitMargin > 10) {
+        this.progressionSystem.awardTradingExperience('profitable_trade', { 
+          value: totalEarnings,
+          profitMargin: profitMargin
+        });
+      }
+      
+      // High-value trade bonus (over 5000 credits)
+      if (totalEarnings > 5000) {
+        this.progressionSystem.awardTradingExperience('high_value_trade', { 
+          value: totalEarnings 
+        });
+      }
+    }
 
     return { success: true };
   }

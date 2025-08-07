@@ -1,6 +1,7 @@
 import { InputManager, TimeManager, SaveManager, EconomicSystem, ContractManager, RouteAnalyzer, PlayerManager } from '../systems';
 import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { CharacterManager } from '../systems/CharacterManager';
+import { CharacterProgressionSystem } from '../systems/CharacterProgressionSystem';
 import { WorldManager } from '../systems/WorldManager';
 
 /**
@@ -18,6 +19,7 @@ export class SystemManager {
   private routeAnalyzer: RouteAnalyzer;
   private playerManager: PlayerManager;
   private characterManager: CharacterManager;
+  private characterProgressionSystem: CharacterProgressionSystem;
   private maintenanceManager: MaintenanceManager;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -31,7 +33,19 @@ export class SystemManager {
     this.routeAnalyzer = new RouteAnalyzer();
     this.playerManager = new PlayerManager();
     this.characterManager = new CharacterManager();
+    this.characterProgressionSystem = new CharacterProgressionSystem(this.characterManager);
     this.maintenanceManager = new MaintenanceManager(this.timeManager);
+    
+    // Link systems that need to communicate
+    this.playerManager.setProgressionSystem(this.characterProgressionSystem);
+    this.contractManager.setProgressionSystem(this.characterProgressionSystem);
+    this.maintenanceManager.setProgressionSystem(this.characterProgressionSystem);
+    
+    // Get faction manager from player manager and link it
+    const factionManager = this.playerManager.getFactionManager();
+    if (factionManager && 'setProgressionSystem' in factionManager) {
+      (factionManager as any).setProgressionSystem(this.characterProgressionSystem);
+    }
     
     // Initialize economics for existing stations
     this.initializeEconomics();
@@ -107,6 +121,10 @@ export class SystemManager {
 
   getCharacterManager(): CharacterManager {
     return this.characterManager;
+  }
+
+  getCharacterProgressionSystem(): CharacterProgressionSystem {
+    return this.characterProgressionSystem;
   }
 
   getMaintenanceManager(): MaintenanceManager {
