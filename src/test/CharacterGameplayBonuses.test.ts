@@ -9,7 +9,7 @@ import { MaintenanceManager } from '../systems/MaintenanceManager';
 import { TimeManager } from '../systems/TimeManager';
 import { CharacterManager } from '../systems/CharacterManager';
 import { getCommodity } from '../data/commodities';
-import { Character, CharacterAppearance } from '../types/character';
+import { CharacterAppearance } from '../types/character';
 
 describe('Character Gameplay Bonuses', () => {
   let economicSystem: EconomicSystem;
@@ -64,9 +64,10 @@ describe('Character Gameplay Bonuses', () => {
         demandFactors: {
           stationType: 1.0,
           population: 0.5,
-          securityLevel: 0.8
+          securityLevel: 0.8,
+          factionControl: 1.0
         },
-        lastUpdated: Date.now()
+        lastUpdate: Date.now()
       };
 
       // Calculate prices with different characters
@@ -116,9 +117,10 @@ describe('Character Gameplay Bonuses', () => {
         demandFactors: {
           stationType: 1.0,
           population: 0.5,
-          securityLevel: 0.8
+          securityLevel: 0.8,
+          factionControl: 1.0
         },
-        lastUpdated: Date.now()
+        lastUpdate: Date.now()
       };
 
       const novicePrice = economicSystem.calculatePriceWithCharacterBonusStable(commodity, testMarket, noviceTrader);
@@ -277,9 +279,10 @@ describe('Character Gameplay Bonuses', () => {
         demandFactors: {
           stationType: 1.0,
           population: 0.5,
-          securityLevel: 0.8
+          securityLevel: 0.8,
+          factionControl: 1.0
         },
-        lastUpdated: Date.now()
+        lastUpdate: Date.now()
       };
 
       // Should not throw error and should return base price
@@ -299,9 +302,10 @@ describe('Character Gameplay Bonuses', () => {
         demandFactors: {
           stationType: 1.0,
           population: 0.5,
-          securityLevel: 0.8
+          securityLevel: 0.8,
+          factionControl: 1.0
         },
-        lastUpdated: Date.now()
+        lastUpdate: Date.now()
       };
 
       // Should not throw error with null character
