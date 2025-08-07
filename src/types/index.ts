@@ -52,6 +52,7 @@ export * from './character';
 export * from './contacts';  
 export * from './economy';
 export * from './events';
+export * from './npc';
 export * from './player';
 export * from './shipHubs';
 export * from './skillTrees';

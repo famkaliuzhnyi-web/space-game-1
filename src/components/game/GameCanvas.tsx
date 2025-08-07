@@ -4,6 +4,7 @@ import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, Equipment
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
+import { NPCPanel } from './NPCPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
 import { ShipConstructionConfig } from '../../systems/ShipConstructionSystem';
@@ -27,9 +28,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
+  const [showNPCs, setShowNPCs] = useState(false);
   const [stationContacts, setStationContacts] = useState<Contact[]>([]);
   
   // Computed panel visibility states for backward compatibility
@@ -159,8 +161,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code === 'Escape') {
         setActivePanel(null);
-      } else if (event.code === 'KeyN') {
+      } else if (event.code === 'KeyN' && !event.shiftKey) {
         setActivePanel(activePanel === 'navigation' ? null : 'navigation');
+      } else if (event.code === 'KeyN' && event.shiftKey) {
+        setShowNPCs(!showNPCs);
       } else if (event.code === 'KeyS') {
         setActivePanel(activePanel === 'ship' ? null : 'ship');
       } else if (event.code === 'KeyF') {
@@ -1087,6 +1091,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           events={activeEvents}
           onEventChoice={handleEventChoice}
           onClose={() => setActivePanel(null)}
+        />
+      )}
+
+      {/* NPC Panel */}
+      {engineRef.current && (
+        <NPCPanel
+          npcAIManager={engineRef.current.getNPCAIManager()}
+          currentSystemId={engineRef.current.getWorldManager().getGalaxy().currentPlayerLocation.systemId}
+          isVisible={showNPCs}
+          onToggle={() => setShowNPCs(!showNPCs)}
         />
       )}
     </div>
