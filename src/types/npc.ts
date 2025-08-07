@@ -14,6 +14,18 @@ export interface NPCShip {
     speed: number; // Units per second
     currentVelocity: { x: number; y: number };
     lastMoveTime: number;
+    // Enhanced movement properties for Phase 5.2
+    pathfindingWaypoints?: { x: number; y: number }[];
+    currentWaypoint?: number;
+    avoidanceVector?: { x: number; y: number };
+    formation?: {
+      leaderId?: string;
+      position: 'lead' | 'follow_left' | 'follow_right' | 'follow_rear';
+      offset: { x: number; y: number };
+    };
+    maneuverability: number; // 0-100, affects turning speed and agility
+    maxAcceleration: number; // Maximum acceleration rate
+    brakingDistance: number; // Distance needed to stop at current speed
   };
   ai: NPCAIData;
   ship: {
@@ -44,6 +56,27 @@ export interface NPCAIData {
     timestamp: number;
     outcome: 'positive' | 'negative' | 'neutral';
   } | null;
+  // Enhanced AI properties for Phase 5.2
+  combatSkill: number; // 0-100, affects combat effectiveness
+  navigationSkill: number; // 0-100, affects pathfinding and maneuvering
+  socialSkill: number; // 0-100, affects conversations and reputation gain
+  marketKnowledge: number; // 0-100, affects trading decisions and market timing
+  threatAssessment: {
+    nearbyThreats: string[]; // IDs of threatening NPCs/player
+    currentThreatLevel: number; // 0-100
+    lastThreatUpdate: number;
+  };
+  routeOptimization: {
+    preferredRoutes: Map<string, number>; // stationId -> preference score
+    avoidedSectors: string[];
+    knownProfitableRoutes: Array<{
+      from: string;
+      to: string;
+      commodity: string;
+      profitMargin: number;
+      lastUpdated: number;
+    }>;
+  };
 }
 
 export interface NPCPersonality {
@@ -180,4 +213,67 @@ export interface FleetRole {
   type: 'leader' | 'escort' | 'scout' | 'transport' | 'support';
   position: { x: number; y: number }; // Relative to leader
   behavior: 'aggressive' | 'defensive' | 'support';
+}
+
+// Enhanced AI interfaces for Phase 5.2
+export interface PathfindingNode {
+  x: number;
+  y: number;
+  g: number; // Cost from start
+  h: number; // Heuristic cost to goal
+  f: number; // Total cost (g + h)
+  parent?: PathfindingNode;
+  obstacle?: boolean;
+  cost?: number; // Movement cost multiplier
+}
+
+export interface AvoidanceTarget {
+  id: string;
+  position: { x: number; y: number };
+  radius: number;
+  strength: number; // How strongly to avoid (0-100)
+  type: 'ship' | 'station' | 'hazard' | 'debris';
+}
+
+export interface AIDecisionContext {
+  npc: NPCShip;
+  nearbyNPCs: NPCShip[];
+  nearbyStations: any[]; // Station interfaces
+  playerInRange: boolean;
+  playerPosition?: { x: number; y: number };
+  marketData?: any; // Market price data
+  threatLevel: number;
+  timestamp: number;
+}
+
+export interface TradeDecision {
+  action: 'buy' | 'sell' | 'wait' | 'travel';
+  commodity?: string;
+  quantity?: number;
+  targetPrice?: number;
+  targetStationId?: string;
+  confidence: number; // 0-100, how confident the AI is in this decision
+  reasoning: string; // Human-readable explanation
+}
+
+export interface CombatDecision {
+  action: 'engage' | 'flee' | 'intimidate' | 'ignore' | 'call_backup';
+  targetId?: string;
+  tacticalPosition?: { x: number; y: number };
+  confidence: number;
+  reasoning: string;
+}
+
+export interface ConversationState {
+  npcId: string;
+  playerId: string;
+  currentTopic: string;
+  moodModifier: number; // -100 to 100, affects responses
+  conversationHistory: Array<{
+    speaker: 'npc' | 'player';
+    text: string;
+    timestamp: number;
+  }>;
+  availableTopics: string[];
+  relationshipChange: number; // Pending reputation change
 }
