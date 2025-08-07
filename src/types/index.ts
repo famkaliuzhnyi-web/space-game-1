@@ -57,4 +57,5 @@ export * from './player';
 export * from './security';
 export * from './shipHubs';
 export * from './skillTrees';
+export * from './tutorial';
 export * from './world';
