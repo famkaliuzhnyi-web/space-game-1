@@ -16,7 +16,7 @@ const mockFactionManager = {
 const mockCharacterManager = {
   getCharacter: vi.fn(() => ({
     progression: { level: 5 },
-    skills: { 'investigation': 4, 'trading': 3 }
+    skills: { 'Investigation': 4, 'trading': 3 }
   })),
   awardExperience: vi.fn()
 } as any;

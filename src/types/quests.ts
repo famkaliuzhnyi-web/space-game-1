@@ -22,12 +22,20 @@ export type QuestCategory =
   | 'investigation'
   | 'construction'
   | 'mystery'
-  | 'character';
+  | 'character'
+  | 'hacking'
+  | 'humanitarian'
+  | 'smuggling'
+  | 'piracy'
+  | 'leadership';
 
 export interface QuestObjective {
   id: string;
   description: string;
-  type: 'deliver' | 'eliminate' | 'visit' | 'collect' | 'interact' | 'build' | 'achieve';
+  type: 'deliver' | 'eliminate' | 'visit' | 'collect' | 'interact' | 'build' | 'achieve' | 
+        'combat' | 'investigation' | 'dialogue' | 'trading' | 'economic_warfare' | 
+        'stealth' | 'hacking' | 'technical' | 'piracy' | 'social' | 'leadership' | 
+        'smuggle' | 'humanitarian';
   target?: string;
   quantity?: number;
   currentProgress?: number;
@@ -40,6 +48,7 @@ export interface QuestReward {
   experience?: number;
   items?: string[];
   reputation?: { [factionId: string]: number };
+  reputation_loss?: { [factionId: string]: number }; // For quests that harm standing with factions
   unlocks?: string[]; // Unlocked features, areas, or quests
   ships?: string[];
   blueprints?: string[];
