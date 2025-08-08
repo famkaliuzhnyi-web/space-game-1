@@ -14,6 +14,7 @@ import {
 import { TimeManager } from './TimeManager';
 import { WorldManager } from './WorldManager';
 import { PlayerManager } from './PlayerManager';
+import { NavigationManager } from './NavigationManager';
 import { Station, StarSystem } from '../types/world';
 
 /**
@@ -39,6 +40,7 @@ export class NPCAIManager {
   private timeManager: TimeManager;
   private worldManager: WorldManager;
   private playerManager: PlayerManager;
+  private navigationManager: NavigationManager | null = null;
   // These will be used in future updates
   // private factionManager: FactionManager;
   // private economicSystem: EconomicSystem;
@@ -72,6 +74,13 @@ export class NPCAIManager {
     
     this.initializePersonalityTemplates();
     this.initializeStartingNPCs();
+  }
+
+  /**
+   * Set the navigation manager for time-based NPC travel (optional)
+   */
+  setNavigationManager(navigationManager: NavigationManager): void {
+    this.navigationManager = navigationManager;
   }
 
   /**
@@ -471,6 +480,9 @@ export class NPCAIManager {
     
     // Update NPC movement and positions
     this.updateNPCMovement(deltaTime);
+    
+    // Update time-based travel for NPCs (if navigation manager is available)
+    this.updateNPCTimBasedTravel();
   }
 
   /**
@@ -651,6 +663,148 @@ export class NPCAIManager {
         npc.movement.targetCoordinates = undefined;
       }
     }
+  }
+
+  /**
+   * Enhanced NPC destination setting with optional time-based travel
+   */
+  private setNPCDestinationEnhanced(npc: NPCShip, targetStationId: string, useTimeBased: boolean = false): void {
+    if (useTimeBased && this.navigationManager && this.worldManager) {
+      // Use time-based travel system
+      this.startNPCTimBasedTravel(npc, targetStationId);
+    } else {
+      // Use existing pathfinding system
+      this.setNPCDestination(npc, targetStationId);
+    }
+  }
+
+  /**
+   * Start time-based travel for an NPC
+   */
+  private startNPCTimBasedTravel(npc: NPCShip, targetStationId: string): boolean {
+    if (!this.navigationManager || !this.worldManager) {
+      return false;
+    }
+
+    // Check if NPC is already in transit
+    if (npc.movement.isInTransit) {
+      return false;
+    }
+
+    // Create a navigation target for the destination station
+    const destinationTarget = this.worldManager.createStationTarget(targetStationId);
+    if (!destinationTarget) {
+      return false;
+    }
+
+    // Create a pseudo-ship from the NPC data for navigation system
+    const npcAsShip = this.convertNPCToShip(npc);
+    
+    // Start travel using navigation manager
+    const travelResult = this.navigationManager.startTravel(npcAsShip, destinationTarget);
+    
+    if (travelResult.success && travelResult.travelPlan) {
+      // Update NPC state for time-based travel
+      npc.movement.isInTransit = true;
+      npc.movement.travelPlanId = travelResult.travelPlan.id;
+      npc.movement.targetStationId = targetStationId;
+      npc.movement.arrivalTime = travelResult.travelPlan.estimatedArrivalTime.getTime();
+      
+      // Clear pathfinding since we're using time-based travel
+      npc.movement.pathfindingWaypoints = undefined;
+      npc.movement.currentWaypoint = undefined;
+      
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Convert NPC to Ship format for NavigationManager compatibility
+   */
+  private convertNPCToShip(npc: NPCShip): any {
+    return {
+      id: npc.id,
+      name: npc.name,
+      class: {
+        baseSpeed: npc.movement.speed * 3.6, // Convert from units/second to units/hour
+        equipmentSlots: { engines: 1, cargo: 1, shields: 1, weapons: 1, utility: 1 }
+      },
+      equipment: {
+        engines: [], // NPCs don't have detailed equipment for now
+        cargo: [],
+        shields: [],
+        weapons: [],
+        utility: []
+      },
+      condition: {
+        engines: npc.ship.condition / 100, // Convert from 0-100 to 0-1 scale
+        hull: npc.ship.condition / 100,
+        cargo: npc.ship.condition / 100,
+        shields: npc.ship.condition / 100,
+        lastMaintenance: Date.now()
+      },
+      location: {
+        systemId: npc.position.systemId,
+        stationId: npc.position.stationId,
+        coordinates: npc.position.coordinates,
+        isInTransit: npc.movement.isInTransit || false,
+        destination: npc.movement.targetStationId,
+        arrivalTime: npc.movement.arrivalTime
+      }
+    };
+  }
+
+  /**
+   * Check and complete time-based travel for NPCs
+   */
+  private updateNPCTimBasedTravel(): void {
+    if (!this.navigationManager) {
+      return;
+    }
+
+    const currentTime = this.timeManager.getCurrentTimestamp();
+
+    for (const npc of this.npcShips.values()) {
+      if (npc.movement.isInTransit && npc.movement.arrivalTime) {
+        // Check if travel should be completed
+        if (currentTime >= npc.movement.arrivalTime) {
+          this.completeNPCTimBasedTravel(npc);
+        }
+      }
+    }
+  }
+
+  /**
+   * Complete time-based travel for an NPC
+   */
+  private completeNPCTimBasedTravel(npc: NPCShip): void {
+    if (!npc.movement.targetStationId) {
+      return;
+    }
+
+    // Update NPC position to destination
+    npc.position.stationId = npc.movement.targetStationId;
+    
+    // Get station coordinates
+    const galaxy = this.worldManager.getGalaxy();
+    const system = this.findSystemById(galaxy, npc.position.systemId);
+    if (system) {
+      const station = this.findStationById(system, npc.movement.targetStationId);
+      if (station) {
+        npc.position.coordinates = { ...station.position };
+      }
+    }
+
+    // Clear travel state
+    npc.movement.isInTransit = false;
+    npc.movement.travelPlanId = undefined;
+    npc.movement.arrivalTime = undefined;
+    npc.movement.targetStationId = undefined;
+    npc.movement.currentVelocity = { x: 0, y: 0 };
+
+    console.log(`NPC ${npc.name} completed time-based travel to ${npc.position.stationId}`);
   }
 
   /**

@@ -16,6 +16,9 @@ import { ContactFactory } from './ContactManager';
 import { CharacterManager } from './CharacterManager';
 import { Character } from '../types/character';
 import { Contact } from '../types/contacts';
+import { NavigationManager, TravelPlan, TravelProgress } from './NavigationManager';
+import { NavigationTarget } from '../types/world';
+import { TimeManager } from './TimeManager';
 
 // Forward declaration to avoid circular dependency
 interface ICharacterProgressionSystem {
@@ -28,6 +31,8 @@ export class PlayerManager implements InventoryManager {
   private shipStorage: ShipStorageManager;
   private factionManager: FactionManager;
   private characterManager: CharacterManager;
+  private navigationManager: NavigationManager | null = null;
+  private worldManager: any = null; // WorldManager reference for navigation
   private progressionSystem: ICharacterProgressionSystem | null = null;
   private equipmentInventory: EquipmentItem[] = []; // Store uninstalled equipment
 
@@ -43,6 +48,20 @@ export class PlayerManager implements InventoryManager {
    */
   setProgressionSystem(progressionSystem: ICharacterProgressionSystem): void {
     this.progressionSystem = progressionSystem;
+  }
+
+  /**
+   * Set the navigation manager (dependency injection)
+   */
+  setNavigationManager(navigationManager: NavigationManager): void {
+    this.navigationManager = navigationManager;
+  }
+
+  /**
+   * Set the world manager (dependency injection) - needed for navigation
+   */
+  setWorldManager(worldManager: any): void {
+    this.worldManager = worldManager;
   }
 
   private createDefaultPlayer(id: string, name: string): Player {
@@ -931,5 +950,202 @@ export class PlayerManager implements InventoryManager {
    */
   getEquipmentInventory(): EquipmentItem[] {
     return [...this.equipmentInventory];
+  }
+
+  // Navigation and Travel Management
+
+  /**
+   * Start travel to a destination
+   */
+  startTravel(destination: NavigationTarget, origin?: NavigationTarget): { success: boolean; travelPlan?: TravelPlan; error?: string } {
+    if (!this.navigationManager) {
+      return { success: false, error: 'Navigation system not available' };
+    }
+
+    const currentShip = this.getCurrentShip();
+    return this.navigationManager.startTravel(currentShip, destination, origin);
+  }
+
+  /**
+   * Cancel current travel
+   */
+  cancelTravel(): { success: boolean; error?: string } {
+    if (!this.navigationManager) {
+      return { success: false, error: 'Navigation system not available' };
+    }
+
+    const currentShip = this.getCurrentShip();
+    return this.navigationManager.cancelTravel(currentShip.id);
+  }
+
+  /**
+   * Get current travel progress
+   */
+  getTravelProgress(): TravelProgress | null {
+    if (!this.navigationManager) {
+      return null;
+    }
+
+    const currentShip = this.getCurrentShip();
+    return this.navigationManager.getTravelProgress(currentShip.id);
+  }
+
+  /**
+   * Check if current ship is traveling
+   */
+  isInTransit(): boolean {
+    const currentShip = this.getCurrentShip();
+    return currentShip.location.isInTransit;
+  }
+
+  /**
+   * Get travel history for current ship
+   */
+  getTravelHistory(): TravelPlan[] {
+    if (!this.navigationManager) {
+      return [];
+    }
+
+    const currentShip = this.getCurrentShip();
+    return this.navigationManager.getTravelHistory(currentShip.id);
+  }
+
+  /**
+   * Estimate travel time to destination
+   */
+  estimateTravelTime(destination: NavigationTarget, origin?: NavigationTarget): number {
+    if (!this.navigationManager) {
+      return 0;
+    }
+
+    const currentShip = this.getCurrentShip();
+    const actualOrigin = origin || this.getCurrentLocationAsNavigationTarget();
+    
+    if (!actualOrigin) {
+      return 0;
+    }
+
+    // Calculate ship speed for more accurate estimation
+    let speed = currentShip.class.baseSpeed || 100;
+    if (currentShip.equipment.engines.length > 0) {
+      for (const engine of currentShip.equipment.engines) {
+        if (engine.effects.speed) {
+          speed += engine.effects.speed * engine.condition;
+        }
+      }
+    }
+    speed *= currentShip.condition.engines;
+
+    return this.navigationManager.estimateTravelTime(actualOrigin, destination, speed);
+  }
+
+  /**
+   * Complete travel when arrival time is reached (called by NavigationManager)
+   */
+  completeTravelArrival(): void {
+    const currentShip = this.getCurrentShip();
+    if (currentShip.location.isInTransit && currentShip.location.destination) {
+      // Update ship location
+      currentShip.location.isInTransit = false;
+      
+      // For station travel, update station ID
+      if (currentShip.location.destination.startsWith('station:') || 
+          currentShip.location.destination.includes('-station')) {
+        currentShip.location.stationId = currentShip.location.destination;
+        currentShip.location.coordinates = undefined;
+      }
+      
+      // Clear travel data
+      currentShip.location.destination = undefined;
+      currentShip.location.arrivalTime = undefined;
+
+      // Update statistics
+      this.player.statistics.distanceTraveled += 1; // Basic increment, could be enhanced
+    }
+  }
+
+  /**
+   * Convert current location to NavigationTarget for travel calculations
+   */
+  private getCurrentLocationAsNavigationTarget(): NavigationTarget | null {
+    const currentShip = this.getCurrentShip();
+    const location = currentShip.location;
+
+    // If we have worldManager, use it to create proper navigation targets
+    if (this.worldManager && location.stationId) {
+      return this.worldManager.createStationTarget(location.stationId);
+    }
+
+    // Fallback to basic implementation
+    if (location.stationId) {
+      return {
+        type: 'station',
+        id: location.stationId,
+        name: location.stationId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        position: location.coordinates || { x: 0, y: 0 },
+        distance: 0,
+        estimatedTravelTime: 0
+      };
+    }
+
+    if (location.coordinates) {
+      return {
+        type: 'station', // Default type for unknown coordinates
+        id: `position-${location.coordinates.x}-${location.coordinates.y}`,
+        name: `Current Position`,
+        position: location.coordinates,
+        distance: 0,
+        estimatedTravelTime: 0
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get available travel destinations
+   */
+  getAvailableTravelDestinations(): NavigationTarget[] {
+    if (!this.worldManager) {
+      return [];
+    }
+
+    // Get nearby stations and systems
+    const stations = this.worldManager.getAllReachableStations();
+    const systems = this.worldManager.getAllReachableSystems();
+    
+    return [...stations, ...systems];
+  }
+
+  /**
+   * Travel to a station by ID
+   */
+  travelToStation(stationId: string): { success: boolean; travelPlan?: TravelPlan; error?: string } {
+    if (!this.worldManager) {
+      return { success: false, error: 'World manager not available' };
+    }
+
+    const destination = this.worldManager.createStationTarget(stationId);
+    if (!destination) {
+      return { success: false, error: 'Station not found' };
+    }
+
+    return this.startTravel(destination);
+  }
+
+  /**
+   * Travel to a system by ID
+   */
+  travelToSystem(systemId: string): { success: boolean; travelPlan?: TravelPlan; error?: string } {
+    if (!this.worldManager) {
+      return { success: false, error: 'World manager not available' };
+    }
+
+    const destination = this.worldManager.createSystemTarget(systemId);
+    if (!destination) {
+      return { success: false, error: 'System not found' };
+    }
+
+    return this.startTravel(destination);
   }
 }

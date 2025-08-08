@@ -26,6 +26,10 @@ export interface NPCShip {
     maneuverability: number; // 0-100, affects turning speed and agility
     maxAcceleration: number; // Maximum acceleration rate
     brakingDistance: number; // Distance needed to stop at current speed
+    // Time-based navigation integration
+    isInTransit?: boolean; // If using time-based travel system
+    travelPlanId?: string; // ID of active travel plan from NavigationManager
+    arrivalTime?: number; // Timestamp when travel completes (for time-based travel)
   };
   ai: NPCAIData;
   ship: {
