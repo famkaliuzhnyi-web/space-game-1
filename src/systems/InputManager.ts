@@ -3,6 +3,8 @@ import { InputState, Vector2D } from '../types';
 export class InputManager {
   private inputState: InputState;
   private canvas: HTMLCanvasElement;
+  private previousMouseState: { [button: number]: boolean } = {};
+  private clickEvents: Array<{ button: number; position: Vector2D }> = [];
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -49,6 +51,14 @@ export class InputManager {
   }
 
   private handleMouseUp(event: MouseEvent): void {
+    // Detect click: mouse was down and is now up
+    if (this.inputState.mouse.buttons[event.button]) {
+      this.clickEvents.push({
+        button: event.button,
+        position: { ...this.inputState.mouse.position }
+      });
+    }
+    
     this.inputState.mouse.buttons[event.button] = false;
   }
 
@@ -101,6 +111,15 @@ export class InputManager {
 
   getTouchPositions(): Vector2D[] {
     return [...this.inputState.touch.touches];
+  }
+
+  /**
+   * Get and clear click events since last frame
+   */
+  getClickEvents(): Array<{ button: number; position: Vector2D }> {
+    const events = [...this.clickEvents];
+    this.clickEvents = []; // Clear after reading
+    return events;
   }
 
   dispose(): void {

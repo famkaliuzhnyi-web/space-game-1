@@ -137,6 +137,9 @@ export class SystemManager {
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
     this.maintenanceManager.setProgressionSystem(this.characterProgressionSystem);
     
+    // Set player ship in world manager for rendering
+    this.worldManager.setPlayerShip(this.playerManager.getShip());
+    
     // Link achievement manager to progression system for achievement unlocks
     if ('setAchievementManager' in this.characterProgressionSystem) {
       (this.characterProgressionSystem as any).setAchievementManager(this.achievementManager);
@@ -158,6 +161,9 @@ export class SystemManager {
   updateSystems(deltaTime: number): void {
     // Update time system
     this.timeManager.update(deltaTime);
+    
+    // Update world system (includes ship movement)
+    this.worldManager.updateShipMovement(deltaTime);
     
     // Update economic system
     this.economicSystem.update(deltaTime * 1000); // Convert to milliseconds for economic system

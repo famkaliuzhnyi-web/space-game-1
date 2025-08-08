@@ -52,12 +52,15 @@ export class InputHandler {
       camera.zoom = Math.max(camera.zoom - deltaTime, 0.1);
     }
 
-    // Handle mouse/touch input for navigation
-    const mousePos = inputManager.getMousePosition();
-    if (inputManager.isMouseButtonPressed(0)) { // Left click
-      this.handleClick(mousePos.x, mousePos.y, camera);
+    // Handle click events for navigation
+    const clickEvents = inputManager.getClickEvents();
+    for (const clickEvent of clickEvents) {
+      if (clickEvent.button === 0) { // Left click
+        this.handleClick(clickEvent.position.x, clickEvent.position.y, camera);
+      }
     }
 
+    // Handle touch events for navigation
     const touches = inputManager.getTouchPositions();
     if (touches.length === 1) {
       // Single touch for navigation
@@ -84,6 +87,8 @@ export class InputHandler {
   static handleWorldClick(worldX: number, worldY: number, worldManager: WorldManager): void {
     // Check if click is on any navigable object
     const objects = worldManager.getAllVisibleObjects();
+    let clickedOnObject = false;
+    
     for (const obj of objects) {
       const distance = Math.sqrt(
         Math.pow(worldX - obj.position.x, 2) + 
@@ -95,13 +100,20 @@ export class InputHandler {
       if (obj.type === 'station') clickRadius = 15;
       if (obj.type === 'planet' && 'radius' in obj.object) clickRadius = obj.object.radius || 25;
       if (obj.type === 'star') clickRadius = 30;
+      if (obj.type === 'ship') clickRadius = 10; // Ship has smaller click radius
 
       if (distance <= clickRadius) {
+        clickedOnObject = true;
         if (obj.type === 'station' && 'id' in obj.object) {
           worldManager.navigateToTarget(obj.object.id);
         }
         break;
       }
+    }
+    
+    // If no object was clicked, move ship to the clicked coordinates
+    if (!clickedOnObject) {
+      worldManager.moveShipToCoordinates(worldX, worldY);
     }
   }
 }
