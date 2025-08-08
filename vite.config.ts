@@ -5,6 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: process.env.NODE_ENV === 'production' ? '/space-game-1/' : '/',
+  server: {
+    host: true, // This allows external access to the dev server
+    port: 5173
+  },
   build: {
     rollupOptions: {
       output: {
