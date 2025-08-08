@@ -306,7 +306,7 @@ export class QuestManager {
     // Check level requirement
     if (requirements.level) {
       const character = this.characterManager.getCharacter();
-      if (!character || character.progression.level < requirements.level) {
+      if (!character || !character.progression || character.progression.level < requirements.level) {
         return false;
       }
     }
