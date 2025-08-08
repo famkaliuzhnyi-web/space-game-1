@@ -6,39 +6,42 @@ extends Node
 class_name GameEngine
 
 # Core engine components
-var renderer: GameRenderer
-var input_handler: GameInputHandler
 var system_manager: GameSystemManager
-var game_loop: GameGameLoop
+# TODO: Add other engine components as needed:
+# var renderer: GameRenderer
+# var input_handler: GameInputHandler  
+# var game_loop: GameGameLoop
 
 func _ready():
 	print("Initializing Godot Game Engine...")
 	initialize_engine()
 
 func initialize_engine():
-	# Initialize core engine components
+	# Initialize system manager first
 	system_manager = GameSystemManager.new()
 	add_child(system_manager)
 	
-	renderer = GameRenderer.new()
-	add_child(renderer)
+	# TODO: Initialize other engine components as they are created:
+	# renderer = GameRenderer.new()
+	# add_child(renderer)
 	
-	input_handler = GameInputHandler.new()
-	add_child(input_handler)
+	# input_handler = GameInputHandler.new()
+	# add_child(input_handler)
 	
-	game_loop = GameGameLoop.new()
-	add_child(game_loop)
+	# game_loop = GameGameLoop.new()
+	# add_child(game_loop)
 	
 	print("Game Engine initialized successfully")
 
 func handle_input(event):
-	if input_handler:
-		input_handler.handle_input(event)
+	# TODO: Implement input handling
+	pass
 
 func _process(delta):
-	if game_loop:
-		game_loop.update(delta)
+	if system_manager:
+		system_manager.update(delta)
 
 func shutdown():
 	print("Shutting down Game Engine...")
-	# Clean shutdown of all systems
+	if system_manager:
+		system_manager.shutdown()
