@@ -18,6 +18,9 @@ export class ThreeRenderer {
   private ambientLight!: THREE.AmbientLight; // Initialized in setupLighting
   private sunLight!: THREE.DirectionalLight; // Initialized in setupLighting
 
+  // Dummy mesh cache for performance
+  private dummyMeshCache: Map<string, THREE.BufferGeometry> = new Map();
+
   // Camera control properties
   private cameraTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   private cameraPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 300);
@@ -25,51 +28,73 @@ export class ThreeRenderer {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     
-    // Initialize Three.js renderer
-    this.renderer = new THREE.WebGLRenderer({ 
-      canvas: canvas,
-      antialias: true,
-      alpha: true
-    });
-    this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
-    this.renderer.setClearColor(0x000000, 1); // Black space background
+    try {
+      // Initialize Three.js renderer with error handling
+      this.renderer = new THREE.WebGLRenderer({ 
+        canvas: canvas,
+        antialias: true,
+        alpha: true
+      });
+      
+      // Set renderer properties
+      this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
+      this.renderer.setClearColor(0x000000, 1); // Black space background
 
-    // Create scene
-    this.scene = new THREE.Scene();
+      // Create scene
+      this.scene = new THREE.Scene();
 
-    // Set up camera
-    this.camera = new THREE.PerspectiveCamera(
-      75, // Field of view
-      canvas.clientWidth / canvas.clientHeight, // Aspect ratio
-      0.1, // Near clipping plane
-      10000 // Far clipping plane
-    );
-    this.camera.position.copy(this.cameraPosition);
+      // Set up camera
+      this.camera = new THREE.PerspectiveCamera(
+        75, // Field of view
+        canvas.clientWidth / canvas.clientHeight, // Aspect ratio
+        0.1, // Near clipping plane
+        10000 // Far clipping plane
+      );
+      this.camera.position.copy(this.cameraPosition);
 
-    // Set up lighting
-    this.setupLighting();
+      // Set up lighting
+      this.setupLighting();
 
-    // Create star field
-    this.createStarField();
+      // Create star field
+      this.createStarField();
 
-    // Handle window resize
-    this.setupResizeHandler();
+      // Handle window resize
+      this.setupResizeHandler();
+    } catch (error) {
+      console.error('ThreeRenderer initialization failed:', error);
+      throw new Error(`Failed to initialize 3D renderer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   /**
    * Set up lighting for the 3D scene
    */
   private setupLighting(): void {
-    // Ambient light for general illumination
-    this.ambientLight = new THREE.AmbientLight(0x404040, 0.4); // Dim ambient
-    this.scene.add(this.ambientLight);
+    try {
+      // Ambient light for general illumination
+      this.ambientLight = new THREE.AmbientLight(0x404040, 0.4); // Dim ambient
+      this.scene.add(this.ambientLight);
 
-    // Directional light to simulate distant sun
-    this.sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    this.sunLight.position.set(1000, 500, 1000);
-    this.sunLight.castShadow = false; // Disable shadows for performance
-    this.scene.add(this.sunLight);
+      // Directional light to simulate distant sun
+      this.sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      
+      // Ensure the light was created successfully before setting properties
+      if (this.sunLight && this.sunLight.position) {
+        this.sunLight.position.set(1000, 500, 1000);
+        this.sunLight.castShadow = false; // Disable shadows for performance
+        this.scene.add(this.sunLight);
+      } else {
+        console.warn('Failed to create directional light, using ambient light only');
+      }
+    } catch (error) {
+      console.error('Error setting up lighting:', error);
+      // Fall back to basic ambient light only
+      if (!this.ambientLight) {
+        this.ambientLight = new THREE.AmbientLight(0x404040, 0.6); // Brighter ambient as fallback
+        this.scene.add(this.ambientLight);
+      }
+    }
   }
 
   /**
@@ -230,9 +255,82 @@ export class ThreeRenderer {
         return this.createStation(position.x, position.y, obj.object as Station, isCurrentStation);
       case 'planet':
         return this.createPlanet(position.x, position.y, obj.object as Planet);
+      case 'ship':
+        return this.createShip(position.x, position.y, obj.object);
+      case 'cargo':
+        return this.createCargo(position.x, position.y, obj.object);
+      case 'debris':
+        return this.createDebris(position.x, position.y, obj.object);
       default:
-        return null;
+        // Create a generic dummy mesh for unknown object types
+        return this.createDummyMesh(obj.type, position.x, position.y);
     }
+  }
+
+  /**
+   * Create a dummy mesh for objects without specific 3D representations
+   */
+  private createDummyMesh(objectType: string, _x: number, _y: number): THREE.Object3D {
+    const group = new THREE.Group();
+    
+    // Get or create cached geometry for this object type
+    let geometry = this.dummyMeshCache.get(objectType);
+    if (!geometry) {
+      // Create different dummy shapes based on object type
+      switch (objectType) {
+        case 'asteroid':
+          geometry = new THREE.DodecahedronGeometry(5, 0);
+          break;
+        case 'beacon':
+          geometry = new THREE.ConeGeometry(2, 8, 6);
+          break;
+        case 'probe':
+          geometry = new THREE.OctahedronGeometry(3);
+          break;
+        case 'mine':
+          geometry = new THREE.IcosahedronGeometry(4);
+          break;
+        default:
+          // Generic cube for unknown types
+          geometry = new THREE.BoxGeometry(4, 4, 4);
+      }
+      this.dummyMeshCache.set(objectType, geometry);
+    }
+
+    // Create material based on object type
+    let color = 0x888888;
+    let emissiveColor = 0x000000;
+    
+    switch (objectType) {
+      case 'asteroid':
+        color = 0x8b7355;
+        break;
+      case 'beacon':
+        color = 0x00ff00;
+        emissiveColor = 0x003300;
+        break;
+      case 'probe':
+        color = 0x4a90e2;
+        emissiveColor = 0x001122;
+        break;
+      case 'mine':
+        color = 0xff4444;
+        emissiveColor = 0x220000;
+        break;
+      default:
+        color = 0x666666;
+    }
+
+    const material = new THREE.MeshLambertMaterial({ color });
+    if (emissiveColor !== 0x000000) {
+      (material as any).emissive = new THREE.Color(emissiveColor);
+      (material as any).emissiveIntensity = 0.3;
+    }
+
+    const mesh = new THREE.Mesh(geometry, material);
+    group.add(mesh);
+
+    return group;
   }
 
   /**
@@ -376,6 +474,114 @@ export class ThreeRenderer {
   }
 
   /**
+   * Create a 3D ship representation
+   */
+  private createShip(_x: number, _y: number, ship: any): THREE.Object3D {
+    const shipGroup = new THREE.Group();
+
+    // Main hull
+    const hullGeometry = new THREE.CylinderGeometry(2, 4, 12, 8);
+    const hullMaterial = new THREE.MeshLambertMaterial({
+      color: ship?.color || 0x4a90e2
+    });
+    const hullMesh = new THREE.Mesh(hullGeometry, hullMaterial);
+    hullMesh.rotation.z = Math.PI / 2; // Point forward
+    shipGroup.add(hullMesh);
+
+    // Engine glow
+    const engineGeometry = new THREE.ConeGeometry(1.5, 3, 6);
+    const engineMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00aaff
+    });
+    (engineMaterial as any).emissive = new THREE.Color(0x0055ff);
+    (engineMaterial as any).emissiveIntensity = 0.8;
+    
+    const engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
+    engineMesh.position.set(-8, 0, 0);
+    engineMesh.rotation.z = -Math.PI / 2;
+    shipGroup.add(engineMesh);
+
+    // Wings
+    const wingGeometry = new THREE.BoxGeometry(3, 8, 0.5);
+    const wingMaterial = new THREE.MeshLambertMaterial({
+      color: ship?.color || 0x4a90e2
+    });
+    const wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
+    wingMesh.position.set(-2, 0, 0);
+    shipGroup.add(wingMesh);
+
+    return shipGroup;
+  }
+
+  /**
+   * Create a 3D cargo container representation
+   */
+  private createCargo(_x: number, _y: number, cargo: any): THREE.Object3D {
+    const cargoGroup = new THREE.Group();
+
+    // Main container box
+    const containerGeometry = new THREE.BoxGeometry(6, 6, 8);
+    const containerMaterial = new THREE.MeshLambertMaterial({
+      color: cargo?.type === 'valuable' ? 0xffd700 : 0x888888
+    });
+    const containerMesh = new THREE.Mesh(containerGeometry, containerMaterial);
+    cargoGroup.add(containerMesh);
+
+    // Corner reinforcements
+    const cornerGeometry = new THREE.BoxGeometry(1, 1, 8.2);
+    const cornerMaterial = new THREE.MeshLambertMaterial({
+      color: 0x555555
+    });
+
+    for (let i = -1; i <= 1; i += 2) {
+      for (let j = -1; j <= 1; j += 2) {
+        const corner = new THREE.Mesh(cornerGeometry, cornerMaterial);
+        corner.position.set(i * 2.5, j * 2.5, 0);
+        cargoGroup.add(corner);
+      }
+    }
+
+    return cargoGroup;
+  }
+
+  /**
+   * Create a 3D debris representation
+   */
+  private createDebris(_x: number, _y: number, debris: any): THREE.Object3D {
+    const debrisGroup = new THREE.Group();
+
+    // Random debris shapes
+    const pieces = Math.floor(Math.random() * 3) + 2; // 2-4 pieces
+
+    for (let i = 0; i < pieces; i++) {
+      const size = Math.random() * 2 + 1;
+      const geometry = Math.random() > 0.5 ? 
+        new THREE.BoxGeometry(size, size, size) :
+        new THREE.DodecahedronGeometry(size);
+      
+      const material = new THREE.MeshLambertMaterial({
+        color: debris?.metallic ? 0x999999 : 0x654321
+      });
+
+      const piece = new THREE.Mesh(geometry, material);
+      piece.position.set(
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4,
+        (Math.random() - 0.5) * 4
+      );
+      piece.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+      );
+
+      debrisGroup.add(piece);
+    }
+
+    return debrisGroup;
+  }
+
+  /**
    * Add subtle animations to 3D objects
    */
   private animate3DObject(mesh: THREE.Object3D, objectType: string): void {
@@ -399,6 +605,40 @@ export class ThreeRenderer {
         // Planet rotation
         mesh.rotation.y += 0.002;
         break;
+      case 'ship':
+        // Engine glow pulse
+        if (mesh instanceof THREE.Group && mesh.children.length > 1) {
+          const engineMesh = mesh.children[1];
+          if (engineMesh instanceof THREE.Mesh && engineMesh.material instanceof THREE.MeshBasicMaterial) {
+            const intensity = 0.5 + Math.sin(time * 8) * 0.3;
+            (engineMesh.material as any).emissiveIntensity = intensity;
+          }
+        }
+        break;
+      case 'debris':
+        // Tumbling motion
+        mesh.rotation.x += 0.01;
+        mesh.rotation.y += 0.005;
+        mesh.rotation.z += 0.008;
+        break;
+      case 'beacon':
+        // Blinking light
+        if (mesh instanceof THREE.Group && mesh.children.length > 0) {
+          const beaconMesh = mesh.children[0];
+          if (beaconMesh instanceof THREE.Mesh && beaconMesh.material instanceof THREE.MeshLambertMaterial) {
+            const blink = Math.sin(time * 4) > 0.5 ? 1 : 0.2;
+            (beaconMesh.material as any).emissiveIntensity = blink * 0.5;
+          }
+        }
+        break;
+      case 'asteroid':
+        // Slow rotation
+        mesh.rotation.x += 0.002;
+        mesh.rotation.y += 0.003;
+        break;
+      default:
+        // Generic slow rotation for unknown objects
+        mesh.rotation.y += 0.001;
     }
   }
 
@@ -426,6 +666,12 @@ export class ThreeRenderer {
         }
       }
     });
+
+    // Dispose of cached dummy mesh geometries
+    this.dummyMeshCache.forEach((geometry) => {
+      geometry.dispose();
+    });
+    this.dummyMeshCache.clear();
 
     // Dispose of star field
     if (this.stars) {

@@ -358,6 +358,12 @@ export class Engine implements GameEngine {
    * @returns true if the switch was successful, false otherwise
    */
   setRenderMode(mode: '2D' | '3D'): boolean {
+    // Validate mode parameter
+    if (mode !== '2D' && mode !== '3D') {
+      console.warn('Invalid render mode specified:', mode);
+      return false;
+    }
+    
     if (mode === '3D' && !this.renderer3D) {
       console.warn('3D renderer not available, staying in 2D mode');
       return false;
