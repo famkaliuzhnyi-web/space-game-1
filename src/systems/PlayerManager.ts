@@ -29,6 +29,7 @@ export class PlayerManager implements InventoryManager {
   private factionManager: FactionManager;
   private characterManager: CharacterManager;
   private progressionSystem: ICharacterProgressionSystem | null = null;
+  private equipmentInventory: EquipmentItem[] = []; // Store uninstalled equipment
 
   constructor(playerId: string = 'player-1', playerName: string = 'Captain') {
     this.shipStorage = new ShipStorageManager();
@@ -902,5 +903,33 @@ export class PlayerManager implements InventoryManager {
    */
   hasCharacter(): boolean {
     return !!this.player.characterId && !!this.characterManager.getCharacter();
+  }
+
+  // Equipment Inventory Management
+  
+  /**
+   * Add equipment to player inventory
+   */
+  addEquipmentToInventory(equipment: EquipmentItem): void {
+    this.equipmentInventory.push(equipment);
+  }
+
+  /**
+   * Remove equipment from player inventory
+   */
+  removeEquipmentFromInventory(equipmentId: string): boolean {
+    const index = this.equipmentInventory.findIndex(item => item.id === equipmentId);
+    if (index !== -1) {
+      this.equipmentInventory.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get all equipment in player inventory
+   */
+  getEquipmentInventory(): EquipmentItem[] {
+    return [...this.equipmentInventory];
   }
 }

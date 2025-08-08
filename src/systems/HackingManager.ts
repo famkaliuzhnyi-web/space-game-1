@@ -464,7 +464,7 @@ export class HackingManager {
     const attempt: HackingAttempt = {
       id: attemptId,
       targetId,
-      playerId: 'player-1', // TODO: Get actual player ID
+      playerId: this.playerManager.getId(),
       startTime: this.timeManager.getCurrentTimestamp(),
       phase: 'reconnaissance',
       progress: {

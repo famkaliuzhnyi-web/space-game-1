@@ -436,8 +436,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (playerManager.getCredits() >= cost) {
         playerManager.spendCredits(cost);
         
-        // Add equipment to player's inventory (for now, we'll store it separately)
-        // TODO: Implement proper equipment inventory system
+        // Add equipment to player's inventory
+        playerManager.addEquipmentToInventory(equipment);
         
         // Update UI
         setPlayerCredits(playerManager.getCredits());

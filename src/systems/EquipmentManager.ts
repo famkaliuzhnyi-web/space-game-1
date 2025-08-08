@@ -4,7 +4,9 @@ import {
   getEquipmentTemplate, 
   createEquipmentItem, 
   getEffectiveStats,
-  getAvailableEquipment 
+  getAvailableEquipment,
+  canInstallEquipment,
+  getTemplateIdFromEquipmentId
 } from '../data/equipment';
 
 export interface EquipmentMarket {
@@ -81,8 +83,14 @@ export class EquipmentManager {
       return { success: false, error: `No available ${slotCategory} slots` };
     }
 
-    // Check compatibility (this would use the template, but for now we'll allow all)
-    // TODO: Add proper compatibility checking based on ship class
+    // Check compatibility with ship class
+    const templateId = getTemplateIdFromEquipmentId(equipmentItem.id);
+    if (!templateId || !canInstallEquipment(templateId, ship.class.id)) {
+      return { 
+        success: false, 
+        error: `Equipment '${equipmentItem.name}' is not compatible with ship class '${ship.class.name}'` 
+      };
+    }
 
     // Install the equipment
     ship.equipment[slotCategory].push(equipmentItem);
