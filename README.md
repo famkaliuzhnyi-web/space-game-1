@@ -42,6 +42,23 @@ npm run build   # Build for production
 npm run test    # Run comprehensive test suite
 ```
 
+## 📖 Documentation 
+
+### Quick Reference
+- **[🎮 Complete Feature List](./FEATURES_IMPLEMENTED.md)** - All implemented systems and features
+- **[📊 Progress Tracker](./PROGRESS_TRACKER.md)** - Current implementation status  
+- **[📋 Game Design Docs](./docs/README.md)** - Complete design specification
+
+### Development & Planning  
+- **[Execution Plan](./EXECUTION_PLAN.md)** - Master development roadmap
+- **[Agent Instructions](./AGENT_INSTRUCTIONS.md)** - Guidelines for GitHub agents
+- **[Task Templates](./TASK_TEMPLATES.md)** - Development task templates
+
+### Detailed Game Documentation
+- **[World Structure](./docs/world-structure.md)** - Galaxy, sectors, and stations
+- **[Economic Systems](./docs/economy/README.md)** - Supply chain simulation
+- **[Factions & Politics](./docs/factions.md)** - Faction relationships  
+- **[Ship Systems](./docs/ships/ship-classes.md)** - Modular ship building
 
 ## 🛠️ Technical Details
 
@@ -89,6 +106,42 @@ npm run lint         # ESLint code quality check
 - **UI Tests**: React component testing  
 - **Game Logic Tests**: Economic simulation, combat, AI behavior
 - **Performance Tests**: Memory usage and rendering optimization
+
+## 🐛 Troubleshooting
+
+### Common Development Issues
+
+**Build Errors:**
+```bash
+# Clear cache and rebuild
+rm -rf node_modules dist
+npm install
+npm run build
+```
+
+**Test Failures:**
+```bash
+# Run specific test files
+npm test -- src/test/SystemName.test.ts
+# Run with coverage
+npm run test:coverage
+```
+
+**Canvas/Game Engine Issues:**
+- Ensure browser supports HTML5 Canvas
+- Check console for WebGL or rendering errors
+- Verify no ad blockers are interfering with game assets
+
+**TypeScript Configuration:**
+- Node.js version must be >=14.18.0  
+- Ensure `@types/node` is installed as dev dependency
+- Check `tsconfig.json` for proper path resolution
+
+### Performance Optimization
+- Game loads ~87KB gzipped JavaScript bundle
+- Uses lazy loading for heavy UI panels
+- Memory usage typically <50MB
+- Canvas rendering optimized for 60fps
 
 ---
 
