@@ -1,10 +1,51 @@
 import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget } from '../types/world';
+import { Ship } from '../types/player';
 
 export class WorldManager {
   private galaxy: Galaxy;
+  private playerShip: Ship | null = null;
+  private shipMovement: {
+    isMoving: boolean;
+    startPos: Coordinates;
+    targetPos: Coordinates;
+    startTime: number;
+    duration: number;
+  } | null = null;
 
   constructor() {
     this.galaxy = this.generateInitialGalaxy();
+  }
+
+  /**
+   * Set the player's ship for rendering and position tracking
+   */
+  setPlayerShip(ship: Ship): void {
+    this.playerShip = ship;
+  }
+
+  /**
+   * Update ship movement animation
+   */
+  updateShipMovement(_deltaTime: number): void {
+    if (!this.shipMovement || !this.playerShip) return;
+
+    const elapsed = Date.now() - this.shipMovement.startTime;
+    const progress = Math.min(elapsed / this.shipMovement.duration, 1.0);
+
+    // Interpolate position
+    const currentX = this.shipMovement.startPos.x + 
+      (this.shipMovement.targetPos.x - this.shipMovement.startPos.x) * progress;
+    const currentY = this.shipMovement.startPos.y + 
+      (this.shipMovement.targetPos.y - this.shipMovement.startPos.y) * progress;
+
+    // Update ship coordinates
+    this.playerShip.location.coordinates = { x: currentX, y: currentY };
+
+    // Check if movement is complete
+    if (progress >= 1.0) {
+      this.playerShip.location.isInTransit = false;
+      this.shipMovement = null;
+    }
   }
 
   private generateInitialGalaxy(): Galaxy {
@@ -454,17 +495,55 @@ export class WorldManager {
     return true;
   }
 
+  /**
+   * Move the player's ship to specific coordinates in space
+   */
+  moveShipToCoordinates(worldX: number, worldY: number): boolean {
+    if (!this.playerShip || !this.playerShip.location.coordinates) return false;
+
+    // Add reasonable bounds to prevent ship from going too far off-screen
+    const currentSystem = this.getCurrentSystem();
+    if (currentSystem) {
+      const systemX = currentSystem.position.x;
+      const systemY = currentSystem.position.y;
+      
+      // Limit movement to a reasonable area around the system (±300 units)
+      const boundedX = Math.max(systemX - 300, Math.min(systemX + 300, worldX));
+      const boundedY = Math.max(systemY - 300, Math.min(systemY + 300, worldY));
+      
+      worldX = boundedX;
+      worldY = boundedY;
+    }
+
+    // Start smooth movement animation
+    this.shipMovement = {
+      isMoving: true,
+      startPos: { ...this.playerShip.location.coordinates },
+      targetPos: { x: worldX, y: worldY },
+      startTime: Date.now(),
+      duration: 3000 // 3 seconds for movement
+    };
+
+    // Set ship to transit state
+    this.playerShip.location.isInTransit = true;
+    this.playerShip.location.stationId = undefined; // No longer docked
+    
+    console.log(`Ship moving from (${this.shipMovement.startPos.x}, ${this.shipMovement.startPos.y}) to (${worldX}, ${worldY})`);
+    
+    return true;
+  }
+
   private calculateDistance(pos1: Coordinates, pos2: Coordinates): number {
     const dx = pos2.x - pos1.x;
     const dy = pos2.y - pos1.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | {name: string; type: string}, position: Coordinates}> {
+  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> {
     const currentSystem = this.getCurrentSystem();
     if (!currentSystem) return [];
 
-    const objects: Array<{type: string, object: Station | Planet | {name: string; type: string}, position: Coordinates}> = [];
+    const objects: Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> = [];
 
     // Add star
     objects.push({
@@ -490,6 +569,17 @@ export class WorldManager {
         position: planet.position
       });
     });
+
+    // Add player ship if in this system and has coordinates
+    if (this.playerShip && 
+        this.playerShip.location.systemId === currentSystem.id && 
+        this.playerShip.location.coordinates) {
+      objects.push({
+        type: 'ship',
+        object: this.playerShip,
+        position: this.playerShip.location.coordinates
+      });
+    }
 
     return objects;
   }

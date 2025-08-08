@@ -105,8 +105,9 @@ export class PlayerManager implements InventoryManager {
         lastMaintenance: Date.now()
       },
       location: {
-        systemId: 'sol',
-        stationId: 'earth-station',
+        systemId: 'sol-system',  // Updated to match actual system ID
+        stationId: undefined, // Start in space, not docked
+        coordinates: { x: 150, y: 100 }, // Start away from Earth Station Alpha for visibility
         isInTransit: false
       }
     };
