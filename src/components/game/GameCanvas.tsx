@@ -83,6 +83,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [playerReputation, setPlayerReputation] = useState<Map<string, FactionReputation>>(new Map());
   const [activeEvents, setActiveEvents] = useState<GameEvent[]>([]);
   const [questCounts, setQuestCounts] = useState({ active: 0, available: 0, completed: 0 });
+  const [renderMode, setRenderMode] = useState<'2D' | '3D'>('2D');
+  const [is3DAvailable, setIs3DAvailable] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -112,6 +114,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         engineRef.current.start();
         setIsEngineRunning(true);
         setIsLoading(false);
+        
+        // Check 3D availability
+        setIs3DAvailable(engineRef.current.is3DAvailable());
+        setRenderMode(engineRef.current.getRenderMode());
         
         // Initial resize to fit the container
         handleResize();
@@ -221,6 +227,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setActivePanel(prevActivePanel => prevActivePanel === 'investment' ? null : 'investment');
       } else if (event.code === 'KeyQ') {
         setActivePanel(prevActivePanel => prevActivePanel === 'quests' ? null : 'quests');
+      } else if (event.code === 'KeyT') {
+        toggleRenderMode();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -764,6 +772,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const toggleRenderMode = () => {
+    if (!engineRef.current || !is3DAvailable) return;
+    
+    const newMode = renderMode === '2D' ? '3D' : '2D';
+    const success = engineRef.current.setRenderMode(newMode);
+    
+    if (success) {
+      setRenderMode(newMode);
+      console.log(`Switched to ${newMode} mode`);
+    }
+  };
+
   return (
     <div className={`game-canvas-container ${className}`} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {/* Loading state */}
@@ -958,6 +978,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Quests {(questCounts.active > 0 || questCounts.available > 0) && `(${questCounts.active}/${questCounts.available})`}
         </button>
+        {is3DAvailable && (
+          <button 
+            onClick={toggleRenderMode} 
+            disabled={!engineRef.current || !!engineError}
+            style={{ 
+              backgroundColor: renderMode === '3D' ? '#ff6b6b' : '#4a90e2'
+            }}
+            title="Toggle 2D/3D (T)"
+          >
+            {renderMode === '2D' ? '🎮 2D' : '🎮 3D'}
+          </button>
+        )}
       </div>
 
       {/* Navigation Panel */}
