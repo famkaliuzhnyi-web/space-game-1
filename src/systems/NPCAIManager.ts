@@ -272,7 +272,7 @@ export class NPCAIManager {
       goalHistory: [],
       decisionCooldown: 0,
       riskTolerance: Math.floor(Math.random() * 50) + 25, // 25-75
-      aggressiveness: Math.floor(Math.random() * 50) + (npcType === 'pirate' ? 40 : 10),
+      aggressiveness: Math.floor(Math.random() * 50) + (npcType === 'pirate' ? 50 : 10), // Pirates: 50-99, Others: 10-59
       tradingSkill: Math.floor(Math.random() * 50) + (npcType === 'trader' ? 40 : 25),
       lastInteraction: null,
       // Enhanced AI properties for Phase 5.2

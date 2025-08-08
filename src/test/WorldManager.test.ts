@@ -12,13 +12,13 @@ describe('WorldManager', () => {
     it('should create a galaxy with sectors', () => {
       const galaxy = worldManager.getGalaxy();
       expect(galaxy).toBeDefined();
-      expect(galaxy.sectors).toHaveLength(1);
-      expect(galaxy.sectors[0].id).toBe('alpha-sector');
+      expect(galaxy.sectors).toHaveLength(3); // Now we have 3 sectors
+      expect(galaxy.sectors[0].id).toBe('core-sector');
     });
 
     it('should initialize with Sol System as starting location', () => {
       const galaxy = worldManager.getGalaxy();
-      expect(galaxy.currentPlayerLocation.sectorId).toBe('alpha-sector');
+      expect(galaxy.currentPlayerLocation.sectorId).toBe('core-sector');
       expect(galaxy.currentPlayerLocation.systemId).toBe('sol-system');
       expect(galaxy.currentPlayerLocation.stationId).toBe('earth-station');
     });
@@ -28,7 +28,7 @@ describe('WorldManager', () => {
     it('should get current sector', () => {
       const sector = worldManager.getCurrentSector();
       expect(sector).toBeDefined();
-      expect(sector?.name).toBe('Alpha Sector');
+      expect(sector?.name).toBe('Core Worlds Sector');
     });
 
     it('should get current system', () => {

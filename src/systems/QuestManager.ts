@@ -1437,6 +1437,212 @@ export class QuestManager {
       priority: 1,
       repeatable: false
     });
+
+    // === ENDGAME CONTENT ===
+    
+    // Master Trader - Economic Dominance
+    this.addQuest({
+      id: 'endgame_trade_emperor',
+      title: 'The Trade Emperor',
+      description: 'Achieve ultimate economic dominance by controlling major trade routes and market forces across the galaxy.',
+      type: 'endgame',
+      category: 'trading',
+      status: 'locked',
+      requirements: {
+        level: 25,
+        credits: 100000000, // 100 million credits
+        reputation: { 'traders_guild': 100 },
+        completedQuests: ['tg_market_research', 'gcg_trade_route_expansion', 'gcg_financial_crisis'],
+        achievements: ['master_trader', 'market_manipulator', 'trade_route_king']
+      },
+      objectives: [
+        {
+          id: 'control_major_routes',
+          description: 'Establish control over 10 major trade routes',
+          type: 'economic_warfare',
+          quantity: 10,
+          completed: false
+        },
+        {
+          id: 'trade_empire_valuation',
+          description: 'Achieve a trade empire valuation of 1 billion credits',
+          type: 'achieve',
+          quantity: 1000000000,
+          completed: false
+        },
+        {
+          id: 'economic_crisis_resolution',
+          description: 'Single-handedly resolve a galaxy-wide economic crisis',
+          type: 'leadership',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 500000,
+        experience: 5000,
+        reputation: { 'traders_guild': 50 },
+        items: ['trade_emperor_crown', 'galactic_commerce_charter', 'ultimate_market_analyzer'],
+        unlocks: ['galactic_trade_authority', 'economic_superpower_status']
+      },
+      giver: 'galactic_trade_council',
+      factionId: 'traders_guild',
+      storyArc: 'endgame_trade_mastery',
+      priority: 1,
+      repeatable: false
+    });
+
+    // Fleet Admiral - Military Supremacy
+    this.addQuest({
+      id: 'endgame_fleet_admiral',
+      title: 'Supreme Fleet Admiral',
+      description: 'Rise to become the supreme military commander, leading vast fleets in defense of galactic civilization.',
+      type: 'endgame',
+      category: 'combat',
+      status: 'locked',
+      requirements: {
+        level: 25,
+        reputation: { 'earth_federation': 100 },
+        completedQuests: ['fed_strange_signals', 'main_first_contact'],
+        skills: { 'Combat': 15, 'Leadership': 15 },
+        achievements: ['combat_veteran', 'fleet_commander', 'hero_of_the_galaxy']
+      },
+      objectives: [
+        {
+          id: 'command_grand_fleet',
+          description: 'Command a grand fleet of 50+ ships in a major battle',
+          type: 'combat',
+          quantity: 1,
+          completed: false
+        },
+        {
+          id: 'defeat_alien_threat',
+          description: 'Defeat the mysterious alien threat to galactic civilization',
+          type: 'combat',
+          quantity: 1,
+          completed: false
+        },
+        {
+          id: 'establish_galactic_peace',
+          description: 'Establish lasting peace between all major factions',
+          type: 'diplomacy',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 1000000,
+        experience: 7500,
+        reputation: { 'earth_federation': 75 },
+        items: ['supreme_admiral_insignia', 'legendary_flagship', 'galactic_peace_treaty'],
+        unlocks: ['supreme_military_authority', 'galactic_protector_status']
+      },
+      giver: 'galactic_defense_council',
+      factionId: 'earth_federation',
+      storyArc: 'endgame_military_supremacy',
+      priority: 1,
+      repeatable: false
+    });
+
+    // Galactic Explorer - Discovery Master
+    this.addQuest({
+      id: 'endgame_cosmic_explorer',
+      title: 'Master of the Unknown',
+      description: 'Explore the deepest mysteries of space and make discoveries that reshape our understanding of the universe.',
+      type: 'endgame',
+      category: 'exploration',
+      status: 'locked',
+      requirements: {
+        level: 20,
+        completedQuests: ['investigation_missing_cargo', 'investigation_suspicious_behavior'],
+        skills: { 'Investigation': 12, 'Technical': 12, 'Social': 10 },
+        achievements: ['master_explorer', 'cosmic_cartographer', 'xenoarchaeologist']
+      },
+      objectives: [
+        {
+          id: 'discover_ancient_civilization',
+          description: 'Discover evidence of an ancient precursor civilization',
+          type: 'exploration',
+          quantity: 1,
+          completed: false
+        },
+        {
+          id: 'map_unknown_sectors',
+          description: 'Chart and map 5 previously unknown sectors',
+          type: 'exploration',
+          quantity: 5,
+          completed: false
+        },
+        {
+          id: 'cosmic_phenomenon_study',
+          description: 'Study and catalog 20 unique cosmic phenomena',
+          type: 'research',
+          quantity: 20,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 750000,
+        experience: 6000,
+        items: ['cosmic_explorer_medallion', 'precursor_technology', 'universal_star_charts'],
+        unlocks: ['precursor_tech_access', 'cosmic_explorer_status', 'deep_space_expedition_rights']
+      },
+      giver: 'scientific_exploration_council',
+      factionId: 'scientific_alliance',
+      storyArc: 'endgame_cosmic_discovery',
+      priority: 1,
+      repeatable: false
+    });
+
+    // Shadow Broker - Information Mastery
+    this.addQuest({
+      id: 'endgame_shadow_broker',
+      title: 'The Ultimate Shadow Broker',
+      description: 'Become the galaxy\'s most powerful information broker, controlling secrets and intelligence networks.',
+      type: 'endgame',
+      category: 'hacking',
+      status: 'locked',
+      requirements: {
+        level: 22,
+        skills: { 'Hacking': 15, 'Social': 12, 'Investigation': 10 },
+        achievements: ['master_hacker', 'information_broker', 'shadow_network_controller'],
+        completedQuests: ['investigation_suspicious_behavior']
+      },
+      objectives: [
+        {
+          id: 'control_information_networks',
+          description: 'Establish control over major information networks in 8 sectors',
+          type: 'hacking',
+          quantity: 8,
+          completed: false
+        },
+        {
+          id: 'broker_faction_secrets',
+          description: 'Successfully broker critical secrets between major factions',
+          type: 'social',
+          quantity: 5,
+          completed: false
+        },
+        {
+          id: 'prevent_galactic_war',
+          description: 'Use information to prevent a devastating galactic war',
+          type: 'diplomacy',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 2000000,
+        experience: 8000,
+        items: ['shadow_broker_cypher', 'galactic_intelligence_network', 'ultimate_data_vault'],
+        unlocks: ['shadow_broker_status', 'galactic_information_authority', 'faction_puppet_master']
+      },
+      giver: 'the_conclave_of_shadows',
+      factionId: 'neutral',
+      storyArc: 'endgame_information_mastery',
+      priority: 1,
+      repeatable: false
+    });
   }
 
   /**
@@ -1615,6 +1821,7 @@ export class QuestManager {
    * Initialize seasonal content
    */
   private initializeSeasonalContent(): void {
+    // Winter Festival - Technology and Luxury Focus
     const winterFestival: SeasonalContent = {
       id: 'winter_festival_2024',
       name: 'Winter Festival',
@@ -1632,7 +1839,83 @@ export class QuestManager {
       unlocks: ['winter_decorations', 'festival_music']
     };
 
+    // Spring Trade Expo - Commerce and Industry Focus
+    const springExpo: SeasonalContent = {
+      id: 'spring_trade_expo',
+      name: 'Galactic Trade Expo',
+      description: 'The largest trade exposition in the galaxy, featuring new technologies and trade partnerships.',
+      startMonth: 3,
+      endMonth: 5,
+      quests: ['trade_expo_showcase', 'innovation_challenge', 'corporate_networking'],
+      events: ['new_tech_releases', 'bulk_trading_contracts', 'startup_investments'],
+      rewards: [
+        {
+          credits: 15000,
+          items: ['trade_expo_pass', 'prototype_scanner', 'corporate_contacts_list']
+        }
+      ],
+      unlocks: ['advanced_trading_algorithms', 'industrial_partnerships', 'tech_preview_access']
+    };
+
+    // Summer Security Crisis - Combat and Law Enforcement Focus
+    const summerCrisis: SeasonalContent = {
+      id: 'summer_security_crisis',
+      name: 'The Great Pirate Surge',
+      description: 'A coordinated pirate offensive threatens shipping lanes across multiple sectors.',
+      startMonth: 6,
+      endMonth: 8,
+      quests: ['defend_trade_routes', 'hunt_pirate_leaders', 'coordinate_fleet_defense'],
+      events: ['pirate_raids', 'security_contracts_surge', 'emergency_military_procurement'],
+      rewards: [
+        {
+          credits: 25000,
+          items: ['hero_of_the_lanes_medal', 'military_commendation', 'advanced_weapons_license']
+        }
+      ],
+      unlocks: ['elite_security_missions', 'military_grade_equipment', 'fleet_command_access']
+    };
+
+    // Autumn Harvest - Agricultural and Medical Focus  
+    const autumnHarvest: SeasonalContent = {
+      id: 'autumn_harvest_season',
+      name: 'Galactic Harvest Season',
+      description: 'Peak harvest season brings agricultural bounty and medical supply shortages.',
+      startMonth: 9,
+      endMonth: 11,
+      quests: ['emergency_food_delivery', 'medical_supply_shortage', 'harvest_moon_celebration'],
+      events: ['agricultural_surplus', 'medical_supply_crisis', 'harvest_festivals'],
+      rewards: [
+        {
+          credits: 12000,
+          items: ['harvest_coordinator_badge', 'medical_corps_recognition', 'agricultural_scanner']
+        }
+      ],
+      unlocks: ['priority_medical_contracts', 'agricultural_investment_opportunities', 'humanitarian_missions']
+    };
+
+    // Special Anniversary Event - Multi-Faction Focus
+    const galaxyDay: SeasonalContent = {
+      id: 'galaxy_day_celebration',
+      name: 'Galaxy Day Celebration',
+      description: 'The anniversary of the first interstellar colony brings unprecedented cooperation.',
+      startMonth: 7,
+      endMonth: 7, // Single month event
+      quests: ['unity_summit', 'historical_artifact_recovery', 'peace_treaty_negotiation'],
+      events: ['faction_peace_talks', 'historical_exhibitions', 'diplomatic_breakthrough'],
+      rewards: [
+        {
+          credits: 50000,
+          items: ['galaxy_day_commemorative', 'diplomatic_immunity_pass', 'historical_archive_access']
+        }
+      ],
+      unlocks: ['cross_faction_missions', 'diplomatic_career_path', 'historical_research_access']
+    };
+
     this.seasonalContent.set('winter_festival', winterFestival);
+    this.seasonalContent.set('spring_trade_expo', springExpo);
+    this.seasonalContent.set('summer_security_crisis', summerCrisis);
+    this.seasonalContent.set('autumn_harvest_season', autumnHarvest);
+    this.seasonalContent.set('galaxy_day_celebration', galaxyDay);
   }
 
   /**

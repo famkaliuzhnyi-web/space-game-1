@@ -35,7 +35,7 @@ export interface QuestObjective {
   type: 'deliver' | 'eliminate' | 'visit' | 'collect' | 'interact' | 'build' | 'achieve' | 
         'combat' | 'investigation' | 'dialogue' | 'trading' | 'economic_warfare' | 
         'stealth' | 'hacking' | 'technical' | 'piracy' | 'social' | 'leadership' | 
-        'smuggle' | 'humanitarian';
+        'smuggle' | 'humanitarian' | 'diplomacy' | 'exploration' | 'research';
   target?: string;
   quantity?: number;
   currentProgress?: number;

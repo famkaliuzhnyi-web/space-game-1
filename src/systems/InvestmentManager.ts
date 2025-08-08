@@ -470,7 +470,7 @@ export class InvestmentManager {
   private calculateStationRiskLevel(station: any): 'low' | 'moderate' | 'high' {
     // Use station ID to create deterministic but varied risk levels
     // This ensures we always have a mix of risk levels for testing
-    const stationHash = station.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const stationHash = station.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
     const riskScore = (stationHash % 100) / 100;
     
     if (riskScore < 0.4) return 'low';

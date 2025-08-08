@@ -544,7 +544,22 @@ export class EconomicSystem {
       'industrial': 80000,
       'military': 30000,
       'research': 15000,
-      'mining': 25000
+      'mining': 25000,
+      'luxury': 20000,
+      'diplomatic': 10000,
+      'entertainment': 35000,
+      'pirate': 8000,
+      'agricultural': 40000,
+      'medical': 18000,
+      'exploration': 12000,
+      'colonial': 45000,
+      'salvage': 15000,
+      'observatory': 5000,
+      'foundry': 75000,
+      'habitat': 90000,
+      'security': 25000,
+      'prison': 8000,
+      'energy': 20000
     };
     
     const base = basePopulation[station.type] || 30000;
@@ -631,7 +646,22 @@ export class EconomicSystem {
       'industrial': 800000,
       'military': 1200000,
       'research': 600000,
-      'mining': 400000
+      'mining': 400000,
+      'luxury': 2000000,
+      'diplomatic': 800000,
+      'entertainment': 1500000,
+      'pirate': 300000,
+      'agricultural': 500000,
+      'medical': 900000,
+      'exploration': 400000,
+      'colonial': 600000,
+      'salvage': 350000,
+      'observatory': 300000,
+      'foundry': 1100000,
+      'habitat': 700000,
+      'security': 800000,
+      'prison': 400000,
+      'energy': 1300000
     };
     
     const base = baseCredits[station.type] || 500000;
