@@ -485,4 +485,157 @@ export class WorldManager {
     }
     return allStations;
   }
+
+  // Navigation Integration Methods
+
+  /**
+   * Create a NavigationTarget from a station
+   */
+  createStationTarget(stationId: string): NavigationTarget | null {
+    const station = this.getStationById(stationId);
+    if (!station) return null;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, station.position);
+    
+    return {
+      type: 'station',
+      id: station.id,
+      name: station.name,
+      position: station.position,
+      distance,
+      estimatedTravelTime: this.estimateStationTravelTime(station)
+    };
+  }
+
+  /**
+   * Create a NavigationTarget from a system
+   */
+  createSystemTarget(systemId: string): NavigationTarget | null {
+    const system = this.getSystemById(systemId);
+    if (!system) return null;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, system.position);
+    
+    return {
+      type: 'system',
+      id: system.id,
+      name: system.name,
+      position: system.position,
+      distance,
+      estimatedTravelTime: this.estimateSystemTravelTime(system)
+    };
+  }
+
+  /**
+   * Get station by ID from all sectors/systems
+   */
+  getStationById(stationId: string): Station | null {
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        const station = system.stations.find(s => s.id === stationId);
+        if (station) return station;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get system by ID from all sectors
+   */
+  getSystemById(systemId: string): StarSystem | null {
+    for (const sector of this.galaxy.sectors) {
+      const system = sector.systems.find(s => s.id === systemId);
+      if (system) return system;
+    }
+    return null;
+  }
+
+  /**
+   * Estimate travel time to a station (in milliseconds)
+   */
+  private estimateStationTravelTime(station: Station): number {
+    const currentSystem = this.getCurrentSystem();
+    if (!currentSystem) return 0;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, station.position);
+    
+    // Check if station is in the same system
+    const isInSameSystem = currentSystem.stations.some(s => s.id === station.id);
+    const baseSpeed = isInSameSystem ? 150 : 50; // Faster travel within system
+    
+    const travelTimeHours = Math.max(0.01, distance / baseSpeed);
+    return travelTimeHours * 60 * 60 * 1000; // Convert to milliseconds
+  }
+
+  /**
+   * Estimate travel time to a system (in milliseconds)
+   */
+  private estimateSystemTravelTime(system: StarSystem): number {
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, system.position);
+    
+    // Inter-system travel is typically slower
+    const baseSpeed = 25; // Slow jump drive speeds
+    const travelTimeHours = Math.max(0.5, distance / baseSpeed); // Minimum 30 minutes for system jumps
+    return travelTimeHours * 60 * 60 * 1000; // Convert to milliseconds
+  }
+
+  /**
+   * Get all reachable stations as navigation targets
+   */
+  getAllReachableStations(): NavigationTarget[] {
+    const targets: NavigationTarget[] = [];
+    const currentPos = this.getCurrentPlayerPosition();
+    
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        for (const station of system.stations) {
+          // Skip current location
+          if (station.id === this.galaxy.currentPlayerLocation.stationId) continue;
+          
+          const distance = this.calculateDistance(currentPos, station.position);
+          targets.push({
+            type: 'station',
+            id: station.id,
+            name: station.name,
+            position: station.position,
+            distance,
+            estimatedTravelTime: this.estimateStationTravelTime(station)
+          });
+        }
+      }
+    }
+    
+    return targets.sort((a, b) => a.distance - b.distance);
+  }
+
+  /**
+   * Get all reachable systems as navigation targets
+   */
+  getAllReachableSystems(): NavigationTarget[] {
+    const targets: NavigationTarget[] = [];
+    const currentPos = this.getCurrentPlayerPosition();
+    
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        // Skip current system
+        if (system.id === this.galaxy.currentPlayerLocation.systemId) continue;
+        
+        const distance = this.calculateDistance(currentPos, system.position);
+        targets.push({
+          type: 'system',
+          id: system.id,
+          name: system.name,
+          position: system.position,
+          distance,
+          estimatedTravelTime: this.estimateSystemTravelTime(system)
+        });
+      }
+    }
+    
+    return targets.sort((a, b) => a.distance - b.distance);
+  }
 }
