@@ -475,29 +475,32 @@ export class SkillSpecializationManager {
     // Check all prerequisites
     for (const req of node.prerequisites) {
       switch (req.type) {
-        case 'skill':
+        case 'skill': {
           const skillValue = (playerSkills as any)[req.id] || 0;
           if (skillValue < req.value) {
             missingRequirements.push(`${req.id} skill must be ${req.value} (currently ${skillValue})`);
           }
           break;
-        case 'node':
+        }
+        case 'node': {
           const nodeRank = this.playerSkillTrees.unlockedNodes.get(req.id) || 0;
           if (nodeRank < req.value) {
             missingRequirements.push(`${req.id} node must be rank ${req.value} (currently ${nodeRank})`);
           }
           break;
+        }
         case 'level':
           if (playerLevel < req.value) {
             missingRequirements.push(`Character level must be ${req.value} (currently ${playerLevel})`);
           }
           break;
-        case 'attribute':
+        case 'attribute': {
           const attrValue = playerAttributes[req.id] || 0;
           if (attrValue < req.value) {
             missingRequirements.push(`${req.id} attribute must be ${req.value} (currently ${attrValue})`);
           }
           break;
+        }
       }
     }
 
