@@ -7,7 +7,9 @@ export interface Coordinates {
 export interface Station {
   id: string;
   name: string;
-  type: 'trade' | 'industrial' | 'military' | 'research' | 'mining';
+  type: 'trade' | 'industrial' | 'military' | 'research' | 'mining' | 'luxury' | 'diplomatic' | 
+        'entertainment' | 'pirate' | 'agricultural' | 'medical' | 'exploration' | 'colonial' | 
+        'salvage' | 'observatory' | 'foundry' | 'habitat' | 'security' | 'prison' | 'energy';
   position: Coordinates;
   faction: string;
   dockingCapacity: number;

@@ -467,9 +467,13 @@ export class InvestmentManager {
   }
 
   // Helper methods
-  private calculateStationRiskLevel(_station: any): 'low' | 'moderate' | 'high' {
-    const riskScore = Math.random();
-    if (riskScore < 0.3) return 'low';
+  private calculateStationRiskLevel(station: any): 'low' | 'moderate' | 'high' {
+    // Use station ID to create deterministic but varied risk levels
+    // This ensures we always have a mix of risk levels for testing
+    const stationHash = station.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+    const riskScore = (stationHash % 100) / 100;
+    
+    if (riskScore < 0.4) return 'low';
     if (riskScore < 0.7) return 'moderate';
     return 'high';
   }
