@@ -526,16 +526,90 @@ export class QuestManager {
     });
 
     // Federation Conspiracy Questline
+    // Add starter quests with no requirements for early game
+    this.addQuest({
+      id: 'main_awakening',
+      title: 'Awakening',
+      description: 'You wake up in a med-bay with no memory of how you got here. Start your journey among the stars.',
+      type: 'main_story',
+      category: 'investigation',
+      status: 'available',
+      requirements: {},
+      objectives: [
+        {
+          id: 'check_identity',
+          description: 'Check your identity records and ship registration',
+          type: 'interact',
+          quantity: 1,
+          completed: false
+        },
+        {
+          id: 'investigate_memory',
+          description: 'Investigate clues about your past',
+          type: 'investigation',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 1000,
+        experience: 50,
+        unlocks: ['investigation_tutorial']
+      },
+      giver: 'station_medic',
+      priority: 10,
+      repeatable: false,
+      nextQuest: 'main_first_contact'
+    });
+
+    this.addQuest({
+      id: 'main_first_contact',
+      title: 'First Contact',
+      description: 'Make contact with the local authorities and begin establishing your identity.',
+      type: 'main_story', 
+      category: 'investigation',
+      status: 'locked',
+      requirements: {
+        completedQuests: ['main_awakening']
+      },
+      objectives: [
+        {
+          id: 'talk_to_authorities',
+          description: 'Speak with station security about your situation',
+          type: 'investigation',
+          quantity: 1,
+          completed: false
+        },
+        {
+          id: 'gather_basic_info',
+          description: 'Gather basic information about current galactic situation',
+          type: 'investigation',
+          quantity: 3,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 2000,
+        experience: 75,
+        reputation: { 'security_forces': 5 }
+      },
+      giver: 'security_chief',
+      priority: 9,
+      repeatable: false,
+      nextQuest: 'fed_strange_signals'
+    });
+
     this.addQuest({
       id: 'fed_strange_signals',
       title: 'Strange Signals',
       description: 'Investigate mysterious transmissions detected near the outer rim.',
       type: 'main_story',
       category: 'investigation',
-      status: 'available',
+      status: 'locked',
       requirements: {
-        level: 5,
-        skills: { 'Investigation': 3 }
+        completedQuests: ['main_first_contact'],
+        level: 3,
+        skills: { 'Investigation': 2 }
       },
       objectives: [
         {
@@ -562,6 +636,75 @@ export class QuestManager {
       storyArc: 'federation_conspiracy_arc_1',
       priority: 8,
       repeatable: false
+    });
+
+    // Simple investigation side quests available early
+    this.addQuest({
+      id: 'investigation_missing_cargo',
+      title: 'Missing Cargo Investigation',
+      description: 'A trader has lost contact with their cargo shipment. Help investigate what happened.',
+      type: 'side_quest',
+      category: 'investigation',
+      status: 'available',
+      requirements: {},
+      objectives: [
+        {
+          id: 'interview_witnesses',
+          description: 'Interview station staff about the missing cargo',
+          type: 'investigation',
+          quantity: 2,
+          completed: false
+        },
+        {
+          id: 'examine_evidence',
+          description: 'Examine the evidence at the cargo bay',
+          type: 'investigation',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 1500,
+        experience: 25,
+        reputation: { 'traders_guild': 2 }
+      },
+      giver: 'distressed_trader',
+      priority: 3,
+      repeatable: false
+    });
+
+    this.addQuest({
+      id: 'investigation_suspicious_behavior',
+      title: 'Suspicious Activities',
+      description: 'Station security has noticed unusual behavior from some visitors. Discreetly investigate.',
+      type: 'side_quest',
+      category: 'investigation',
+      status: 'available',
+      requirements: {},
+      objectives: [
+        {
+          id: 'observe_suspects',
+          description: 'Observe suspicious individuals without being detected',
+          type: 'investigation',
+          quantity: 3,
+          completed: false
+        },
+        {
+          id: 'gather_intel',
+          description: 'Gather intelligence about their activities',
+          type: 'investigation',
+          quantity: 1,
+          completed: false
+        }
+      ],
+      rewards: {
+        credits: 2000,
+        experience: 40,
+        reputation: { 'security_forces': 3 }
+      },
+      giver: 'station_security',
+      priority: 3,
+      repeatable: true
     });
 
     // Seasonal Quest Example
