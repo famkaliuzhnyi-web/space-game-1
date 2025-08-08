@@ -2,6 +2,8 @@
 
 **A comprehensive space adventure game featuring deep trading mechanics, faction politics, and complex economic simulation.**
 
+**🚨 Currently Migrating to Godot Engine** - The original React/TypeScript implementation is preserved in the `orig/` directory while we migrate to Godot for better performance and platform support.
+
 Built with React, TypeScript, and Vite - featuring a fully playable space trading RPG with character progression, combat, diplomacy, and economic strategy.
 
 ## 🎮 Game Features
@@ -29,18 +31,29 @@ Built with React, TypeScript, and Vite - featuring a fully playable space tradin
 
 ## 🚀 Quick Start
 
-### Play Online
+### Play Online (Original Version)
 - **Live Game**: [https://famkaliuzhnyi-web.github.io/space-game-1/](https://famkaliuzhnyi-web.github.io/space-game-1/)
 - **Mobile-Friendly**: Optimized for both desktop and mobile play
 - **Branch Previews**: Every branch gets its own preview URL for testing
 
-### Local Development
+### Development
+
+#### Original React/TypeScript Version (in `orig/`)
 ```bash
+cd orig/
 npm install
 npm run dev     # Start development server  
 npm run build   # Build for production
-npm run test    # Run comprehensive test suite
+npm run test    # Run comprehensive test suite (628 tests)
 ```
+
+#### New Godot Version (in development)
+```bash
+# Open project.godot in Godot Editor
+# Or run from command line with Godot engine
+```
+
+**Note**: The Godot version is currently under development. See [GODOT_MIGRATION.md](./GODOT_MIGRATION.md) for migration progress.
 
 ## 📖 Documentation 
 
@@ -48,6 +61,7 @@ npm run test    # Run comprehensive test suite
 - **[🎮 Complete Feature List](./FEATURES_IMPLEMENTED.md)** - All implemented systems and features
 - **[📊 Progress Tracker](./PROGRESS_TRACKER.md)** - Current implementation status  
 - **[📋 Game Design Docs](./docs/README.md)** - Complete design specification
+- **[🔄 Godot Migration Plan](./GODOT_MIGRATION.md)** - Migration progress and strategy
 
 ### Development & Planning  
 - **[Execution Plan](./EXECUTION_PLAN.md)** - Master development roadmap
@@ -63,6 +77,14 @@ npm run test    # Run comprehensive test suite
 ## 🛠️ Technical Details
 
 ### Architecture & Performance
+
+#### Current Godot Migration (In Progress)
+- **Godot 4.3** with GDScript for core engine
+- **Native Performance** with built-in optimizations
+- **Cross-Platform** builds (Windows, macOS, Linux, Mobile)
+- **Web Export** capabilities for browser deployment
+
+#### Original React/TypeScript Implementation (Preserved in `orig/`)
 - **React 18** with TypeScript for type safety
 - **Vite** for fast development and optimized builds  
 - **Canvas-based Renderer** for smooth 2D graphics
@@ -71,12 +93,33 @@ npm run test    # Run comprehensive test suite
 - **Modular System Architecture** with dependency injection
 
 ### System Requirements
+
+#### Godot Version
+- **Godot**: >=4.3.0 (for development)
+- **Target Platforms**: Windows, macOS, Linux, Android, iOS, Web
+- **Memory**: Optimized native performance
+- **Storage**: Save system with native file handling
+
+#### Original Version  
 - **Node.js**: >=14.18.0
 - **Modern Browser**: Chrome, Firefox, Safari, Edge
 - **Memory**: ~50MB for full game experience
 - **Storage**: Automatic save system with localStorage
 
 ### Key Technologies
+
+#### Current Migration Target
+```json
+{
+  "engine": "Godot 4.3",
+  "scripting": "GDScript",
+  "platforms": "Multi-platform native + web",
+  "ui": "Godot UI system",
+  "state": "Native Godot scene management"
+}
+```
+
+#### Original Implementation (Preserved)
 ```json
 {
   "frontend": "React + TypeScript + Vite",
@@ -90,14 +133,25 @@ npm run test    # Run comprehensive test suite
 ## 🧪 Development & Testing
 
 ### Available Scripts
+
+#### Original React/TypeScript Version
 ```bash
-npm run dev          # Development server (http://localhost:5173)
-npm run build        # Production build
-npm run preview      # Preview production build
-npm run test         # Run test suite (628+ tests)
-npm run test:ui      # Visual test runner interface  
-npm run test:coverage # Generate coverage reports
-npm run lint         # ESLint code quality check
+npm run install:orig   # Install dependencies for original version
+npm run dev:orig       # Development server (http://localhost:5173)
+npm run build:orig     # Production build
+npm run test:orig      # Run test suite (628+ tests)
+```
+
+#### Godot Version (In Development)
+```bash
+npm run setup         # Setup both original and Godot development
+npm run godot:run     # Run Godot project (requires Godot installed)
+npm run godot:export  # Export for web deployment
+```
+
+#### Helper Scripts
+```bash
+npm run setup         # Install original dependencies and setup instructions
 ```
 
 ### Testing Framework
