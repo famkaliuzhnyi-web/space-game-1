@@ -26,7 +26,7 @@ export class WorldManager {
   /**
    * Update ship movement animation
    */
-  updateShipMovement(deltaTime: number): void {
+  updateShipMovement(_deltaTime: number): void {
     if (!this.shipMovement || !this.playerShip) return;
 
     const elapsed = Date.now() - this.shipMovement.startTime;
@@ -500,6 +500,20 @@ export class WorldManager {
    */
   moveShipToCoordinates(worldX: number, worldY: number): boolean {
     if (!this.playerShip || !this.playerShip.location.coordinates) return false;
+
+    // Add reasonable bounds to prevent ship from going too far off-screen
+    const currentSystem = this.getCurrentSystem();
+    if (currentSystem) {
+      const systemX = currentSystem.position.x;
+      const systemY = currentSystem.position.y;
+      
+      // Limit movement to a reasonable area around the system (±300 units)
+      const boundedX = Math.max(systemX - 300, Math.min(systemX + 300, worldX));
+      const boundedY = Math.max(systemY - 300, Math.min(systemY + 300, worldY));
+      
+      worldX = boundedX;
+      worldY = boundedY;
+    }
 
     // Start smooth movement animation
     this.shipMovement = {

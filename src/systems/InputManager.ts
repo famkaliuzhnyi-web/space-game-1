@@ -3,7 +3,6 @@ import { InputState, Vector2D } from '../types';
 export class InputManager {
   private inputState: InputState;
   private canvas: HTMLCanvasElement;
-  private previousMouseState: { [button: number]: boolean } = {};
   private clickEvents: Array<{ button: number; position: Vector2D }> = [];
 
   constructor(canvas: HTMLCanvasElement) {
