@@ -70,6 +70,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [currentShipId, setCurrentShipId] = useState<string>('');
   const [playerReputation, setPlayerReputation] = useState<Map<string, FactionReputation>>(new Map());
   const [activeEvents, setActiveEvents] = useState<GameEvent[]>([]);
+  const [questCounts, setQuestCounts] = useState({ active: 0, available: 0, completed: 0 });
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -118,11 +119,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const eventManager = engineRef.current.getEventManager();
         setActiveEvents(eventManager.getActiveEvents());
 
-        // Set up periodic sync for events (every 5 seconds)
+        // Sync quest counts from QuestManager
+        const questManager = engineRef.current.getQuestManager();
+        const activeQuests = questManager.getActiveQuests();
+        const availableQuests = questManager.getAvailableQuests();
+        const completedQuests = questManager.getCompletedQuests();
+        setQuestCounts({
+          active: activeQuests.length,
+          available: availableQuests.length,
+          completed: completedQuests.length
+        });
+
+        // Set up periodic sync for events and quests (every 5 seconds)
         const eventSyncInterval = setInterval(() => {
           if (engineRef.current) {
             const eventManager = engineRef.current.getEventManager();
             setActiveEvents(eventManager.getActiveEvents());
+            
+            const questManager = engineRef.current.getQuestManager();
+            const activeQuests = questManager.getActiveQuests();
+            const availableQuests = questManager.getAvailableQuests();
+            const completedQuests = questManager.getCompletedQuests();
+            setQuestCounts({
+              active: activeQuests.length,
+              available: availableQuests.length,
+              completed: completedQuests.length
+            });
           }
         }, 5000);
 
@@ -913,6 +935,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           title="Events (E)"
         >
           Events {activeEvents.length > 0 && `(${activeEvents.length})`}
+        </button>
+        <button 
+          onClick={() => setActivePanel(activePanel === 'quests' ? null : 'quests')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            backgroundColor: activePanel === 'quests' ? '#4a90e2' : undefined
+          }}
+          title="Quests (Q)"
+        >
+          Quests {(questCounts.active > 0 || questCounts.available > 0) && `(${questCounts.active}/${questCounts.available})`}
         </button>
       </div>
 
