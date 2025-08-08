@@ -6,11 +6,11 @@ extends Node
 class_name GameSystemManager
 
 # System instances - will be initialized based on original implementation
+var world_manager: WorldManager
 var character_manager: CharacterManager
 var economic_system: EconomicSystem
 var combat_manager: CombatManager
 var faction_manager: FactionManager
-var world_manager: WorldManager
 var quest_manager: QuestManager
 var achievement_manager: AchievementManager
 var save_manager: SaveManager
@@ -20,17 +20,25 @@ func _ready():
 	initialize_systems()
 
 func initialize_systems():
-	# TODO: Initialize all systems from original implementation
+	# Initialize core systems - starting with WorldManager
+	print("Initializing WorldManager...")
+	world_manager = WorldManager.new()
+	add_child(world_manager)
+	
+	# Connect to world events
+	world_manager.connect("location_changed", _on_location_changed)
+	world_manager.connect("galaxy_updated", _on_galaxy_updated)
+	
+	# TODO: Initialize remaining systems from original implementation
 	# These should mirror the 29 systems from the TypeScript version:
 	
-	# Core systems
-	# character_manager = CharacterManager.new()
-	# economic_system = EconomicSystem.new() 
-	# combat_manager = CombatManager.new()
-	# faction_manager = FactionManager.new()
-	# world_manager = WorldManager.new()
+	# Priority systems to implement next:
+	# - CharacterManager (character creation and progression)
+	# - EconomicSystem (trading and market simulation) 
+	# - FactionManager (reputation and politics)
+	# - CombatManager (ship-to-ship combat)
 	
-	# Additional systems:
+	# Additional systems to implement later:
 	# - AchievementManager
 	# - ContactManager
 	# - ContractManager
@@ -54,12 +62,32 @@ func initialize_systems():
 	# - TimeManager
 	# - TutorialManager
 	
-	print("All game systems initialized")
+	print("WorldManager initialized successfully")
 
 func update(delta: float):
-	# Update all systems
+	# Update world manager first
+	if world_manager:
+		# WorldManager doesn't need delta updates in current implementation
+		pass
+	
+	# TODO: Update other systems as they are implemented
 	pass
 
 func shutdown():
 	print("Shutting down all game systems...")
 	# Clean shutdown of all systems
+	if world_manager:
+		world_manager.queue_free()
+
+# Event handlers for world system
+func _on_location_changed(sector_id: String, system_id: String, station_id: String):
+	print("Location changed to: ", sector_id, "/", system_id, "/", station_id)
+	# TODO: Notify other systems about location change
+
+func _on_galaxy_updated():
+	print("Galaxy data updated")
+	# TODO: Notify other systems about galaxy updates
+
+# Public interface for accessing systems
+func get_world_manager() -> WorldManager:
+	return world_manager

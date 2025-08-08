@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3 uid="uid://dr1gfxs7ksvej"]
+
+[ext_resource type="Script" path="res://scripts/ui/WorldUI.gd" id="1_7n4uc"]
+
+[node name="WorldUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_7n4uc")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Space Game - World Navigator"
+horizontal_alignment = 1
+
+[node name="LocationInfo" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Location: Loading..."
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SystemList" type="ItemList" parent="VBox/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StationList" type="ItemList" parent="VBox/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NavigateButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = "Quick Navigate"
+
+[connection signal="item_selected" from="VBox/HSplitContainer/SystemList" to="." method="_on_system_list_item_selected"]
+[connection signal="item_selected" from="VBox/HSplitContainer/StationList" to="." method="_on_station_list_item_selected"]
+[connection signal="pressed" from="VBox/NavigateButton" to="." method="_on_navigate_button_pressed"]
