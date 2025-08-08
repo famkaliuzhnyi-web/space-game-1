@@ -372,10 +372,11 @@ export class NPCAIManager {
         return station.faction; // Patrols belong to station's faction
       case 'pirate':
         return 'Pirates'; // Generic pirate faction
-      default:
+      default: {
         // Traders and civilians can be from various factions
         const factions = ['Traders Guild', 'Independent', station.faction];
         return factions[Math.floor(Math.random() * factions.length)];
+      }
     }
   }
 
