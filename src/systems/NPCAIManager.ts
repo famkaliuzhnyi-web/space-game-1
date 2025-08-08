@@ -667,7 +667,9 @@ export class NPCAIManager {
 
   /**
    * Enhanced NPC destination setting with optional time-based travel
+   * Currently unused - kept for future feature development
    */
+  /*
   private setNPCDestinationEnhanced(npc: NPCShip, targetStationId: string, useTimeBased: boolean = false): void {
     if (useTimeBased && this.navigationManager && this.worldManager) {
       // Use time-based travel system
@@ -677,10 +679,13 @@ export class NPCAIManager {
       this.setNPCDestination(npc, targetStationId);
     }
   }
+  */
 
   /**
    * Start time-based travel for an NPC
+   * Currently unused - kept for future feature development
    */
+  /*
   private startNPCTimBasedTravel(npc: NPCShip, targetStationId: string): boolean {
     if (!this.navigationManager || !this.worldManager) {
       return false;
@@ -719,10 +724,13 @@ export class NPCAIManager {
 
     return false;
   }
+  */
 
   /**
    * Convert NPC to Ship format for NavigationManager compatibility
+   * Currently unused - kept for future feature development
    */
+  /*
   private convertNPCToShip(npc: NPCShip): any {
     return {
       id: npc.id,
@@ -755,6 +763,7 @@ export class NPCAIManager {
       }
     };
   }
+  */
 
   /**
    * Check and complete time-based travel for NPCs

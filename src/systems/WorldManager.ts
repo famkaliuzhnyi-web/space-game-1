@@ -378,6 +378,24 @@ export class WorldManager {
     return system.stations.find(s => s.id === this.galaxy.currentPlayerLocation.stationId);
   }
 
+  /**
+   * Get the current player position - either station position or system position
+   */
+  getCurrentPlayerPosition(): Coordinates {
+    const currentStation = this.getCurrentStation();
+    if (currentStation) {
+      return currentStation.position;
+    }
+    
+    const currentSystem = this.getCurrentSystem();
+    if (currentSystem) {
+      return currentSystem.position;
+    }
+    
+    // Fallback to origin if no current location
+    return { x: 0, y: 0 };
+  }
+
   getAvailableTargets(): NavigationTarget[] {
     const currentSector = this.getCurrentSector();
     if (!currentSector) return [];
