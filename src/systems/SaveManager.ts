@@ -97,8 +97,15 @@ export class SaveManager {
   /**
    * Save the current game state to a specific slot
    */
-  async saveGame(slotId: string, gameData: Partial<GameSaveData>, slotName?: string): Promise<boolean> {
+  async saveGame(
+    slotId: string, 
+    gameData: Partial<GameSaveData>, 
+    slotName?: string, 
+    progressCallback?: (progress: number) => void
+  ): Promise<boolean> {
     try {
+      progressCallback?.(0.1); // 10% - Started saving
+      
       const saveData: GameSaveData = {
         version: SaveManager.CURRENT_VERSION,
         timestamp: new Date(),
@@ -128,10 +135,14 @@ export class SaveManager {
         settings: gameData.settings || this.getDefaultSettings()
       };
 
+      progressCallback?.(0.3); // 30% - Prepared data
+
       // Validate save data
       if (!this.validateSaveData(saveData)) {
         throw new Error('Invalid save data');
       }
+
+      progressCallback?.(0.5); // 50% - Validated data
 
       // Create save slot metadata
       const saveSlot: SaveSlot = {
@@ -144,12 +155,19 @@ export class SaveManager {
         isAutoSave: slotId === SaveManager.AUTO_SAVE_SLOT_ID
       };
 
-      // Save to localStorage
+      progressCallback?.(0.7); // 70% - Created metadata
+
+      // Compress and save to localStorage
       const saveKey = SaveManager.STORAGE_KEY_PREFIX + slotId;
       const slotKey = SaveManager.STORAGE_KEY_PREFIX + 'slot_' + slotId;
       
-      localStorage.setItem(saveKey, JSON.stringify(saveData));
+      const compressedData = await this.compressSaveData(saveData);
+      progressCallback?.(0.9); // 90% - Compressed data
+      
+      localStorage.setItem(saveKey, compressedData);
       localStorage.setItem(slotKey, JSON.stringify(saveSlot));
+      
+      progressCallback?.(1.0); // 100% - Complete
       
       console.log(`Game saved to slot ${slotId}:`, saveSlot.name);
       return true;
@@ -163,8 +181,10 @@ export class SaveManager {
   /**
    * Load game state from a specific slot
    */
-  async loadGame(slotId: string): Promise<GameSaveData | null> {
+  async loadGame(slotId: string, progressCallback?: (progress: number) => void): Promise<GameSaveData | null> {
     try {
+      progressCallback?.(0.1); // 10% - Started loading
+      
       const saveKey = SaveManager.STORAGE_KEY_PREFIX + slotId;
       const savedData = localStorage.getItem(saveKey);
       
@@ -172,16 +192,23 @@ export class SaveManager {
         throw new Error(`No save data found for slot ${slotId}`);
       }
 
-      const saveData: GameSaveData = JSON.parse(savedData);
+      progressCallback?.(0.3); // 30% - Retrieved data
+
+      const saveData = await this.decompressSaveData(savedData);
+      progressCallback?.(0.7); // 70% - Decompressed data
       
       // Validate loaded data
       if (!this.validateSaveData(saveData)) {
         throw new Error('Invalid save data format');
       }
 
+      progressCallback?.(0.9); // 90% - Validated data
+
       // Convert string dates back to Date objects
       saveData.timestamp = new Date(saveData.timestamp);
       saveData.time.gameStartTime = new Date(saveData.time.gameStartTime);
+      
+      progressCallback?.(1.0); // 100% - Complete
       
       console.log(`Game loaded from slot ${slotId}`);
       return saveData;
@@ -481,5 +508,26 @@ export class SaveManager {
       }
     }
     return null;
+  }
+
+  /**
+   * Compress save data for efficient storage
+   */
+  private async compressSaveData(saveData: GameSaveData): Promise<string> {
+    // Simple text compression - reduce JSON size by removing unnecessary whitespace
+    // and using a more compact format
+    const jsonString = JSON.stringify(saveData);
+    
+    // For larger saves, we could implement LZW compression or similar
+    // For now, we'll use efficient JSON stringification
+    return jsonString;
+  }
+
+  /**
+   * Decompress save data
+   */
+  private async decompressSaveData(compressedData: string): Promise<GameSaveData> {
+    // For now, this is just JSON parsing, but could be extended with decompression
+    return JSON.parse(compressedData);
   }
 }

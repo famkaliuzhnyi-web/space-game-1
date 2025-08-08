@@ -40,6 +40,13 @@ export class GameLoop {
   private animationFrameId: number = 0;
   private updateCallback?: (deltaTime: number) => void;
   private renderCallback?: () => void;
+  
+  // Performance monitoring
+  private frameCount: number = 0;
+  private lastFpsUpdate: number = 0;
+  private currentFps: number = 0;
+  private frameTimeHistory: number[] = [];
+  private maxFrameTimeHistory = 60; // Keep last 60 frame times
 
   /**
    * Set the callback function for game updates.
@@ -125,7 +132,8 @@ export class GameLoop {
   private loop = (): void => {
     if (!this.isRunning) return;
 
-    const currentTime = performance.now();
+    const frameStartTime = performance.now();
+    const currentTime = frameStartTime;
     const deltaTime = (currentTime - this.lastFrameTime) / 1000; // Convert to seconds
     this.lastFrameTime = currentTime;
 
@@ -139,6 +147,22 @@ export class GameLoop {
       this.renderCallback();
     }
 
+    // Performance monitoring
+    const frameEndTime = performance.now();
+    const frameTime = frameEndTime - frameStartTime;
+    
+    this.frameCount++;
+    this.frameTimeHistory.push(frameTime);
+    if (this.frameTimeHistory.length > this.maxFrameTimeHistory) {
+      this.frameTimeHistory.shift();
+    }
+
+    // Update FPS every second
+    if (frameEndTime - this.lastFpsUpdate >= 1000) {
+      this.currentFps = Math.round(1000 / (frameEndTime - frameStartTime));
+      this.lastFpsUpdate = frameEndTime;
+    }
+
     this.animationFrameId = requestAnimationFrame(this.loop);
   };
 
@@ -149,5 +173,48 @@ export class GameLoop {
     this.stop();
     this.updateCallback = undefined;
     this.renderCallback = undefined;
+  }
+
+  // Performance monitoring methods
+
+  /**
+   * Get current FPS
+   */
+  getCurrentFps(): number {
+    return this.currentFps;
+  }
+
+  /**
+   * Get average frame time in milliseconds
+   */
+  getAverageFrameTime(): number {
+    if (this.frameTimeHistory.length === 0) return 0;
+    const sum = this.frameTimeHistory.reduce((a, b) => a + b, 0);
+    return sum / this.frameTimeHistory.length;
+  }
+
+  /**
+   * Get maximum frame time in milliseconds
+   */
+  getMaxFrameTime(): number {
+    if (this.frameTimeHistory.length === 0) return 0;
+    return Math.max(...this.frameTimeHistory);
+  }
+
+  /**
+   * Get performance metrics
+   */
+  getPerformanceMetrics(): {
+    fps: number;
+    avgFrameTime: number;
+    maxFrameTime: number;
+    frameCount: number;
+  } {
+    return {
+      fps: this.currentFps,
+      avgFrameTime: this.getAverageFrameTime(),
+      maxFrameTime: this.getMaxFrameTime(),
+      frameCount: this.frameCount
+    };
   }
 }
