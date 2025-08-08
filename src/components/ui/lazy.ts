@@ -7,5 +7,5 @@ export const InvestmentPanel = lazy(() => import('./InvestmentPanel').then(modul
 export const FleetManagementPanel = lazy(() => import('./FleetManagementPanel'));
 export const AchievementsPanel = lazy(() => import('./AchievementsPanel'));
 export const SecurityPanel = lazy(() => import('./SecurityPanel').then(module => ({ default: module.SecurityPanel })));
-export const QuestPanel = lazy(() => import('./QuestPanel').then(module => ({ default: module.QuestPanel })));
+export const QuestPanel = lazy(() => import('./QuestPanel'));
 export const CharacterCreationPanel = lazy(() => import('./CharacterCreationPanel').then(module => ({ default: module.CharacterCreationPanel })));

@@ -567,3 +567,5 @@ export const QuestPanel: React.FC<QuestPanelProps> = ({
     </div>
   );
 };
+
+export default QuestPanel;
