@@ -293,7 +293,7 @@ describe('InvestmentManager', () => {
       };
       
       // Should fail without sufficient influence
-      let success = investmentManager.executeEconomicWarfare(action);
+      const success = investmentManager.executeEconomicWarfare(action);
       expect(success).toBe(false);
       
       // Increase market influence and try again

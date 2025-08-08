@@ -1079,18 +1079,21 @@ export class CombatManager {
       
       // Modify score based on targeting preference
       switch (ai.tactics.targeting) {
-        case 'nearest':
+        case 'nearest': {
           const distance = this.calculateDistance(participant.position, other.position);
           score += Math.max(0, 10 - distance / 100);
           break;
-        case 'weakest':
+        }
+        case 'weakest': {
           const weakness = 1 - (other.ship.hull.current / other.ship.hull.maximum);
           score += weakness * 5;
           break;
-        case 'strongest':
+        }
+        case 'strongest': {
           const strength = other.ship.hull.current / other.ship.hull.maximum;
           score += strength * 5;
           break;
+        }
       }
 
       if (score > bestScore) {

@@ -23,6 +23,21 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Relax some TypeScript rules for legacy code while we improve
+      '@typescript-eslint/no-explicit-any': 'warn', // Change from error to warning
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+    },
+  },
+  // Specific rules for test files
+  {
+    files: ['**/*.test.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off', // Allow any in tests for mocking
+      '@typescript-eslint/no-unused-vars': 'off', // Allow unused vars in tests
     },
   },
 )

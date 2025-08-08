@@ -3,6 +3,11 @@ import Modal from './Modal';
 import { AchievementManager } from '../../systems/AchievementManager';
 import { Achievement, PlayerAchievements, AchievementNotification } from '../../types/achievements';
 
+// Extended notification interface for UI with timestamp
+interface NotificationWithTimestamp extends AchievementNotification {
+  timestamp: number;
+}
+
 interface AchievementsPanelProps {
   isVisible: boolean;
   onClose: () => void;
@@ -17,7 +22,7 @@ const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
   const [activeTab, setActiveTab] = useState<'unlocked' | 'progress' | 'all'>('unlocked');
   const [playerAchievements, setPlayerAchievements] = useState<PlayerAchievements | null>(null);
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
-  const [notifications, setNotifications] = useState<AchievementNotification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationWithTimestamp[]>([]);
 
   useEffect(() => {
     if (achievementManager) {
@@ -26,10 +31,11 @@ const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
       
       // Listen for achievement notifications
       const handleNotification = (notification: AchievementNotification) => {
-        setNotifications(prev => [...prev, { ...notification, timestamp: Date.now() }]);
+        const notificationWithTimestamp: NotificationWithTimestamp = { ...notification, timestamp: Date.now() };
+        setNotifications(prev => [...prev, notificationWithTimestamp]);
         // Clear notification after 5 seconds
         setTimeout(() => {
-          setNotifications(prev => prev.filter((n: any) => n.timestamp !== (notification as any).timestamp));
+          setNotifications(prev => prev.filter(n => n.timestamp !== notificationWithTimestamp.timestamp));
         }, 5000);
       };
 
@@ -197,7 +203,7 @@ const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
             right: '20px', 
             zIndex: 1000 
           }}>
-            {notifications.map((notification: any) => (
+            {notifications.map((notification: NotificationWithTimestamp) => (
               <div
                 key={notification.timestamp}
                 style={{
@@ -258,7 +264,7 @@ const AchievementsPanel: React.FC<AchievementsPanelProps> = ({
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => setActiveTab(tab.key as 'unlocked' | 'progress' | 'all')}
               style={{
                 padding: '8px 16px',
                 backgroundColor: activeTab === tab.key ? '#3b82f6' : 'transparent',

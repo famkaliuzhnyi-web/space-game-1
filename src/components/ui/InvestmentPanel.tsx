@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './InvestmentPanel.css';
 import { 
   Investment, 
@@ -7,10 +7,13 @@ import {
   SupplyChainNode
 } from '../../types/investment';
 
+import { InvestmentManager } from '../../systems/InvestmentManager';
+import { PlayerManager } from '../../systems/PlayerManager';
+
 interface InvestmentPanelProps {
   isVisible: boolean;
-  investmentManager: any;
-  playerManager: any;
+  investmentManager: InvestmentManager;
+  playerManager: PlayerManager;
 }
 
 export const InvestmentPanel: React.FC<InvestmentPanelProps> = ({ 
@@ -26,20 +29,20 @@ export const InvestmentPanel: React.FC<InvestmentPanelProps> = ({
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   const [investmentAmount, setInvestmentAmount] = useState<number>(0);
 
-  useEffect(() => {
-    if (!isVisible || !investmentManager) return;
-    
-    updateData();
-  }, [isVisible, investmentManager]);
-
-  const updateData = () => {
+  const updateData = useCallback(() => {
     if (!investmentManager) return;
     
     setPortfolio(investmentManager.getPlayerPortfolio());
     setAvailableInvestments(investmentManager.getAvailableInvestments());
     setActiveSpeculations(investmentManager.getActiveSpeculations());
     setSupplyChains(investmentManager.getSupplyChains());
-  };
+  }, [investmentManager]);
+
+  useEffect(() => {
+    if (!isVisible || !investmentManager) return;
+    
+    updateData();
+  }, [isVisible, investmentManager, updateData]);
 
   const handleMakeInvestment = (investmentId: string, amount: number) => {
     if (investmentManager.makeInvestment(investmentId, amount)) {

@@ -146,14 +146,16 @@ export class ContactManager {
       switch (req.type) {
         case 'trust':
           return contact.trustLevel >= req.minimum;
-        case 'reputation':
+        case 'reputation': {
           const rep = playerReputation.get(contact.factionId);
           return rep ? rep.standing >= req.minimum : false;
+        }
         case 'credits':
           return playerCredits >= req.minimum;
-        case 'faction_standing':
+        case 'faction_standing': {
           const factionRep = playerReputation.get(req.value);
           return factionRep ? factionRep.standing >= req.minimum : false;
+        }
         default:
           return true;
       }

@@ -77,7 +77,7 @@ export const CharacterCreationPanel: React.FC<CharacterCreationPanelProps> = ({
     setCharacterData(prev => ({ ...prev, backgroundId }));
   };
 
-  const handleAppearanceChange = (field: keyof CharacterAppearance, value: any) => {
+  const handleAppearanceChange = (field: keyof CharacterAppearance, value: string | number) => {
     setCharacterData(prev => ({
       ...prev,
       appearance: { ...prev.appearance, [field]: value }
@@ -206,7 +206,7 @@ export const CharacterCreationPanel: React.FC<CharacterCreationPanelProps> = ({
         <label>Gender:</label>
         <select 
           value={characterData.appearance.gender}
-          onChange={(e) => handleAppearanceChange('gender', e.target.value as any)}
+          onChange={(e) => handleAppearanceChange('gender', e.target.value as 'male' | 'female' | 'other')}
         >
           <option value="male">Male</option>
           <option value="female">Female</option>
