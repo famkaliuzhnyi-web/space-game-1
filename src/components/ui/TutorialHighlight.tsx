@@ -30,7 +30,20 @@ export const TutorialHighlight: React.FC<TutorialHighlightProps> = ({
       return;
     }
 
-    const element = document.querySelector(target) as HTMLElement;
+    // Handle special selectors like text content matching
+    let element: HTMLElement | null = null;
+    
+    if (target.includes(':contains(')) {
+      // Extract text from :contains() selector
+      const match = target.match(/button:contains\(['"]([^'"]+)['"]\)/);
+      if (match) {
+        const searchText = match[1];
+        const buttons = Array.from(document.querySelectorAll('button'));
+        element = buttons.find(btn => btn.textContent?.trim() === searchText) as HTMLElement || null;
+      }
+    } else {
+      element = document.querySelector(target) as HTMLElement;
+    }
     if (element) {
       setTargetElement(element);
       setHighlightRect(element.getBoundingClientRect());

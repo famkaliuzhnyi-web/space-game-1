@@ -131,8 +131,8 @@ describe('SaveManager', () => {
       expect(slots[0].name).toBe('New Save'); // Should be first (newest)
     });
 
-    it('should delete save slots correctly', () => {
-      saveManager.saveGame('slot1', mockGameData, 'Save 1');
+    it('should delete save slots correctly', async () => {
+      await saveManager.saveGame('slot1', mockGameData, 'Save 1');
       
       let slots = saveManager.getSaveSlots();
       expect(slots).toHaveLength(1);

@@ -33,6 +33,34 @@ export class Renderer {
     
     // Set up canvas for crisp pixel art
     this.context.imageSmoothingEnabled = false;
+    
+    // Mobile performance optimizations
+    this.optimizeCanvasForMobile();
+  }
+
+  /**
+   * Apply mobile-specific optimizations
+   */
+  private optimizeCanvasForMobile(): void {
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // Reduce rendering quality slightly for better performance on mobile
+      this.context.imageSmoothingQuality = 'low';
+      
+      // Set up canvas for mobile-optimized rendering
+      const dpr = window.devicePixelRatio || 1;
+      const rect = this.canvas.getBoundingClientRect();
+      
+      // Scale canvas for device pixel ratio but limit for performance
+      const maxDpr = 2; // Limit DPR for performance
+      const effectiveDpr = Math.min(dpr, maxDpr);
+      
+      this.canvas.width = rect.width * effectiveDpr;
+      this.canvas.height = rect.height * effectiveDpr;
+      this.context.scale(effectiveDpr, effectiveDpr);
+    }
   }
 
   /**

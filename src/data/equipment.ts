@@ -342,6 +342,20 @@ export function getEffectiveStats(equipment: EquipmentItem): EquipmentItem['effe
 }
 
 /**
+ * Extract template ID from equipment item ID
+ */
+export function getTemplateIdFromEquipmentId(equipmentId: string): string | null {
+  // Equipment IDs are in format: templateId-timestamp-randomString
+  // Find the template ID by checking which template ID the equipment ID starts with
+  for (const templateId of Object.keys(EQUIPMENT_TEMPLATES)) {
+    if (equipmentId.startsWith(`${templateId}-`)) {
+      return templateId;
+    }
+  }
+  return null;
+}
+
+/**
  * Check if equipment can be installed on a ship class
  */
 export function canInstallEquipment(templateId: string, shipClassId: string): boolean {
