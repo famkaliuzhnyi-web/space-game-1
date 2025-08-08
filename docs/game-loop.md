@@ -64,12 +64,28 @@ The core game loop focuses on logistics and supply chain management, with the pl
 **Duration:** 10-60 minutes depending on route complexity
 **Environment:** Space travel between sectors and stations
 
+#### Real-Time Navigation System
+The game now features a comprehensive time-based travel system that simulates realistic journey times:
+
+- **Time Flow:** Ships take actual time to traverse space based on distance and ship capabilities
+- **Travel Planning:** Routes are calculated considering ship speed, engine condition, and equipment
+- **Progress Tracking:** Players can monitor travel progress and estimated arrival times
+- **Travel States:** Ships are properly tracked as being "in transit" during journeys
+- **Completion Events:** Automatic arrival notifications and location updates when travel completes
+
+#### Travel Mechanics
+- **Ship Speed Factors:** Base ship class speed, engine equipment bonuses, and ship condition all affect travel time
+- **Distance Calculations:** Accurate 3D distance calculations between stations and systems  
+- **Time Acceleration:** Travel time respects the game's time acceleration settings
+- **Inter-System vs Intra-System:** Different travel speeds for local station-to-station vs system-to-system journeys
+- **Minimum Travel Times:** Even zero-distance "travel" takes minimum time to simulate docking/undocking
+
 #### Navigation Phase
-- **Route Following:** Executing planned travel path
+- **Route Following:** Executing planned travel path with realistic time progression
 - **Traffic Management:** Coordinating with other ships and control systems
 - **Fuel Management:** Monitoring consumption and adjusting for efficiency
 - **System Monitoring:** Watching for equipment problems or external threats
-- **Schedule Adherence:** Maintaining delivery timelines
+- **Schedule Adherence:** Maintaining delivery timelines with accurate ETAs
 
 #### Encounter Management
 - **Random Events:** Responding to distress calls, pirate attacks, or opportunities
