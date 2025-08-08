@@ -9,7 +9,7 @@
  */
 
 import { Ship, ShipLocation } from '../types/player';
-import { Station, StarSystem, Coordinates, NavigationTarget } from '../types/world';
+import { Coordinates, NavigationTarget } from '../types/world';
 import { TimeManager } from './TimeManager';
 
 export interface TravelPlan {

@@ -321,11 +321,11 @@ export class ThreeRenderer {
         color = 0x666666;
     }
 
-    const material = new THREE.MeshLambertMaterial({ color });
-    if (emissiveColor !== 0x000000) {
-      (material as any).emissive = new THREE.Color(emissiveColor);
-      (material as any).emissiveIntensity = 0.3;
-    }
+    const material = new THREE.MeshLambertMaterial({ 
+      color,
+      emissive: emissiveColor,
+      emissiveIntensity: emissiveColor !== 0x000000 ? 0.3 : 0
+    });
 
     const mesh = new THREE.Mesh(geometry, material);
     group.add(mesh);
@@ -342,11 +342,9 @@ export class ThreeRenderer {
     // Core star
     const coreGeometry = new THREE.SphereGeometry(8, 16, 16);
     const coreMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffff99,
+      color: 0xffff99
     });
-    // Add emissive property manually for glow
-    (coreMaterial as any).emissive = new THREE.Color(0xffff99);
-    (coreMaterial as any).emissiveIntensity = 0.5;
+    // MeshBasicMaterial doesn't need emissive since it's unlit
     
     const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
     starGroup.add(coreMesh);
@@ -375,11 +373,9 @@ export class ThreeRenderer {
     const mainGeometry = new THREE.BoxGeometry(16, 6, 12);
     const mainMaterial = new THREE.MeshLambertMaterial({
       color: isCurrent ? 0x00ff00 : 0xaaaaaa,
+      emissive: isCurrent ? 0x003300 : 0x000000,
+      emissiveIntensity: isCurrent ? 0.3 : 0
     });
-    // Add emissive property manually for current station glow
-    if (isCurrent) {
-      (mainMaterial as any).emissive = new THREE.Color(0x003300);
-    }
     
     const mainStructure = new THREE.Mesh(mainGeometry, mainMaterial);
     stationGroup.add(mainStructure);
@@ -395,11 +391,9 @@ export class ThreeRenderer {
     // Docking lights
     const lightGeometry = new THREE.SphereGeometry(1, 8, 8);
     const lightMaterial = new THREE.MeshBasicMaterial({
-      color: 0x00ccff,
+      color: 0x00ccff
     });
-    // Add emissive property manually for lights glow
-    (lightMaterial as any).emissive = new THREE.Color(0x00ccff);
-    (lightMaterial as any).emissiveIntensity = 0.8;
+    // MeshBasicMaterial is unlit, so it appears bright by default
 
     // Add multiple docking lights
     for (let i = 0; i < 4; i++) {
@@ -449,10 +443,9 @@ export class ThreeRenderer {
 
     const planetMaterial = new THREE.MeshLambertMaterial({
       color: color,
+      emissive: emissiveColor,
+      emissiveIntensity: 0.1
     });
-    // Add emissive property manually
-    (planetMaterial as any).emissive = new THREE.Color(emissiveColor);
-    (planetMaterial as any).emissiveIntensity = 0.1;
 
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
     planetGroup.add(planetMesh);
@@ -493,8 +486,7 @@ export class ThreeRenderer {
     const engineMaterial = new THREE.MeshBasicMaterial({
       color: 0x00aaff
     });
-    (engineMaterial as any).emissive = new THREE.Color(0x0055ff);
-    (engineMaterial as any).emissiveIntensity = 0.8;
+    // MeshBasicMaterial is unlit, so it appears bright by default
     
     const engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
     engineMesh.position.set(-8, 0, 0);
@@ -606,12 +598,13 @@ export class ThreeRenderer {
         mesh.rotation.y += 0.002;
         break;
       case 'ship':
-        // Engine glow pulse
+        // Engine glow pulse - use opacity changes for MeshBasicMaterial
         if (mesh instanceof THREE.Group && mesh.children.length > 1) {
           const engineMesh = mesh.children[1];
           if (engineMesh instanceof THREE.Mesh && engineMesh.material instanceof THREE.MeshBasicMaterial) {
-            const intensity = 0.5 + Math.sin(time * 8) * 0.3;
-            (engineMesh.material as any).emissiveIntensity = intensity;
+            const intensity = 0.7 + Math.sin(time * 8) * 0.3;
+            engineMesh.material.opacity = intensity;
+            engineMesh.material.transparent = true;
           }
         }
         break;
@@ -622,12 +615,12 @@ export class ThreeRenderer {
         mesh.rotation.z += 0.008;
         break;
       case 'beacon':
-        // Blinking light
+        // Blinking light - use opacity for effect with MeshLambertMaterial
         if (mesh instanceof THREE.Group && mesh.children.length > 0) {
           const beaconMesh = mesh.children[0];
           if (beaconMesh instanceof THREE.Mesh && beaconMesh.material instanceof THREE.MeshLambertMaterial) {
             const blink = Math.sin(time * 4) > 0.5 ? 1 : 0.2;
-            (beaconMesh.material as any).emissiveIntensity = blink * 0.5;
+            beaconMesh.material.emissiveIntensity = blink * 0.5;
           }
         }
         break;

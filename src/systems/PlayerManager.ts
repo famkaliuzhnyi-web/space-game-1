@@ -18,7 +18,6 @@ import { Character } from '../types/character';
 import { Contact } from '../types/contacts';
 import { NavigationManager, TravelPlan, TravelProgress } from './NavigationManager';
 import { NavigationTarget } from '../types/world';
-import { TimeManager } from './TimeManager';
 
 // Forward declaration to avoid circular dependency
 interface ICharacterProgressionSystem {
