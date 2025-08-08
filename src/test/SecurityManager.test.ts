@@ -6,14 +6,7 @@ import { PlayerManager } from '../systems/PlayerManager';
 import { FactionManager } from '../systems/FactionManager';
 import { NPCAIManager } from '../systems/NPCAIManager';
 import { 
-  SecurityLevel, 
-  SecurityZone, 
-  CrimeType, 
-  Evidence, 
-  LegalStatus,
-  SecurityScanResult,
-  Warrant,
-  LawEnforcementUnit
+  Evidence
 } from '../types/security';
 
 // Mock dependencies

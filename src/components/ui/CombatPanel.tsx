@@ -31,7 +31,7 @@ export const CombatPanel: React.FC<CombatPanelProps> = ({
     <button
       key={tabId}
       className={`tab-button ${activeTab === tabId ? 'active' : ''}`}
-      onClick={() => setActiveTab(tabId as any)}
+      onClick={() => setActiveTab(tabId as 'encounters' | 'weapons' | 'shields' | 'licenses' | 'stats')}
     >
       {label}
       {badge !== undefined && badge > 0 && (

@@ -37,7 +37,7 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
     <button
       key={tabId}
       className={`tab-button ${activeTab === tabId ? 'active' : ''}`}
-      onClick={() => setActiveTab(tabId as any)}
+      onClick={() => setActiveTab(tabId as 'targets' | 'equipment' | 'data' | 'market' | 'stats' | 'active')}
     >
       {label}
       {badge !== undefined && badge > 0 && (

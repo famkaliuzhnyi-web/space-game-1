@@ -75,7 +75,7 @@ export interface AchievementTrigger {
   type: 'trade_complete' | 'contract_finish' | 'ship_repair' | 'system_visit' | 
         'level_up' | 'skill_increase' | 'reputation_gain' | 'credits_earned' |
         'distance_traveled' | 'maintenance_performed' | 'stat_update';
-  data: Record<string, any>;           // Activity-specific data
+  data: Record<string, string | number | boolean>;           // Activity-specific data
 }
 
 // Achievement notification data

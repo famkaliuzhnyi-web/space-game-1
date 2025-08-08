@@ -1,9 +1,21 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FleetManagementPanel, FactionReputationPanel, CharacterSheet, CharacterCreationPanel, AchievementsPanel, EventsPanel, SecurityPanel, HackingPanel, CombatPanel, InvestmentPanel, TutorialPanel, NewPlayerGuide, QuestPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide } from '../ui';
+// Import heavy panels lazily
+import { 
+  FleetManagementPanel, 
+  AchievementsPanel, 
+  SecurityPanel, 
+  HackingPanel, 
+  CombatPanel, 
+  InvestmentPanel, 
+  QuestPanel,
+  CharacterCreationPanel
+} from '../ui/lazy';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
+import LoadingPanel from '../ui/LoadingPanel';
 import { NPCPanel } from './NPCPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
@@ -996,23 +1008,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       />
 
       {/* Fleet Management Panel */}
-      <FleetManagementPanel
-        isVisible={showShipManagement}
-        onClose={() => setActivePanel(null)}
-        playerCredits={playerCredits}
-        currentShipId={currentShipId}
-        ownedShips={ownedShips}
-        stationId={engineRef.current?.getWorldManager().getCurrentStation()?.id || 'earth-station'}
-        stationName={engineRef.current?.getWorldManager().getCurrentStation()?.name || 'Earth Station Alpha'}
-        stationType="trade"
-        techLevel={1}
-        onSwitchShip={handleSwitchShip}
+      <Suspense fallback={<LoadingPanel />}>
+        <FleetManagementPanel
+          isVisible={showShipManagement}
+          onClose={() => setActivePanel(null)}
+          playerCredits={playerCredits}
+          currentShipId={currentShipId}
+          ownedShips={ownedShips}
+          stationId={engineRef.current?.getWorldManager().getCurrentStation()?.id || 'earth-station'}
+          stationName={engineRef.current?.getWorldManager().getCurrentStation()?.name || 'Earth Station Alpha'}
+          stationType="trade"
+          techLevel={1}
+          onSwitchShip={handleSwitchShip}
         onPurchaseShip={handlePurchaseShip}
         onConstructShip={handleConstructShip}
         onConstructHubShip={handleConstructHubShip}
         onStoreShip={handleStoreShip}
         onRetrieveShip={handleRetrieveShip}
       />
+      </Suspense>
 
       {/* Equipment Market Panel */}
       {currentShip && (
@@ -1121,23 +1135,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       {/* Combat Panel */}
       {engineRef.current && showCombat && (
-        <CombatPanel
-          combatManager={engineRef.current.getCombatManager()}
-          onClose={() => setActivePanel(null)}
-          onCreditsChange={() => {
-            // Update player credits display
-            setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
-          }}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <CombatPanel
+            combatManager={engineRef.current.getCombatManager()}
+            onClose={() => setActivePanel(null)}
+            onCreditsChange={() => {
+              // Update player credits display
+              setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Investment Panel */}
       {engineRef.current && showInvestment && (
-        <InvestmentPanel
-          isVisible={showInvestment}
-          investmentManager={engineRef.current.getInvestmentManager()}
-          playerManager={engineRef.current.getPlayerManager()}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <InvestmentPanel
+            isVisible={showInvestment}
+            investmentManager={engineRef.current.getInvestmentManager()}
+            playerManager={engineRef.current.getPlayerManager()}
+          />
+        </Suspense>
       )}
 
       {/* Tutorial Panel */}
