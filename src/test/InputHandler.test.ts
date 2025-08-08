@@ -15,6 +15,7 @@ class MockInputManager {
   private mousePos = { x: 0, y: 0 };
   private mouseButtons: Record<number, boolean> = {};
   private touches: Array<{ x: number; y: number }> = [];
+  private clickEvents: Array<{ button: number; position: { x: number; y: number } }> = [];
 
   setKey(key: string, pressed: boolean) {
     this.keys[key] = pressed;
@@ -32,6 +33,10 @@ class MockInputManager {
     this.touches = touches;
   }
 
+  addClickEvent(button: number, position: { x: number; y: number }) {
+    this.clickEvents.push({ button, position });
+  }
+
   isKeyPressed(key: string): boolean {
     return this.keys[key] || false;
   }
@@ -46,6 +51,12 @@ class MockInputManager {
 
   getTouchPositions() {
     return this.touches;
+  }
+
+  getClickEvents() {
+    const events = [...this.clickEvents];
+    this.clickEvents = []; // Clear after reading
+    return events;
   }
 }
 
@@ -125,8 +136,7 @@ describe('InputHandler', () => {
       const clickHandler = vi.fn();
       inputHandler.setClickHandler(clickHandler);
       
-      mockInputManager.setMousePos(100, 100);
-      mockInputManager.setMouseButton(0, true);
+      mockInputManager.addClickEvent(0, { x: 100, y: 100 });
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       expect(clickHandler).toHaveBeenCalled();
@@ -150,8 +160,7 @@ describe('InputHandler', () => {
       camera.y = 50;
       camera.zoom = 2;
       
-      mockInputManager.setMousePos(400, 300); // Center of canvas
-      mockInputManager.setMouseButton(0, true);
+      mockInputManager.addClickEvent(0, { x: 400, y: 300 }); // Center of canvas
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       
