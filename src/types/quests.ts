@@ -58,10 +58,32 @@ export interface QuestRequirement {
   level?: number;
   reputation?: { [factionId: string]: number };
   completedQuests?: string[];
+  completedArcs?: string[];
   skills?: { [skillName: string]: number };
+  attributes?: { [attributeName: string]: number };
   credits?: number;
   items?: string[];
   achievements?: string[];
+  unlocks?: string[];
+  specialUnlocks?: string[];
+  flags?: { [flagId: string]: boolean | string | number };
+}
+
+export interface QuestBranch {
+  id: string;
+  description: string;
+  requirements?: QuestRequirement;
+  outcomes: {
+    success?: {
+      reputation?: { [factionId: string]: number };
+      unlocks?: string[];
+      consequences?: string[];
+    };
+    failure?: {
+      reputation?: { [factionId: string]: number };
+      consequences?: string[];
+    };
+  };
 }
 
 export interface DialogueOption {
@@ -109,14 +131,27 @@ export interface StoryQuest {
   
   // Story and dialogue
   giver: string; // NPC or faction ID
+  location?: string; // Where the quest giver is located
   startDialogue?: string;
   progressDialogues?: { [objectiveId: string]: string };
   completionDialogue?: string;
+  dialogue?: {
+    intro?: string;
+    success?: string;
+    failure?: string;
+  };
   
   // Quest chain information
   chainId?: string;
   previousQuest?: string;
   nextQuest?: string;
+  
+  // Branching quest mechanics
+  branches?: QuestBranch[];
+  consequences?: {
+    success?: string[];
+    failure?: string[];
+  };
   
   // Temporal aspects
   startDate?: number;
@@ -149,6 +184,8 @@ export interface StoryArc {
   quests: string[]; // Quest IDs in order
   status: 'locked' | 'available' | 'in_progress' | 'completed';
   unlockRequirements?: QuestRequirement;
+  prerequisites?: QuestRequirement;
+  rewards?: QuestReward;
 }
 
 export interface QuestFlag {
@@ -179,6 +216,10 @@ export interface FactionStoryline {
     allied: number;
     trusted: number;
   };
+  unlocks?: {
+    allied?: string[];
+    trusted?: string[];
+  };
 }
 
 // Pre-defined major storylines
@@ -203,4 +244,10 @@ export interface SeasonalContent {
   events: string[];
   rewards: QuestReward[];
   unlocks: string[];
+  economicEffects?: {
+    commodityPriceModifiers?: { [commodity: string]: number };
+    tradingVolumeIncrease?: number;
+    specialContracts?: string[];
+  };
+  specialFeatures?: string[];
 }

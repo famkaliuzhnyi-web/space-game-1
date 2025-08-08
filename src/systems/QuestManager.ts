@@ -11,6 +11,9 @@ import { CharacterManager } from './CharacterManager';
 import { PlayerManager } from './PlayerManager';
 import { TimeManager } from './TimeManager';
 import { EventManager } from './EventManager';
+import { TRADERS_GUILD_STORYLINES, SECURITY_FORCES_STORYLINES, OUTER_COLONIES_STORYLINES, ENHANCED_STORY_ARCS, ENHANCED_FACTION_STORYLINES } from '../data/factionStorylines';
+import { ENHANCED_SEASONAL_EVENTS } from '../data/seasonalEvents';
+import { ENDGAME_QUESTS } from '../data/endgameContent';
 
 /**
  * QuestManager handles faction storylines, major questlines, and narrative content.
@@ -460,7 +463,10 @@ export class QuestManager {
    * Initialize quest definitions
    */
   private initializeQuestDefinitions(): void {
-    // Traders Guild Storyline Quests
+    // Load enhanced faction storylines
+    this.loadEnhancedFactionStorylines();
+    
+    // Keep existing quest for backwards compatibility
     this.addQuest({
       id: 'tg_welcome',
       title: 'Welcome to the Guild',
@@ -1821,7 +1827,10 @@ export class QuestManager {
    * Initialize seasonal content
    */
   private initializeSeasonalContent(): void {
-    // Winter Festival - Technology and Luxury Focus
+    // Load enhanced seasonal events
+    this.loadEnhancedSeasonalEvents();
+    
+    // Keep existing winter festival for backwards compatibility
     const winterFestival: SeasonalContent = {
       id: 'winter_festival_2024',
       name: 'Winter Festival',
@@ -1954,5 +1963,62 @@ export class QuestManager {
     this.questSystemState.questFlags = new Map(data.questFlags || []);
     this.questSystemState.storyArcs = new Map(data.storyArcs || []);
     this.questSystemState.dialogueHistory = new Map(data.dialogueHistory || []);
+  }
+
+  /**
+   * Load enhanced faction storylines from data files
+   */
+  private loadEnhancedFactionStorylines(): void {
+    // Load Traders Guild storylines
+    TRADERS_GUILD_STORYLINES.forEach(quest => {
+      this.questDefinitions.set(quest.id, quest);
+    });
+
+    // Load Security Forces storylines
+    SECURITY_FORCES_STORYLINES.forEach(quest => {
+      this.questDefinitions.set(quest.id, quest);
+    });
+
+    // Load Outer Colonies storylines
+    OUTER_COLONIES_STORYLINES.forEach(quest => {
+      this.questDefinitions.set(quest.id, quest);
+    });
+
+    // Load enhanced story arcs
+    ENHANCED_STORY_ARCS.forEach(arc => {
+      this._storyArcDefinitions.set(arc.id, arc);
+    });
+
+    // Load enhanced faction storylines
+    ENHANCED_FACTION_STORYLINES.forEach(storyline => {
+      this.factionStorylines.set(storyline.factionId, storyline);
+    });
+
+    // Load endgame quests
+    ENDGAME_QUESTS.forEach(quest => {
+      this.questDefinitions.set(quest.id, quest);
+    });
+
+    console.log('Enhanced faction storylines loaded', {
+      tradersGuildQuests: TRADERS_GUILD_STORYLINES.length,
+      securityForcesQuests: SECURITY_FORCES_STORYLINES.length,
+      outerColoniesQuests: OUTER_COLONIES_STORYLINES.length,
+      storyArcs: ENHANCED_STORY_ARCS.length,
+      factionStorylines: ENHANCED_FACTION_STORYLINES.length,
+      endgameQuests: ENDGAME_QUESTS.length
+    });
+  }
+
+  /**
+   * Load enhanced seasonal events from data files
+   */
+  private loadEnhancedSeasonalEvents(): void {
+    ENHANCED_SEASONAL_EVENTS.forEach(event => {
+      this.seasonalContent.set(event.id, event);
+    });
+
+    console.log('Enhanced seasonal events loaded', {
+      seasonalEvents: ENHANCED_SEASONAL_EVENTS.length
+    });
   }
 }
