@@ -25,8 +25,6 @@ interface GameCanvasProps {
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
-  width = 800, 
-  height = 600, 
   className = '' 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,6 +100,9 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setIsEngineRunning(true);
         setIsLoading(false);
         
+        // Initial resize to fit the container
+        handleResize();
+        
         // Sync player credits from PlayerManager
         const playerManager = engineRef.current.getPlayerManager();
         setPlayerCredits(playerManager.getCredits());
@@ -151,17 +152,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           const containerWidth = container.clientWidth;
           const containerHeight = container.clientHeight;
           
-          // Maintain aspect ratio
-          const aspectRatio = width / height;
-          let newWidth = containerWidth;
-          let newHeight = containerWidth / aspectRatio;
-          
-          if (newHeight > containerHeight) {
-            newHeight = containerHeight;
-            newWidth = containerHeight * aspectRatio;
-          }
-          
-          engineRef.current.resizeCanvas(newWidth, newHeight);
+          // For full screen, use the full container dimensions
+          engineRef.current.resizeCanvas(containerWidth, containerHeight);
         }
       }
     };
@@ -216,7 +208,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setIsEngineRunning(false);
       }
     };
-  }, [width, height]);
+  }, []);
 
   const toggleEngine = () => {
     if (!engineRef.current) return;
@@ -329,12 +321,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       setActivePanel('routes');
       
       console.log('Route analysis opened:', analysis.routes.length, 'routes found');
-    }
-  };
-
-  const handleOpenMaintenance = () => {
-    if (engineRef.current && currentShip) {
-      setActivePanel('maintenance');
     }
   };
 
@@ -811,208 +797,122 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       <canvas
         ref={canvasRef}
-        width={width}
-        height={height}
         style={{
           display: 'block',
-          maxWidth: '100%',
-          maxHeight: '100%',
+          width: '100%',
+          height: '100%',
           backgroundColor: '#000',
-          margin: '0 auto',
         }}
       />
       
-      <div style={{ marginTop: '10px', textAlign: 'center' }}>
+      {/* UI Controls overlaid on canvas */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '10px', 
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: '5px',
+        maxWidth: '95vw',
+        zIndex: 1000,
+        background: 'rgba(0, 0, 0, 0.7)',
+        borderRadius: '8px',
+        padding: '10px'
+      }}>
         <button onClick={toggleEngine} disabled={!engineRef.current || !!engineError}>
-          {isEngineRunning ? 'Pause Engine' : 'Start Engine'}
+          {isEngineRunning ? 'Pause' : 'Start'}
         </button>
         <button 
           onClick={() => setActivePanel(activePanel === 'navigation' ? null : 'navigation')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'navigation' ? '#4a90e2' : undefined
           }}
+          title="Navigation (N)"
         >
-          Navigation (N)
+          Nav
         </button>
         <button 
           onClick={handleOpenMarket} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'market' ? '#4a90e2' : undefined
           }}
+          title="Market (M)"
         >
-          Market (M)
+          Market
         </button>
         <button 
           onClick={handleOpenContracts} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'contracts' ? '#4a90e2' : undefined
           }}
+          title="Contracts (C)"
         >
-          Contracts (C)
+          Contracts
         </button>
         <button 
           onClick={handleOpenRouteAnalysis} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'routes' ? '#4a90e2' : undefined
           }}
+          title="Routes (R)"
         >
-          Routes (R)
+          Routes
         </button>
         <button 
           onClick={() => setActivePanel(activePanel === 'inventory' ? null : 'inventory')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'inventory' ? '#4a90e2' : undefined
           }}
+          title="Inventory (I)"
         >
-          Inventory (I)
+          Inventory
         </button>
         <button 
           onClick={() => setActivePanel(activePanel === 'ship' ? null : 'ship')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'ship' ? '#4a90e2' : undefined
           }}
+          title="Ship (S)"
         >
-          Ship (S)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'factions' ? null : 'factions')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'factions' ? '#4a90e2' : undefined
-          }}
-        >
-          Factions (F)
+          Ship
         </button>
         <button 
           onClick={() => setActivePanel(activePanel === 'character' ? null : 'character')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'character' ? '#4a90e2' : undefined
           }}
+          title="Character (H)"
         >
-          Character (H)
+          Character
         </button>
         <button 
           onClick={handleOpenContacts} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'contacts' ? '#4a90e2' : undefined
           }}
+          title="Contacts (P)"
         >
-          Contacts (P)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'achievements' ? null : 'achievements')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'achievements' ? '#4a90e2' : undefined
-          }}
-        >
-          Achievements (A)
+          Contacts
         </button>
         <button 
           onClick={() => setActivePanel(activePanel === 'events' ? null : 'events')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
-            marginLeft: '10px',
             backgroundColor: activePanel === 'events' ? '#4a90e2' : undefined
           }}
+          title="Events (E)"
         >
-          Events (E) {activeEvents.length > 0 && `(${activeEvents.length})`}
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'security' ? null : 'security')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'security' ? '#4a90e2' : undefined
-          }}
-        >
-          Security (L)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'hacking' ? null : 'hacking')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'hacking' ? '#4a90e2' : undefined
-          }}
-        >
-          Hacking (H)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'combat' ? null : 'combat')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'combat' ? '#4a90e2' : undefined
-          }}
-        >
-          Combat (G)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'investment' ? null : 'investment')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'investment' ? '#4a90e2' : undefined
-          }}
-        >
-          Investment (I)
-        </button>
-        <button 
-          onClick={() => setActivePanel(activePanel === 'tutorial' ? null : 'tutorial')} 
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'tutorial' ? '#4a90e2' : undefined
-          }}
-        >
-          Tutorial (T)
-        </button>
-        <button 
-          onClick={handleOpenMaintenance} 
-          disabled={!engineRef.current || !!engineError || !currentShip}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: activePanel === 'maintenance' ? '#4a90e2' : undefined
-          }}
-        >
-          Maintenance (X)
-        </button>
-        {/* Temporary test button for ship damage */}
-        <button 
-          onClick={() => {
-            if (engineRef.current) {
-              engineRef.current.getPlayerManager().simulateShipDamage();
-              setCurrentShip(engineRef.current.getPlayerManager().getShip());
-            }
-          }}
-          disabled={!engineRef.current || !!engineError}
-          style={{ 
-            marginLeft: '10px',
-            backgroundColor: '#dc2626',
-            color: 'white',
-            fontSize: '12px'
-          }}
-        >
-          🔥 Damage Ship (Test)
+          Events {activeEvents.length > 0 && `(${activeEvents.length})`}
         </button>
       </div>
 
