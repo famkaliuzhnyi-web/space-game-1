@@ -75,7 +75,7 @@ describe('QuestManager', () => {
       const availableQuests = questManager.getAvailableQuests();
       const mainStoryQuest = availableQuests.find(q => q.type === 'main_story');
       expect(mainStoryQuest).toBeDefined();
-      expect(mainStoryQuest?.title).toBe('Strange Signals');
+      expect(mainStoryQuest?.title).toBe('Awakening');
     });
   });
 
