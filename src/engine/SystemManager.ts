@@ -133,6 +133,7 @@ export class SystemManager {
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
     this.playerManager.setNavigationManager(this.navigationManager);
     this.playerManager.setWorldManager(this.worldManager);
+    this.worldManager.setPlayerManager(this.playerManager);
     this.npcAIManager.setNavigationManager(this.navigationManager);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
     this.maintenanceManager.setProgressionSystem(this.characterProgressionSystem);

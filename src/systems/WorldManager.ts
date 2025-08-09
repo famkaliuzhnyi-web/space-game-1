@@ -5,6 +5,7 @@ import { SceneManager } from '../engine/SceneManager';
 export class WorldManager {
   private galaxy: Galaxy;
   private playerShip: Ship | null = null;
+  private playerManager: any = null; // PlayerManager reference
   private shipMovement: {
     isMoving: boolean;
     startPos: Coordinates;
@@ -29,6 +30,13 @@ export class WorldManager {
     if (this.sceneManager) {
       this.sceneManager.setPlayerShip(ship);
     }
+  }
+
+  /**
+   * Set the player manager for station status updates
+   */
+  setPlayerManager(playerManager: any): void {
+    this.playerManager = playerManager;
   }
 
   /**
@@ -70,6 +78,10 @@ export class WorldManager {
       if (this.pendingDockingTarget) {
         // Dock at the target station
         this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
+        // Update player's current station status
+        if (this.playerManager) {
+          this.playerManager.setCurrentStation(this.pendingDockingTarget);
+        }
         this.pendingDockingTarget = null;
       }
     }
@@ -515,6 +527,10 @@ export class WorldManager {
     if (target.type === 'system') {
       this.galaxy.currentPlayerLocation.systemId = target.id;
       this.galaxy.currentPlayerLocation.stationId = undefined;
+      // Clear player's current station status when navigating to a system
+      if (this.playerManager) {
+        this.playerManager.setCurrentStation(null);
+      }
     } else if (target.type === 'station') {
       // For stations, move the ship to the station coordinates first
       // The ship will automatically dock when it reaches the station
@@ -557,6 +573,10 @@ export class WorldManager {
         if (this.pendingDockingTarget) {
           // Dock at the target station
           this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
+          // Update player's current station status
+          if (this.playerManager) {
+            this.playerManager.setCurrentStation(this.pendingDockingTarget);
+          }
           this.pendingDockingTarget = null;
         }
       });
@@ -575,6 +595,11 @@ export class WorldManager {
     // Set ship to transit state
     this.playerShip.location.isInTransit = true;
     this.playerShip.location.stationId = undefined; // No longer docked
+    
+    // Clear player's current station status when ship starts moving
+    if (this.playerManager) {
+      this.playerManager.setCurrentStation(null);
+    }
     
     console.log(`Ship moving from (${this.shipMovement.startPos.x}, ${this.shipMovement.startPos.y}) to (${worldX}, ${worldY})`);
     
