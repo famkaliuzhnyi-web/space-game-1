@@ -703,7 +703,7 @@ export class ThreeRenderer {
         }
         break;
       case 'station':
-        // Slow rotation
+        // Slow rotation - only if not paused
         mesh.rotation.z += 0.001;
         break;
       case 'planet':

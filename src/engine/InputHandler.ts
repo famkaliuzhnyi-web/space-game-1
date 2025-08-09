@@ -109,7 +109,7 @@ export class InputHandler {
 
     // If we have input manager and this is a left-click, cancel any ongoing drag
     // This ensures object interactions take priority over map dragging
-    if (inputManager && action === 'move') {
+    if (inputManager && action === 'move' && typeof inputManager.cancelDrag === 'function') {
       inputManager.cancelDrag();
     }
 
