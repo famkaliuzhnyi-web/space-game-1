@@ -1,10 +1,70 @@
 import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget } from '../types/world';
+import { Ship } from '../types/player';
+import { SceneManager } from '../engine/SceneManager';
 
 export class WorldManager {
   private galaxy: Galaxy;
+  private playerShip: Ship | null = null;
+  private shipMovement: {
+    isMoving: boolean;
+    startPos: Coordinates;
+    targetPos: Coordinates;
+    startTime: number;
+    duration: number;
+  } | null = null;
+  private sceneManager: SceneManager | null = null;
 
   constructor() {
     this.galaxy = this.generateInitialGalaxy();
+  }
+
+  /**
+   * Set the player's ship for rendering and position tracking
+   */
+  setPlayerShip(ship: Ship): void {
+    this.playerShip = ship;
+    
+    // Also set ship in scene manager if available
+    if (this.sceneManager) {
+      this.sceneManager.setPlayerShip(ship);
+    }
+  }
+
+  /**
+   * Set the scene manager for actor-based movement
+   */
+  setSceneManager(sceneManager: SceneManager): void {
+    this.sceneManager = sceneManager;
+    
+    // Set current ship if available
+    if (this.playerShip) {
+      this.sceneManager.setPlayerShip(this.playerShip);
+    }
+  }
+
+  /**
+   * Update ship movement animation
+   */
+  updateShipMovement(_deltaTime: number): void {
+    if (!this.shipMovement || !this.playerShip) return;
+
+    const elapsed = Date.now() - this.shipMovement.startTime;
+    const progress = Math.min(elapsed / this.shipMovement.duration, 1.0);
+
+    // Interpolate position
+    const currentX = this.shipMovement.startPos.x + 
+      (this.shipMovement.targetPos.x - this.shipMovement.startPos.x) * progress;
+    const currentY = this.shipMovement.startPos.y + 
+      (this.shipMovement.targetPos.y - this.shipMovement.startPos.y) * progress;
+
+    // Update ship coordinates
+    this.playerShip.location.coordinates = { x: currentX, y: currentY };
+
+    // Check if movement is complete
+    if (progress >= 1.0) {
+      this.playerShip.location.isInTransit = false;
+      this.shipMovement = null;
+    }
   }
 
   private generateInitialGalaxy(): Galaxy {
@@ -378,6 +438,24 @@ export class WorldManager {
     return system.stations.find(s => s.id === this.galaxy.currentPlayerLocation.stationId);
   }
 
+  /**
+   * Get the current player position - either station position or system position
+   */
+  getCurrentPlayerPosition(): Coordinates {
+    const currentStation = this.getCurrentStation();
+    if (currentStation) {
+      return currentStation.position;
+    }
+    
+    const currentSystem = this.getCurrentSystem();
+    if (currentSystem) {
+      return currentSystem.position;
+    }
+    
+    // Fallback to origin if no current location
+    return { x: 0, y: 0 };
+  }
+
   getAvailableTargets(): NavigationTarget[] {
     const currentSector = this.getCurrentSector();
     if (!currentSector) return [];
@@ -436,17 +514,60 @@ export class WorldManager {
     return true;
   }
 
+  /**
+   * Move the player's ship to specific coordinates in space
+   */
+  moveShipToCoordinates(worldX: number, worldY: number): boolean {
+    if (!this.playerShip || !this.playerShip.location.coordinates) return false;
+
+    // Add reasonable bounds to prevent ship from going too far off-screen
+    const currentSystem = this.getCurrentSystem();
+    if (currentSystem) {
+      const systemX = currentSystem.position.x;
+      const systemY = currentSystem.position.y;
+      
+      // Limit movement to a reasonable area around the system (±300 units)
+      const boundedX = Math.max(systemX - 300, Math.min(systemX + 300, worldX));
+      const boundedY = Math.max(systemY - 300, Math.min(systemY + 300, worldY));
+      
+      worldX = boundedX;
+      worldY = boundedY;
+    }
+
+    // Use scene manager for actor-based movement if available
+    if (this.sceneManager) {
+      return this.sceneManager.moveShipTo(worldX, worldY);
+    }
+
+    // Fallback to legacy movement system
+    this.shipMovement = {
+      isMoving: true,
+      startPos: { ...this.playerShip.location.coordinates },
+      targetPos: { x: worldX, y: worldY },
+      startTime: Date.now(),
+      duration: 3000 // 3 seconds for movement
+    };
+
+    // Set ship to transit state
+    this.playerShip.location.isInTransit = true;
+    this.playerShip.location.stationId = undefined; // No longer docked
+    
+    console.log(`Ship moving from (${this.shipMovement.startPos.x}, ${this.shipMovement.startPos.y}) to (${worldX}, ${worldY})`);
+    
+    return true;
+  }
+
   private calculateDistance(pos1: Coordinates, pos2: Coordinates): number {
     const dx = pos2.x - pos1.x;
     const dy = pos2.y - pos1.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | {name: string; type: string}, position: Coordinates}> {
+  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> {
     const currentSystem = this.getCurrentSystem();
     if (!currentSystem) return [];
 
-    const objects: Array<{type: string, object: Station | Planet | {name: string; type: string}, position: Coordinates}> = [];
+    const objects: Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> = [];
 
     // Add star
     objects.push({
@@ -473,6 +594,17 @@ export class WorldManager {
       });
     });
 
+    // Add player ship if in this system and has coordinates
+    if (this.playerShip && 
+        this.playerShip.location.systemId === currentSystem.id && 
+        this.playerShip.location.coordinates) {
+      objects.push({
+        type: 'ship',
+        object: this.playerShip,
+        position: this.playerShip.location.coordinates
+      });
+    }
+
     return objects;
   }
 
@@ -484,5 +616,158 @@ export class WorldManager {
       }
     }
     return allStations;
+  }
+
+  // Navigation Integration Methods
+
+  /**
+   * Create a NavigationTarget from a station
+   */
+  createStationTarget(stationId: string): NavigationTarget | null {
+    const station = this.getStationById(stationId);
+    if (!station) return null;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, station.position);
+    
+    return {
+      type: 'station',
+      id: station.id,
+      name: station.name,
+      position: station.position,
+      distance,
+      estimatedTravelTime: this.estimateStationTravelTime(station)
+    };
+  }
+
+  /**
+   * Create a NavigationTarget from a system
+   */
+  createSystemTarget(systemId: string): NavigationTarget | null {
+    const system = this.getSystemById(systemId);
+    if (!system) return null;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, system.position);
+    
+    return {
+      type: 'system',
+      id: system.id,
+      name: system.name,
+      position: system.position,
+      distance,
+      estimatedTravelTime: this.estimateSystemTravelTime(system)
+    };
+  }
+
+  /**
+   * Get station by ID from all sectors/systems
+   */
+  getStationById(stationId: string): Station | null {
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        const station = system.stations.find(s => s.id === stationId);
+        if (station) return station;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get system by ID from all sectors
+   */
+  getSystemById(systemId: string): StarSystem | null {
+    for (const sector of this.galaxy.sectors) {
+      const system = sector.systems.find(s => s.id === systemId);
+      if (system) return system;
+    }
+    return null;
+  }
+
+  /**
+   * Estimate travel time to a station (in milliseconds)
+   */
+  private estimateStationTravelTime(station: Station): number {
+    const currentSystem = this.getCurrentSystem();
+    if (!currentSystem) return 0;
+
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, station.position);
+    
+    // Check if station is in the same system
+    const isInSameSystem = currentSystem.stations.some(s => s.id === station.id);
+    const baseSpeed = isInSameSystem ? 150 : 50; // Faster travel within system
+    
+    const travelTimeHours = Math.max(0.01, distance / baseSpeed);
+    return travelTimeHours * 60 * 60 * 1000; // Convert to milliseconds
+  }
+
+  /**
+   * Estimate travel time to a system (in milliseconds)
+   */
+  private estimateSystemTravelTime(system: StarSystem): number {
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, system.position);
+    
+    // Inter-system travel is typically slower
+    const baseSpeed = 25; // Slow jump drive speeds
+    const travelTimeHours = Math.max(0.5, distance / baseSpeed); // Minimum 30 minutes for system jumps
+    return travelTimeHours * 60 * 60 * 1000; // Convert to milliseconds
+  }
+
+  /**
+   * Get all reachable stations as navigation targets
+   */
+  getAllReachableStations(): NavigationTarget[] {
+    const targets: NavigationTarget[] = [];
+    const currentPos = this.getCurrentPlayerPosition();
+    
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        for (const station of system.stations) {
+          // Skip current location
+          if (station.id === this.galaxy.currentPlayerLocation.stationId) continue;
+          
+          const distance = this.calculateDistance(currentPos, station.position);
+          targets.push({
+            type: 'station',
+            id: station.id,
+            name: station.name,
+            position: station.position,
+            distance,
+            estimatedTravelTime: this.estimateStationTravelTime(station)
+          });
+        }
+      }
+    }
+    
+    return targets.sort((a, b) => a.distance - b.distance);
+  }
+
+  /**
+   * Get all reachable systems as navigation targets
+   */
+  getAllReachableSystems(): NavigationTarget[] {
+    const targets: NavigationTarget[] = [];
+    const currentPos = this.getCurrentPlayerPosition();
+    
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        // Skip current system
+        if (system.id === this.galaxy.currentPlayerLocation.systemId) continue;
+        
+        const distance = this.calculateDistance(currentPos, system.position);
+        targets.push({
+          type: 'system',
+          id: system.id,
+          name: system.name,
+          position: system.position,
+          distance,
+          estimatedTravelTime: this.estimateSystemTravelTime(system)
+        });
+      }
+    }
+    
+    return targets.sort((a, b) => a.distance - b.distance);
   }
 }

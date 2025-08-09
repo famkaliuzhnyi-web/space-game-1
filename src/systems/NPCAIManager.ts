@@ -14,7 +14,10 @@ import {
 import { TimeManager } from './TimeManager';
 import { WorldManager } from './WorldManager';
 import { PlayerManager } from './PlayerManager';
+import { NavigationManager } from './NavigationManager';
 import { Station, StarSystem } from '../types/world';
+import { SceneManager } from '../engine/SceneManager';
+import { NPCActor } from '../engine/NPCActor';
 
 /**
  * NPCAIManager handles all NPC ship behavior, AI decision-making, and interactions.
@@ -39,11 +42,14 @@ export class NPCAIManager {
   private timeManager: TimeManager;
   private worldManager: WorldManager;
   private playerManager: PlayerManager;
+  private navigationManager: NavigationManager | null = null;
+  private sceneManager: SceneManager | null = null;
   // These will be used in future updates
   // private factionManager: FactionManager;
   // private economicSystem: EconomicSystem;
   
   private npcShips: Map<string, NPCShip> = new Map();
+  private npcActors: Map<string, NPCActor> = new Map(); // New: Actor-based NPCs
   private activeConversations: Map<string, NPCConversation> = new Map();
   private marketBehaviors: Map<string, NPCMarketBehavior> = new Map();
   private npcFleets: Map<string, NPCFleet> = new Map();
@@ -72,6 +78,20 @@ export class NPCAIManager {
     
     this.initializePersonalityTemplates();
     this.initializeStartingNPCs();
+  }
+
+  /**
+   * Set the navigation manager for time-based NPC travel (optional)
+   */
+  setNavigationManager(navigationManager: NavigationManager): void {
+    this.navigationManager = navigationManager;
+  }
+
+  /**
+   * Set the scene manager for actor-based NPC management
+   */
+  setSceneManager(sceneManager: SceneManager): void {
+    this.sceneManager = sceneManager;
   }
 
   /**
@@ -215,6 +235,13 @@ export class NPCAIManager {
     };
 
     this.npcShips.set(npcId, npc);
+    
+    // Create NPCActor if scene manager is available
+    if (this.sceneManager) {
+      const npcActor = new NPCActor(npc);
+      this.npcActors.set(npcId, npcActor);
+      this.sceneManager.getCurrentScene().addActor(npcActor, 'npc');
+    }
     
     // Initialize market behavior for traders
     if (npcType === 'trader') {
@@ -471,6 +498,9 @@ export class NPCAIManager {
     
     // Update NPC movement and positions
     this.updateNPCMovement(deltaTime);
+    
+    // Update time-based travel for NPCs (if navigation manager is available)
+    this.updateNPCTimBasedTravel();
   }
 
   /**
@@ -629,7 +659,7 @@ export class NPCAIManager {
   }
 
   /**
-   * Set NPC destination with pathfinding
+   * Set NPC destination with pathfinding using the new Actor system
    */
   private setNPCDestination(npc: NPCShip, targetStationId: string): void {
     const galaxy = this.worldManager.getGalaxy();
@@ -638,19 +668,175 @@ export class NPCAIManager {
     if (system) {
       const targetStation = this.findStationById(system, targetStationId);
       if (targetStation) {
-        // Generate pathfinding waypoints
-        npc.movement.pathfindingWaypoints = this.generatePathfindingWaypoints(
-          npc.position.coordinates,
-          targetStation.position,
-          system.id
-        );
-        npc.movement.currentWaypoint = 0;
-        npc.movement.targetStationId = targetStationId;
-        
-        // Clear simple target coordinates since we're using pathfinding
-        npc.movement.targetCoordinates = undefined;
+        // Use NPCActor if available, otherwise fallback to old system
+        const npcActor = this.npcActors.get(npc.id);
+        if (npcActor) {
+          // Use actor-based movement with station target
+          npcActor.setStationTarget(targetStationId, targetStation.position);
+        } else {
+          // Fallback to old pathfinding system
+          npc.movement.pathfindingWaypoints = this.generatePathfindingWaypoints(
+            npc.position.coordinates,
+            targetStation.position,
+            system.id
+          );
+          npc.movement.currentWaypoint = 0;
+          npc.movement.targetStationId = targetStationId;
+          npc.movement.targetCoordinates = undefined;
+        }
       }
     }
+  }
+
+  /**
+   * Enhanced NPC destination setting with optional time-based travel
+   * Currently unused - kept for future feature development
+   */
+  /*
+  private setNPCDestinationEnhanced(npc: NPCShip, targetStationId: string, useTimeBased: boolean = false): void {
+    if (useTimeBased && this.navigationManager && this.worldManager) {
+      // Use time-based travel system
+      this.startNPCTimBasedTravel(npc, targetStationId);
+    } else {
+      // Use existing pathfinding system
+      this.setNPCDestination(npc, targetStationId);
+    }
+  }
+  */
+
+  /**
+   * Start time-based travel for an NPC
+   * Currently unused - kept for future feature development
+   */
+  /*
+  private startNPCTimBasedTravel(npc: NPCShip, targetStationId: string): boolean {
+    if (!this.navigationManager || !this.worldManager) {
+      return false;
+    }
+
+    // Check if NPC is already in transit
+    if (npc.movement.isInTransit) {
+      return false;
+    }
+
+    // Create a navigation target for the destination station
+    const destinationTarget = this.worldManager.createStationTarget(targetStationId);
+    if (!destinationTarget) {
+      return false;
+    }
+
+    // Create a pseudo-ship from the NPC data for navigation system
+    const npcAsShip = this.convertNPCToShip(npc);
+    
+    // Start travel using navigation manager
+    const travelResult = this.navigationManager.startTravel(npcAsShip, destinationTarget);
+    
+    if (travelResult.success && travelResult.travelPlan) {
+      // Update NPC state for time-based travel
+      npc.movement.isInTransit = true;
+      npc.movement.travelPlanId = travelResult.travelPlan.id;
+      npc.movement.targetStationId = targetStationId;
+      npc.movement.arrivalTime = travelResult.travelPlan.estimatedArrivalTime.getTime();
+      
+      // Clear pathfinding since we're using time-based travel
+      npc.movement.pathfindingWaypoints = undefined;
+      npc.movement.currentWaypoint = undefined;
+      
+      return true;
+    }
+
+    return false;
+  }
+  */
+
+  /**
+   * Convert NPC to Ship format for NavigationManager compatibility
+   * Currently unused - kept for future feature development
+   */
+  /*
+  private convertNPCToShip(npc: NPCShip): any {
+    return {
+      id: npc.id,
+      name: npc.name,
+      class: {
+        baseSpeed: npc.movement.speed * 3.6, // Convert from units/second to units/hour
+        equipmentSlots: { engines: 1, cargo: 1, shields: 1, weapons: 1, utility: 1 }
+      },
+      equipment: {
+        engines: [], // NPCs don't have detailed equipment for now
+        cargo: [],
+        shields: [],
+        weapons: [],
+        utility: []
+      },
+      condition: {
+        engines: npc.ship.condition / 100, // Convert from 0-100 to 0-1 scale
+        hull: npc.ship.condition / 100,
+        cargo: npc.ship.condition / 100,
+        shields: npc.ship.condition / 100,
+        lastMaintenance: Date.now()
+      },
+      location: {
+        systemId: npc.position.systemId,
+        stationId: npc.position.stationId,
+        coordinates: npc.position.coordinates,
+        isInTransit: npc.movement.isInTransit || false,
+        destination: npc.movement.targetStationId,
+        arrivalTime: npc.movement.arrivalTime
+      }
+    };
+  }
+  */
+
+  /**
+   * Check and complete time-based travel for NPCs
+   */
+  private updateNPCTimBasedTravel(): void {
+    if (!this.navigationManager) {
+      return;
+    }
+
+    const currentTime = this.timeManager.getCurrentTimestamp();
+
+    for (const npc of this.npcShips.values()) {
+      if (npc.movement.isInTransit && npc.movement.arrivalTime) {
+        // Check if travel should be completed
+        if (currentTime >= npc.movement.arrivalTime) {
+          this.completeNPCTimBasedTravel(npc);
+        }
+      }
+    }
+  }
+
+  /**
+   * Complete time-based travel for an NPC
+   */
+  private completeNPCTimBasedTravel(npc: NPCShip): void {
+    if (!npc.movement.targetStationId) {
+      return;
+    }
+
+    // Update NPC position to destination
+    npc.position.stationId = npc.movement.targetStationId;
+    
+    // Get station coordinates
+    const galaxy = this.worldManager.getGalaxy();
+    const system = this.findSystemById(galaxy, npc.position.systemId);
+    if (system) {
+      const station = this.findStationById(system, npc.movement.targetStationId);
+      if (station) {
+        npc.position.coordinates = { ...station.position };
+      }
+    }
+
+    // Clear travel state
+    npc.movement.isInTransit = false;
+    npc.movement.travelPlanId = undefined;
+    npc.movement.arrivalTime = undefined;
+    npc.movement.targetStationId = undefined;
+    npc.movement.currentVelocity = { x: 0, y: 0 };
+
+    console.log(`NPC ${npc.name} completed time-based travel to ${npc.position.stationId}`);
   }
 
   /**
@@ -668,8 +854,9 @@ export class NPCAIManager {
       
       if (availableStations.length > 0) {
         const targetStation = availableStations[Math.floor(Math.random() * availableStations.length)];
-        npc.movement.targetStationId = targetStation.id;
-        npc.movement.targetCoordinates = { ...targetStation.position };
+        
+        // Use the new destination system which will handle Actor vs legacy movement
+        this.setNPCDestination(npc, targetStation.id);
       }
     }
   }
@@ -1062,7 +1249,7 @@ export class NPCAIManager {
   }
 
   /**
-   * Update NPC movement and positions
+   * Update NPC movement and positions using Actor system
    */
   private updateNPCMovement(deltaTime: number): void {
     const currentTime = this.timeManager.getCurrentTimestamp();
@@ -1071,11 +1258,38 @@ export class NPCAIManager {
       // Update threat assessment
       this.updateThreatAssessment(npc);
       
-      // Calculate avoidance vectors for collision avoidance
-      this.updateAvoidanceVector(npc);
-      
-      // Update NPC position with enhanced movement
-      this.updateNPCPositionEnhanced(npc, deltaTime, currentTime);
+      const npcActor = this.npcActors.get(npc.id);
+      if (npcActor) {
+        // Use Actor-based movement - no need to manually update position
+        // The actor system handles physics, collision, and movement
+        
+        // Update waypoint navigation if using pathfinding
+        this.updateActorWaypointNavigation(npcActor);
+        
+        // Check for station arrival
+        this.checkActorStationArrival(npcActor);
+      } else {
+        // Fallback to old movement system for NPCs without actors
+        this.updateAvoidanceVector(npc);
+        this.updateNPCPositionEnhanced(npc, deltaTime, currentTime);
+      }
+    }
+  }
+
+  /**
+   * Update waypoint navigation for NPCActor
+   */
+  private updateActorWaypointNavigation(npcActor: NPCActor): void {
+    // Let the actor handle waypoint progression
+    npcActor.updateWaypointNavigation();
+  }
+
+  /**
+   * Check if NPC actor has reached its target station
+   */
+  private checkActorStationArrival(npcActor: NPCActor): void {
+    if (npcActor.hasReachedStation()) {
+      npcActor.dockAtStation();
     }
   }
 

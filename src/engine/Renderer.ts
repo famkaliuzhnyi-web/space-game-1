@@ -1,6 +1,8 @@
 import { WorldManager } from '../systems/WorldManager';
 import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
+import { Ship } from '../types/player';
+import { SceneManager } from './SceneManager';
 
 export interface Camera {
   x: number;
@@ -66,13 +68,13 @@ export class Renderer {
   /**
    * Main render method - orchestrates the entire rendering pipeline
    */
-  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager): void {
+  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager, sceneManager?: SceneManager): void {
     this.clearCanvas();
     this.setupCamera(camera);
     
     // Render world content
     this.renderStars(camera);
-    this.renderWorldObjects(worldManager);
+    this.renderWorldObjects(worldManager, sceneManager);
     
     this.resetCamera();
     
@@ -126,9 +128,9 @@ export class Renderer {
   }
 
   /**
-   * Render all world objects (stations, planets, stars)
+   * Render all world objects (stations, planets, stars, ships)
    */
-  private renderWorldObjects(worldManager: WorldManager): void {
+  private renderWorldObjects(worldManager: WorldManager, sceneManager?: SceneManager): void {
     const objects = worldManager.getAllVisibleObjects();
     const currentStation = worldManager.getCurrentStation();
 
@@ -151,8 +153,19 @@ export class Renderer {
             this.renderPlanet(position.x, position.y, obj.object as Planet);
           }
           break;
+        case 'ship':
+          // Skip rendering ships here if we have a scene manager - it will render them with actors
+          if (!sceneManager) {
+            this.renderShip(position.x, position.y, obj.object as Ship);
+          }
+          break;
       }
     });
+    
+    // Render actors from scene manager if available
+    if (sceneManager) {
+      sceneManager.render(this.context);
+    }
   }
 
   /**
@@ -238,6 +251,38 @@ export class Renderer {
       this.context.lineWidth = 2;
       this.context.strokeRect(x - radius - 2, y - radius - 2, (radius + 2) * 2, (radius + 2) * 2);
     }
+    
+    this.context.restore();
+  }
+
+  /**
+   * Render the player's ship
+   */
+  private renderShip(x: number, y: number, ship: Ship): void {
+    this.context.save();
+    
+    // Ship hull (triangle pointing up)
+    this.context.fillStyle = '#4a90e2';
+    this.context.beginPath();
+    this.context.moveTo(x, y - 8);       // Top point
+    this.context.lineTo(x - 6, y + 6);   // Bottom left
+    this.context.lineTo(x + 6, y + 6);   // Bottom right
+    this.context.closePath();
+    this.context.fill();
+    
+    // Ship engine glow when in transit
+    if (ship.location.isInTransit) {
+      this.context.fillStyle = '#ff6b42';
+      this.context.globalAlpha = 0.7;
+      this.context.fillRect(x - 2, y + 6, 4, 4);
+      this.context.globalAlpha = 1;
+    }
+    
+    // Ship name label
+    this.context.fillStyle = '#ffffff';
+    this.context.font = '10px monospace';
+    this.context.textAlign = 'center';
+    this.context.fillText(ship.name, x, y + 20);
     
     this.context.restore();
   }

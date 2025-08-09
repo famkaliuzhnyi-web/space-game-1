@@ -1,8 +1,14 @@
 import { GameEngine } from '../types';
 import { Renderer, Camera } from './Renderer';
+import { ThreeRenderer } from './ThreeRenderer';
 import { GameLoop } from './GameLoop';
 import { InputHandler } from './InputHandler';
 import { SystemManager } from './SystemManager';
+import { SceneManager } from './SceneManager';
+import { PoolManager } from './ObjectPool';
+import { performanceMonitor } from './PerformanceMonitor';
+import { resourceManager } from './ResourceManager';
+import { audioEngine } from './AudioEngine';
 
 /**
  * Main game engine class with modular architecture.
@@ -48,11 +54,20 @@ export class Engine implements GameEngine {
   context: CanvasRenderingContext2D;
   private camera: Camera = { x: 0, y: 0, zoom: 1 };
   
+  // Rendering modes
+  private renderer2D: Renderer;
+  private renderer3D: ThreeRenderer | null = null;
+  private renderMode: '2D' | '3D' = '2D'; // Default to 2D for compatibility
+  private canvas3D: HTMLCanvasElement | null = null; // Separate canvas for 3D
+  
   // Modular components
-  private renderer: Renderer;
   private gameLoop: GameLoop;
   private inputHandler: InputHandler;
   private systemManager: SystemManager;
+  private sceneManager: SceneManager;
+  
+  // Modern engine systems
+  private poolManager: PoolManager;
 
   /**
    * Initialize the game engine with a canvas element.
@@ -79,10 +94,43 @@ export class Engine implements GameEngine {
     this.context = context;
     
     // Initialize modular components
-    this.renderer = new Renderer(canvas);
+    this.renderer2D = new Renderer(canvas);
     this.gameLoop = new GameLoop();
     this.inputHandler = new InputHandler(canvas);
     this.systemManager = new SystemManager(canvas);
+    this.sceneManager = new SceneManager();
+    
+    // Initialize modern engine systems
+    this.poolManager = PoolManager.getInstance();
+    
+    // Initialize performance monitoring
+    performanceMonitor.setupGPUProfiling(canvas);
+    
+    // Initialize audio engine
+    audioEngine; // Initialize singleton
+    
+    // Connect scene manager to world manager before systems start
+    this.systemManager.getWorldManager().setSceneManager(this.sceneManager);
+    
+    // Connect scene manager to NPC AI manager for actor-based movement
+    this.systemManager.getNPCAIManager().setSceneManager(this.sceneManager);
+    
+    // Create a separate canvas for 3D rendering (overlay)
+    this.create3DCanvas();
+    
+    // Initialize 3D renderer (lazy load for performance)
+    if (this.canvas3D) {
+      try {
+        this.renderer3D = new ThreeRenderer(this.canvas3D);
+      } catch (error) {
+        console.warn('3D renderer initialization failed, falling back to 2D only:', error);
+        this.renderer3D = null;
+        if (this.canvas3D) {
+          this.canvas3D.remove();
+          this.canvas3D = null;
+        }
+      }
+    }
     
     // Set up game loop callbacks
     this.gameLoop.setUpdateCallback(this.update.bind(this));
@@ -96,6 +144,31 @@ export class Engine implements GameEngine {
     // Ensure canvas has a dark background
     this.context.fillStyle = '#0a0a0a';
     this.context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  /**
+   * Create a separate canvas for 3D rendering
+   */
+  private create3DCanvas(): void {
+    if (!this.canvas.parentElement) return;
+
+    // Create a new canvas element for 3D rendering
+    this.canvas3D = document.createElement('canvas');
+    this.canvas3D.style.position = 'absolute';
+    this.canvas3D.style.top = '0';
+    this.canvas3D.style.left = '0';
+    this.canvas3D.style.width = '100%';
+    this.canvas3D.style.height = '100%';
+    this.canvas3D.style.pointerEvents = 'none'; // Let 2D canvas handle events
+    this.canvas3D.style.zIndex = '1'; // Above 2D canvas
+    this.canvas3D.style.display = 'none'; // Hidden by default
+    
+    // Match the dimensions of the main canvas
+    this.canvas3D.width = this.canvas.width;
+    this.canvas3D.height = this.canvas.height;
+    
+    // Insert after the main canvas
+    this.canvas.parentElement.insertBefore(this.canvas3D, this.canvas.nextSibling);
   }
 
   /**
@@ -113,8 +186,21 @@ export class Engine implements GameEngine {
   start(): void {
     if (this.gameLoop.getIsRunning()) return;
     
+    // Start performance monitoring
+    performanceMonitor.start();
+    
     this.systemManager.startSystems();
+    
+    // Initialize scene with player ship
+    this.initializeScene();
+    
     this.gameLoop.start();
+    
+    console.log('Game Engine started with industry-standard optimizations:');
+    console.log('- Object Pooling: Enabled');
+    console.log('- Performance Monitoring: Enabled');
+    console.log('- Resource Management: Enabled');
+    console.log('- 3D Audio Engine: Enabled');
   }
 
   /**
@@ -131,6 +217,7 @@ export class Engine implements GameEngine {
    * ```
    */
   stop(): void {
+    performanceMonitor.stop();
     this.systemManager.stopSystems();
     this.gameLoop.stop();
   }
@@ -162,29 +249,76 @@ export class Engine implements GameEngine {
    * @param deltaTime - Time elapsed since last update in seconds
    */
   update = (deltaTime: number): void => {
-    // Update all game systems
-    this.systemManager.updateSystems(deltaTime);
+    // Begin performance frame measurement
+    performanceMonitor.beginFrame();
     
-    // Handle input and update camera
-    this.inputHandler.updateCamera(
-      this.camera, 
-      deltaTime, 
-      this.systemManager.getInputManager()
-    );
+    // Update all game systems with profiling
+    performanceMonitor.profileSystem('SystemManager', () => {
+      this.systemManager.updateSystems(deltaTime);
+    });
+    
+    // Update scene and actors with profiling
+    performanceMonitor.profileSystem('SceneManager', () => {
+      this.sceneManager.update(deltaTime);
+    });
+    
+    // Handle input and update camera with profiling
+    performanceMonitor.profileSystem('InputHandler', () => {
+      this.inputHandler.updateCamera(
+        this.camera, 
+        deltaTime, 
+        this.systemManager.getInputManager()
+      );
+    });
+    
+    // Update 3D audio listener position based on camera
+    audioEngine.updateListener({
+      position: { x: this.camera.x, y: this.camera.y, z: 0 },
+      orientation: {
+        forward: { x: 0, y: 0, z: -1 },
+        up: { x: 0, y: 1, z: 0 }
+      }
+    });
   };
 
   /**
-   * Render the game using the dedicated renderer.
+   * Render the game using the active renderer (2D or 3D).
    * 
    * Called automatically by the game loop. Renders all world objects, UI
    * elements, and effects to the canvas.
    */
   render = (): void => {
-    this.renderer.render(
-      this.camera,
-      this.systemManager.getWorldManager(),
-      this.systemManager.getTimeManager()
-    );
+    performanceMonitor.profileSystem('Renderer', () => {
+      if (this.renderMode === '3D' && this.renderer3D && this.canvas3D) {
+        // Hide 2D canvas and show 3D canvas
+        this.canvas.style.display = 'none';
+        this.canvas3D.style.display = 'block';
+        
+        // Use 3D renderer
+        this.renderer3D.render(
+          this.camera,
+          this.systemManager.getWorldManager(),
+          this.systemManager.getTimeManager()
+        );
+      } else {
+        // Show 2D canvas and hide 3D canvas
+        this.canvas.style.display = 'block';
+        if (this.canvas3D) {
+          this.canvas3D.style.display = 'none';
+        }
+        
+        // Use 2D renderer (fallback and default)
+        this.renderer2D.render(
+          this.camera,
+          this.systemManager.getWorldManager(),
+          this.systemManager.getTimeManager(),
+          this.sceneManager
+        );
+      }
+    });
+    
+    // End performance frame measurement
+    performanceMonitor.endFrame();
   };
 
   // System accessor methods for backward compatibility and external access
@@ -284,6 +418,94 @@ export class Engine implements GameEngine {
   }
 
   /**
+   * Get the scene manager for actor-based gameplay
+   */
+  getSceneManager() {
+    return this.sceneManager;
+  }
+
+  /**
+   * Get the object pool manager for performance optimization
+   */
+  getPoolManager() {
+    return this.poolManager;
+  }
+
+  /**
+   * Get the performance monitor for real-time metrics
+   */
+  getPerformanceMonitor() {
+    return performanceMonitor;
+  }
+
+  /**
+   * Get the resource manager for asset loading
+   */
+  getResourceManager() {
+    return resourceManager;
+  }
+
+  /**
+   * Get the audio engine for 3D positional audio
+   */
+  getAudioEngine() {
+    return audioEngine;
+  }
+
+  /**
+   * Initialize the scene with player ship and actors
+   */
+  private initializeScene(): void {
+    // Scene manager should already be connected and ship should be set
+    // This method can be used for any additional scene setup
+    const playerShip = this.systemManager.getPlayerManager().getShip();
+    if (playerShip) {
+      console.log('Player ship initialized in scene:', playerShip.name, 'at', playerShip.location.coordinates);
+    }
+  }
+
+  /**
+   * Switch between 2D and 3D rendering modes.
+   * 
+   * @param mode - The rendering mode to switch to ('2D' or '3D')
+   * @returns true if the switch was successful, false otherwise
+   */
+  setRenderMode(mode: '2D' | '3D'): boolean {
+    // Validate mode parameter
+    if (mode !== '2D' && mode !== '3D') {
+      console.warn('Invalid render mode specified:', mode);
+      return false;
+    }
+    
+    if (mode === '3D' && !this.renderer3D) {
+      console.warn('3D renderer not available, staying in 2D mode');
+      return false;
+    }
+    
+    this.renderMode = mode;
+    console.log(`Switched to ${mode} rendering mode`);
+    return true;
+  }
+
+  /**
+   * Get the current rendering mode.
+   * 
+   * @returns Current rendering mode ('2D' or '3D')
+   */
+  getRenderMode(): '2D' | '3D' {
+    return this.renderMode;
+  }
+
+  /**
+   * Check if 3D rendering is available.
+   * 
+   * @returns true if 3D renderer is initialized and available, false otherwise
+   */
+  is3DAvailable(): boolean {
+    return this.renderer3D !== null;
+  }
+
+  /**
    * Clean up all resources and stop the engine.
    * 
    * Should be called when the engine is no longer needed to prevent
@@ -298,6 +520,24 @@ export class Engine implements GameEngine {
   dispose(): void {
     this.gameLoop.dispose();
     this.systemManager.dispose();
+    this.sceneManager.dispose();
+    
+    // Clean up modern systems
+    performanceMonitor.dispose();
+    resourceManager.dispose();
+    audioEngine.dispose();
+    this.poolManager.dispose();
+    
+    // Clean up 3D renderer if it exists
+    if (this.renderer3D) {
+      this.renderer3D.dispose();
+    }
+    
+    // Remove 3D canvas
+    if (this.canvas3D) {
+      this.canvas3D.remove();
+      this.canvas3D = null;
+    }
   }
 
   /**
@@ -318,6 +558,16 @@ export class Engine implements GameEngine {
    * ```
    */
   resizeCanvas(width: number, height: number): void {
-    this.renderer.resizeCanvas(width, height);
+    this.renderer2D.resizeCanvas(width, height);
+    
+    // Also resize 3D canvas and renderer if available
+    if (this.canvas3D) {
+      this.canvas3D.width = width;
+      this.canvas3D.height = height;
+    }
+    
+    if (this.renderer3D) {
+      this.renderer3D.resizeRenderer(width, height);
+    }
   }
 }

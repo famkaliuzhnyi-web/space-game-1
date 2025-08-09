@@ -11,27 +11,31 @@ function App() {
   }
 
   return (
-    <>
+    <div className="space-landing">
       <div>
-        <h1>🚀 Space Game</h1>
-        <p>Welcome to the Space Adventure!</p>
+        <h1 className="space-title">🚀 Space Game</h1>
+        <p className="space-subtitle">Welcome to the Space Adventure!</p>
       </div>
       
-      <div className="card">
-        <button onClick={() => setShowGame(true)}>
+      <div className="space-actions">
+        <button className="space-button primary" onClick={() => setShowGame(true)}>
           🚀 Launch Game
         </button>
-        <button onClick={() => setScore((score) => score + 10)}>
+        <button className="space-button secondary" onClick={() => setScore((score) => score + 10)}>
           Collect Star ⭐ (Score: {score})
         </button>
-        <p>
-          A pure browser React + TypeScript space game with 2D canvas engine
-        </p>
       </div>
-      <p className="read-the-docs">
+
+      <p className="space-description">
+        A pure browser React + TypeScript space game with 2D canvas engine.
+        Embark on an epic journey through the galaxy, trade with alien civilizations,
+        and build your space empire.
+      </p>
+      
+      <p className="space-footer">
         Built with React, TypeScript, and Vite
       </p>
-    </>
+    </div>
   )
 }
 

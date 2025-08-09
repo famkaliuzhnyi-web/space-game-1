@@ -10,6 +10,7 @@ import { CombatManager } from '../systems/CombatManager';
 import { InvestmentManager } from '../systems/InvestmentManager';
 import { TutorialManager } from '../systems/TutorialManager';
 import { QuestManager } from '../systems/QuestManager';
+import { NavigationManager } from '../systems/NavigationManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -38,6 +39,7 @@ export class SystemManager {
   private investmentManager: InvestmentManager;
   private tutorialManager: TutorialManager;
   private questManager: QuestManager;
+  private navigationManager: NavigationManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -124,10 +126,19 @@ export class SystemManager {
       this.eventManager
     );
     
+    // Initialize navigation manager with required dependencies
+    this.navigationManager = new NavigationManager(this.timeManager);
+    
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
+    this.playerManager.setNavigationManager(this.navigationManager);
+    this.playerManager.setWorldManager(this.worldManager);
+    this.npcAIManager.setNavigationManager(this.navigationManager);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
     this.maintenanceManager.setProgressionSystem(this.characterProgressionSystem);
+    
+    // Set player ship in world manager for rendering
+    this.worldManager.setPlayerShip(this.playerManager.getShip());
     
     // Link achievement manager to progression system for achievement unlocks
     if ('setAchievementManager' in this.characterProgressionSystem) {
@@ -150,6 +161,9 @@ export class SystemManager {
   updateSystems(deltaTime: number): void {
     // Update time system
     this.timeManager.update(deltaTime);
+    
+    // Update world system (includes ship movement)
+    this.worldManager.updateShipMovement(deltaTime);
     
     // Update economic system
     this.economicSystem.update(deltaTime * 1000); // Convert to milliseconds for economic system
@@ -177,6 +191,9 @@ export class SystemManager {
     
     // Update quest system
     this.questManager.update(deltaTime);
+    
+    // Update navigation system
+    this.navigationManager.update();
   }
 
   /**
@@ -283,6 +300,10 @@ export class SystemManager {
 
   getQuestManager(): QuestManager {
     return this.questManager;
+  }
+
+  getNavigationManager(): NavigationManager {
+    return this.navigationManager;
   }
 
   /**
