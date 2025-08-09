@@ -71,8 +71,6 @@ export class WorldManager {
         // Dock at the target station
         this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
         this.pendingDockingTarget = null;
-        
-        console.log(`Ship has docked at station: ${this.galaxy.currentPlayerLocation.stationId}`);
       }
     }
   }
@@ -509,27 +507,21 @@ export class WorldManager {
   }
 
   navigateToTarget(targetId: string): boolean {
-    console.log(`navigateToTarget called with targetId: ${targetId}`);
     const targets = this.getAvailableTargets();
     const target = targets.find(t => t.id === targetId);
-    
-    console.log(`Found target:`, target);
     
     if (!target) return false;
 
     if (target.type === 'system') {
-      console.log(`Navigating to system: ${targetId}`);
       this.galaxy.currentPlayerLocation.systemId = target.id;
       this.galaxy.currentPlayerLocation.stationId = undefined;
     } else if (target.type === 'station') {
-      console.log(`Navigating to station: ${targetId} at position:`, target.position);
       // For stations, move the ship to the station coordinates first
       // The ship will automatically dock when it reaches the station
       const success = this.moveShipToCoordinates(target.position.x, target.position.y);
       if (success) {
         // Store the target station ID so we can dock when movement completes
         this.pendingDockingTarget = targetId;
-        console.log(`Ship movement started, pending docking target: ${targetId}`);
       }
       return success;
     }
@@ -566,8 +558,6 @@ export class WorldManager {
           // Dock at the target station
           this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
           this.pendingDockingTarget = null;
-          
-          console.log(`Ship has docked at station: ${this.galaxy.currentPlayerLocation.stationId}`);
         }
       });
       return success;
