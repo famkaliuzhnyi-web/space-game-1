@@ -204,15 +204,17 @@ export class ThreeRenderer {
    * Update 3D camera position based on game's 2D camera
    */
   private updateCameraFromGameCamera(gameCamera: Camera): void {
-    // Convert 2D camera position to 3D
+    // Convert 2D camera position to 3D - maintain true top-down perspective
     this.cameraTarget.set(gameCamera.x, -gameCamera.y, 0); // Flip Y for 3D space
     
-    // Update camera position with zoom
-    const distance = 300 / gameCamera.zoom;
+    // Calculate camera distance based on zoom for consistent field of view
+    const distance = 500 / gameCamera.zoom; // Increased base distance for better visibility
+    
+    // Position camera directly above the target for true top-down view
     this.cameraPosition.set(
-      gameCamera.x,
-      -gameCamera.y + distance * 0.5, // Slightly elevated view
-      distance
+      gameCamera.x,     // Same X as target
+      -gameCamera.y,    // Same Y as target (flipped)
+      distance          // Positioned directly above
     );
 
     this.camera.position.copy(this.cameraPosition);
