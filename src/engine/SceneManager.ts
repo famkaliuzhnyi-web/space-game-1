@@ -55,10 +55,16 @@ export class SceneManager {
   /**
    * Move ship to target coordinates
    */
-  moveShipTo(worldX: number, worldY: number): boolean {
+  moveShipTo(worldX: number, worldY: number, onComplete?: () => void): boolean {
     if (!this.shipActor) return false;
     
     this.shipActor.setTarget({ x: worldX, y: worldY });
+    
+    // Store the completion callback
+    if (onComplete) {
+      this.shipActor.setMovementCompleteCallback(onComplete);
+    }
+    
     return true;
   }
 

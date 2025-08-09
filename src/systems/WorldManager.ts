@@ -13,6 +13,7 @@ export class WorldManager {
     duration: number;
   } | null = null;
   private sceneManager: SceneManager | null = null;
+  private pendingDockingTarget: string | null = null;
 
   constructor() {
     this.galaxy = this.generateInitialGalaxy();
@@ -64,6 +65,15 @@ export class WorldManager {
     if (progress >= 1.0) {
       this.playerShip.location.isInTransit = false;
       this.shipMovement = null;
+      
+      // Check if we need to dock at a station
+      if (this.pendingDockingTarget) {
+        // Dock at the target station
+        this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
+        this.pendingDockingTarget = null;
+        
+        console.log(`Ship has docked at station: ${this.galaxy.currentPlayerLocation.stationId}`);
+      }
     }
   }
 
@@ -499,16 +509,29 @@ export class WorldManager {
   }
 
   navigateToTarget(targetId: string): boolean {
+    console.log(`navigateToTarget called with targetId: ${targetId}`);
     const targets = this.getAvailableTargets();
     const target = targets.find(t => t.id === targetId);
+    
+    console.log(`Found target:`, target);
     
     if (!target) return false;
 
     if (target.type === 'system') {
+      console.log(`Navigating to system: ${targetId}`);
       this.galaxy.currentPlayerLocation.systemId = target.id;
       this.galaxy.currentPlayerLocation.stationId = undefined;
     } else if (target.type === 'station') {
-      this.galaxy.currentPlayerLocation.stationId = target.id;
+      console.log(`Navigating to station: ${targetId} at position:`, target.position);
+      // For stations, move the ship to the station coordinates first
+      // The ship will automatically dock when it reaches the station
+      const success = this.moveShipToCoordinates(target.position.x, target.position.y);
+      if (success) {
+        // Store the target station ID so we can dock when movement completes
+        this.pendingDockingTarget = targetId;
+        console.log(`Ship movement started, pending docking target: ${targetId}`);
+      }
+      return success;
     }
 
     return true;
@@ -536,7 +559,18 @@ export class WorldManager {
 
     // Use scene manager for actor-based movement if available
     if (this.sceneManager) {
-      return this.sceneManager.moveShipTo(worldX, worldY);
+      // Set up movement completion callback for docking
+      const success = this.sceneManager.moveShipTo(worldX, worldY, () => {
+        // This callback will be called when movement completes
+        if (this.pendingDockingTarget) {
+          // Dock at the target station
+          this.galaxy.currentPlayerLocation.stationId = this.pendingDockingTarget;
+          this.pendingDockingTarget = null;
+          
+          console.log(`Ship has docked at station: ${this.galaxy.currentPlayerLocation.stationId}`);
+        }
+      });
+      return success;
     }
 
     // Fallback to legacy movement system
