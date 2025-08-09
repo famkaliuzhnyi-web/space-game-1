@@ -4,6 +4,7 @@ import { ThreeRenderer } from './ThreeRenderer';
 import { GameLoop } from './GameLoop';
 import { InputHandler } from './InputHandler';
 import { SystemManager } from './SystemManager';
+import { SceneManager } from './SceneManager';
 
 /**
  * Main game engine class with modular architecture.
@@ -59,6 +60,7 @@ export class Engine implements GameEngine {
   private gameLoop: GameLoop;
   private inputHandler: InputHandler;
   private systemManager: SystemManager;
+  private sceneManager: SceneManager;
 
   /**
    * Initialize the game engine with a canvas element.
@@ -89,6 +91,10 @@ export class Engine implements GameEngine {
     this.gameLoop = new GameLoop();
     this.inputHandler = new InputHandler(canvas);
     this.systemManager = new SystemManager(canvas);
+    this.sceneManager = new SceneManager();
+    
+    // Connect scene manager to world manager before systems start
+    this.systemManager.getWorldManager().setSceneManager(this.sceneManager);
     
     // Create a separate canvas for 3D rendering (overlay)
     this.create3DCanvas();
@@ -162,6 +168,10 @@ export class Engine implements GameEngine {
     if (this.gameLoop.getIsRunning()) return;
     
     this.systemManager.startSystems();
+    
+    // Initialize scene with player ship
+    this.initializeScene();
+    
     this.gameLoop.start();
   }
 
@@ -213,6 +223,9 @@ export class Engine implements GameEngine {
     // Update all game systems
     this.systemManager.updateSystems(deltaTime);
     
+    // Update scene and actors
+    this.sceneManager.update(deltaTime);
+    
     // Handle input and update camera
     this.inputHandler.updateCamera(
       this.camera, 
@@ -250,7 +263,8 @@ export class Engine implements GameEngine {
       this.renderer2D.render(
         this.camera,
         this.systemManager.getWorldManager(),
-        this.systemManager.getTimeManager()
+        this.systemManager.getTimeManager(),
+        this.sceneManager
       );
     }
   };
@@ -352,6 +366,25 @@ export class Engine implements GameEngine {
   }
 
   /**
+   * Get the scene manager for actor-based gameplay
+   */
+  getSceneManager() {
+    return this.sceneManager;
+  }
+
+  /**
+   * Initialize the scene with player ship and actors
+   */
+  private initializeScene(): void {
+    // Scene manager should already be connected and ship should be set
+    // This method can be used for any additional scene setup
+    const playerShip = this.systemManager.getPlayerManager().getShip();
+    if (playerShip) {
+      console.log('Player ship initialized in scene:', playerShip.name, 'at', playerShip.location.coordinates);
+    }
+  }
+
+  /**
    * Switch between 2D and 3D rendering modes.
    * 
    * @param mode - The rendering mode to switch to ('2D' or '3D')
@@ -407,6 +440,7 @@ export class Engine implements GameEngine {
   dispose(): void {
     this.gameLoop.dispose();
     this.systemManager.dispose();
+    this.sceneManager.dispose();
     
     // Clean up 3D renderer if it exists
     if (this.renderer3D) {

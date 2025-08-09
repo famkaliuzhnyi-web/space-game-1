@@ -2,6 +2,7 @@ import { WorldManager } from '../systems/WorldManager';
 import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
 import { Ship } from '../types/player';
+import { SceneManager } from './SceneManager';
 
 export interface Camera {
   x: number;
@@ -67,13 +68,13 @@ export class Renderer {
   /**
    * Main render method - orchestrates the entire rendering pipeline
    */
-  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager): void {
+  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager, sceneManager?: SceneManager): void {
     this.clearCanvas();
     this.setupCamera(camera);
     
     // Render world content
     this.renderStars(camera);
-    this.renderWorldObjects(worldManager);
+    this.renderWorldObjects(worldManager, sceneManager);
     
     this.resetCamera();
     
@@ -129,7 +130,7 @@ export class Renderer {
   /**
    * Render all world objects (stations, planets, stars, ships)
    */
-  private renderWorldObjects(worldManager: WorldManager): void {
+  private renderWorldObjects(worldManager: WorldManager, sceneManager?: SceneManager): void {
     const objects = worldManager.getAllVisibleObjects();
     const currentStation = worldManager.getCurrentStation();
 
@@ -153,10 +154,18 @@ export class Renderer {
           }
           break;
         case 'ship':
-          this.renderShip(position.x, position.y, obj.object as Ship);
+          // Skip rendering ships here if we have a scene manager - it will render them with actors
+          if (!sceneManager) {
+            this.renderShip(position.x, position.y, obj.object as Ship);
+          }
           break;
       }
     });
+    
+    // Render actors from scene manager if available
+    if (sceneManager) {
+      sceneManager.render(this.context);
+    }
   }
 
   /**
