@@ -13,6 +13,7 @@ export class ShipActor extends Actor {
   private acceleration: number;
   private rotationSpeed: number;
   private thrustParticles: Array<{ x: number; y: number; life: number }> = [];
+  private movementCompleteCallback?: () => void;
 
   constructor(ship: Ship) {
     super(ship.id, ship.location.coordinates || { x: 0, y: 0 });
@@ -78,6 +79,13 @@ export class ShipActor extends Actor {
   }
 
   /**
+   * Set callback to be called when movement completes
+   */
+  setMovementCompleteCallback(callback: () => void): void {
+    this.movementCompleteCallback = callback;
+  }
+
+  /**
    * Stop the ship movement
    */
   stopMovement(): void {
@@ -112,6 +120,13 @@ export class ShipActor extends Actor {
         this.targetPosition = null;
         this.velocity = { x: 0, y: 0 };
         this.ship.location.isInTransit = false;
+        
+        // Call movement completion callback if set
+        if (this.movementCompleteCallback) {
+          const callback = this.movementCompleteCallback;
+          this.movementCompleteCallback = undefined; // Clear callback after use
+          callback();
+        }
       } else {
         // Calculate desired direction
         const directionX = dx / distance;
