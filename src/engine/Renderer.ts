@@ -3,6 +3,7 @@ import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
 import { Ship } from '../types/player';
 import { SceneManager } from './SceneManager';
+import { StarGenerator } from './StarGenerator';
 
 export interface Camera {
   x: number;
@@ -24,6 +25,7 @@ export interface RenderContext {
 export class Renderer {
   private context: CanvasRenderingContext2D;
   private canvas: HTMLCanvasElement;
+  private starGenerator: StarGenerator;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -35,6 +37,17 @@ export class Renderer {
     
     // Set up canvas for crisp pixel art
     this.context.imageSmoothingEnabled = false;
+    
+    // Initialize star generator with default settings
+    this.starGenerator = new StarGenerator({
+      seed: 42, // Consistent seed for deterministic stars
+      starDensity: 200,
+      cellSize: 500,
+      minSize: 1,
+      maxSize: 4,
+      minBrightness: 0.3,
+      maxBrightness: 1.0
+    });
     
     // Mobile performance optimizations
     this.optimizeCanvasForMobile();
@@ -109,21 +122,40 @@ export class Renderer {
   }
 
   /**
-   * Render background stars with parallax effect
+   * Render background stars using seed-based infinite generation
    */
   private renderStars(camera: Camera): void {
+    // Generate stars for current viewport
+    const stars = this.starGenerator.generateStarsInViewport(
+      camera.x,
+      camera.y,
+      this.canvas.width / camera.zoom,
+      this.canvas.height / camera.zoom,
+      0.1 // Parallax factor for background stars
+    );
+
+    // Render each star
     this.context.fillStyle = '#ffffff';
     
-    const starCount = 200;
-    for (let i = 0; i < starCount; i++) {
+    stars.forEach(star => {
+      // Apply parallax offset for the rendering position
       const parallaxFactor = 0.1;
-      const x = (i * 17 + camera.x * parallaxFactor) % 1000 - 500;
-      const y = (i * 31 + camera.y * parallaxFactor) % 800 - 400;
-      const size = (i % 3) + 1;
+      const renderX = star.x - camera.x * parallaxFactor;
+      const renderY = star.y - camera.y * parallaxFactor;
       
-      this.context.globalAlpha = 0.3 + (i % 7) * 0.1;
-      this.context.fillRect(x, y, size, size);
-    }
+      // Set opacity based on star brightness
+      this.context.globalAlpha = star.brightness;
+      
+      // Render star as a small rectangle
+      this.context.fillRect(
+        Math.round(renderX - star.size / 2),
+        Math.round(renderY - star.size / 2),
+        star.size,
+        star.size
+      );
+    });
+    
+    // Reset alpha for subsequent rendering
     this.context.globalAlpha = 1;
   }
 
