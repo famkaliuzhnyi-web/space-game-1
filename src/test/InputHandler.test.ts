@@ -16,6 +16,13 @@ class MockInputManager {
   private mouseButtons: Record<number, boolean> = {};
   private touches: Array<{ x: number; y: number }> = [];
   private clickEvents: Array<{ button: number; position: { x: number; y: number } }> = [];
+  private wheelDelta = 0;
+  private dragState = {
+    isDragging: false,
+    button: -1,
+    startPosition: { x: 0, y: 0 },
+    currentPosition: { x: 0, y: 0 }
+  };
 
   setKey(key: string, pressed: boolean) {
     this.keys[key] = pressed;
@@ -35,6 +42,19 @@ class MockInputManager {
 
   addClickEvent(button: number, position: { x: number; y: number }) {
     this.clickEvents.push({ button, position });
+  }
+
+  setWheelDelta(delta: number) {
+    this.wheelDelta = delta;
+  }
+
+  setDragState(isDragging: boolean, button: number, startPos: { x: number; y: number }, currentPos: { x: number; y: number }) {
+    this.dragState = {
+      isDragging,
+      button,
+      startPosition: startPos,
+      currentPosition: currentPos
+    };
   }
 
   isKeyPressed(key: string): boolean {
@@ -57,6 +77,29 @@ class MockInputManager {
     const events = [...this.clickEvents];
     this.clickEvents = []; // Clear after reading
     return events;
+  }
+
+  getWheelDelta(): number {
+    const delta = this.wheelDelta;
+    this.wheelDelta = 0; // Clear after reading
+    return delta;
+  }
+
+  getDragState() {
+    return {
+      isDragging: this.dragState.isDragging,
+      button: this.dragState.button,
+      startPosition: { ...this.dragState.startPosition },
+      currentPosition: { ...this.dragState.currentPosition },
+      deltaX: this.dragState.currentPosition.x - this.dragState.startPosition.x,
+      deltaY: this.dragState.currentPosition.y - this.dragState.startPosition.y
+    };
+  }
+
+  resetDragStartPosition(): void {
+    if (this.dragState.isDragging) {
+      this.dragState.startPosition = { ...this.dragState.currentPosition };
+    }
   }
 }
 
@@ -123,6 +166,35 @@ describe('InputHandler', () => {
       mockInputManager.setKey('Minus', true);
       inputHandler.updateCamera(camera, 1, mockInputManager as any);
       expect(camera.zoom).toBeGreaterThanOrEqual(0.1);
+    });
+
+    it('should zoom with mouse wheel', () => {
+      const initialZoom = camera.zoom;
+      
+      // Test zoom in (negative delta)
+      mockInputManager.setWheelDelta(-100);
+      inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
+      expect(camera.zoom).toBeGreaterThan(initialZoom);
+      
+      // Reset and test zoom out (positive delta)
+      camera.zoom = initialZoom;
+      mockInputManager.setWheelDelta(100);
+      inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
+      expect(camera.zoom).toBeLessThan(initialZoom);
+    });
+
+    it('should pan camera with right-click drag', () => {
+      const initialX = camera.x;
+      const initialY = camera.y;
+      
+      // Set up right-click drag state
+      mockInputManager.setDragState(true, 2, { x: 100, y: 100 }, { x: 150, y: 130 });
+      
+      inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
+      
+      // Camera should move opposite to drag direction for natural feel
+      expect(camera.x).toBeLessThan(initialX);
+      expect(camera.y).toBeLessThan(initialY);
     });
   });
 

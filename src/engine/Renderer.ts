@@ -323,9 +323,11 @@ export class Renderer {
     this.context.font = '12px monospace';
     this.context.fillStyle = '#aaaaaa';
     this.context.textAlign = 'right';
-    this.context.fillText('WASD/Arrows: Move Camera', this.canvas.width - 10, this.canvas.height - 75);
-    this.context.fillText('+/-: Zoom', this.canvas.width - 10, this.canvas.height - 60);
-    this.context.fillText('Click: Navigate', this.canvas.width - 10, this.canvas.height - 45);
+    this.context.fillText('WASD/Arrows: Move Camera', this.canvas.width - 10, this.canvas.height - 105);
+    this.context.fillText('+/-: Zoom', this.canvas.width - 10, this.canvas.height - 90);
+    this.context.fillText('Mouse Wheel: Zoom', this.canvas.width - 10, this.canvas.height - 75);
+    this.context.fillText('Right-Click+Drag: Pan Camera', this.canvas.width - 10, this.canvas.height - 60);
+    this.context.fillText('Left-Click: Navigate', this.canvas.width - 10, this.canvas.height - 45);
     this.context.fillText('N: Navigation Panel', this.canvas.width - 10, this.canvas.height - 30);
     this.context.fillText('Touch: Navigate (Mobile)', this.canvas.width - 10, this.canvas.height - 15);
   }

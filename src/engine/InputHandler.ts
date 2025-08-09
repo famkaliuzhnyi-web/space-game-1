@@ -30,7 +30,7 @@ export class InputHandler {
    * Update camera based on input and handle interactions
    */
   updateCamera(camera: Camera, deltaTime: number, inputManager: InputManager): void {
-    // Handle camera movement
+    // Handle camera movement with keyboard
     if (inputManager.isKeyPressed('KeyW') || inputManager.isKeyPressed('ArrowUp')) {
       camera.y -= 100 * deltaTime;
     }
@@ -44,7 +44,7 @@ export class InputHandler {
       camera.x += 100 * deltaTime;
     }
 
-    // Handle zoom
+    // Handle zoom with keyboard
     if (inputManager.isKeyPressed('Equal') || inputManager.isKeyPressed('NumpadAdd')) {
       camera.zoom = Math.min(camera.zoom + deltaTime, 3);
     }
@@ -52,10 +52,30 @@ export class InputHandler {
       camera.zoom = Math.max(camera.zoom - deltaTime, 0.1);
     }
 
-    // Handle click events for navigation
+    // Handle mouse wheel zoom
+    const wheelDelta = inputManager.getWheelDelta();
+    if (wheelDelta !== 0) {
+      const zoomSpeed = 0.001;
+      const zoomChange = -wheelDelta * zoomSpeed; // Negative to make wheel up zoom in
+      camera.zoom = Math.max(0.1, Math.min(3, camera.zoom + zoomChange));
+    }
+
+    // Handle right-click drag for camera panning
+    const dragState = inputManager.getDragState();
+    if (dragState.isDragging && dragState.button === 2) {
+      // Apply drag movement to camera (inverted for natural feel)
+      const dragSpeed = 1 / camera.zoom; // Slower drag when zoomed in
+      camera.x -= dragState.deltaX * dragSpeed;
+      camera.y -= dragState.deltaY * dragSpeed;
+      
+      // Reset drag start position for smooth continuous dragging
+      inputManager.resetDragStartPosition();
+    }
+
+    // Handle click events for navigation (only left clicks)
     const clickEvents = inputManager.getClickEvents();
     for (const clickEvent of clickEvents) {
-      if (clickEvent.button === 0) { // Left click
+      if (clickEvent.button === 0) { // Left click only
         this.handleClick(clickEvent.position.x, clickEvent.position.y, camera);
       }
     }
