@@ -9,4 +9,5 @@ export { SystemManager } from './SystemManager';
 export { Actor } from './Actor';
 export { Scene } from './Scene';
 export { ShipActor } from './ShipActor';
+export { NPCActor } from './NPCActor';
 export { SceneManager } from './SceneManager';

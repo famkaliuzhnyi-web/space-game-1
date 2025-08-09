@@ -16,6 +16,8 @@ import { WorldManager } from './WorldManager';
 import { PlayerManager } from './PlayerManager';
 import { NavigationManager } from './NavigationManager';
 import { Station, StarSystem } from '../types/world';
+import { SceneManager } from '../engine/SceneManager';
+import { NPCActor } from '../engine/NPCActor';
 
 /**
  * NPCAIManager handles all NPC ship behavior, AI decision-making, and interactions.
@@ -41,11 +43,13 @@ export class NPCAIManager {
   private worldManager: WorldManager;
   private playerManager: PlayerManager;
   private navigationManager: NavigationManager | null = null;
+  private sceneManager: SceneManager | null = null;
   // These will be used in future updates
   // private factionManager: FactionManager;
   // private economicSystem: EconomicSystem;
   
   private npcShips: Map<string, NPCShip> = new Map();
+  private npcActors: Map<string, NPCActor> = new Map(); // New: Actor-based NPCs
   private activeConversations: Map<string, NPCConversation> = new Map();
   private marketBehaviors: Map<string, NPCMarketBehavior> = new Map();
   private npcFleets: Map<string, NPCFleet> = new Map();
@@ -81,6 +85,13 @@ export class NPCAIManager {
    */
   setNavigationManager(navigationManager: NavigationManager): void {
     this.navigationManager = navigationManager;
+  }
+
+  /**
+   * Set the scene manager for actor-based NPC management
+   */
+  setSceneManager(sceneManager: SceneManager): void {
+    this.sceneManager = sceneManager;
   }
 
   /**
@@ -224,6 +235,13 @@ export class NPCAIManager {
     };
 
     this.npcShips.set(npcId, npc);
+    
+    // Create NPCActor if scene manager is available
+    if (this.sceneManager) {
+      const npcActor = new NPCActor(npc);
+      this.npcActors.set(npcId, npcActor);
+      this.sceneManager.getCurrentScene().addActor(npcActor, 'npc');
+    }
     
     // Initialize market behavior for traders
     if (npcType === 'trader') {
@@ -641,7 +659,7 @@ export class NPCAIManager {
   }
 
   /**
-   * Set NPC destination with pathfinding
+   * Set NPC destination with pathfinding using the new Actor system
    */
   private setNPCDestination(npc: NPCShip, targetStationId: string): void {
     const galaxy = this.worldManager.getGalaxy();
@@ -650,17 +668,22 @@ export class NPCAIManager {
     if (system) {
       const targetStation = this.findStationById(system, targetStationId);
       if (targetStation) {
-        // Generate pathfinding waypoints
-        npc.movement.pathfindingWaypoints = this.generatePathfindingWaypoints(
-          npc.position.coordinates,
-          targetStation.position,
-          system.id
-        );
-        npc.movement.currentWaypoint = 0;
-        npc.movement.targetStationId = targetStationId;
-        
-        // Clear simple target coordinates since we're using pathfinding
-        npc.movement.targetCoordinates = undefined;
+        // Use NPCActor if available, otherwise fallback to old system
+        const npcActor = this.npcActors.get(npc.id);
+        if (npcActor) {
+          // Use actor-based movement with station target
+          npcActor.setStationTarget(targetStationId, targetStation.position);
+        } else {
+          // Fallback to old pathfinding system
+          npc.movement.pathfindingWaypoints = this.generatePathfindingWaypoints(
+            npc.position.coordinates,
+            targetStation.position,
+            system.id
+          );
+          npc.movement.currentWaypoint = 0;
+          npc.movement.targetStationId = targetStationId;
+          npc.movement.targetCoordinates = undefined;
+        }
       }
     }
   }
@@ -831,8 +854,9 @@ export class NPCAIManager {
       
       if (availableStations.length > 0) {
         const targetStation = availableStations[Math.floor(Math.random() * availableStations.length)];
-        npc.movement.targetStationId = targetStation.id;
-        npc.movement.targetCoordinates = { ...targetStation.position };
+        
+        // Use the new destination system which will handle Actor vs legacy movement
+        this.setNPCDestination(npc, targetStation.id);
       }
     }
   }
@@ -1225,7 +1249,7 @@ export class NPCAIManager {
   }
 
   /**
-   * Update NPC movement and positions
+   * Update NPC movement and positions using Actor system
    */
   private updateNPCMovement(deltaTime: number): void {
     const currentTime = this.timeManager.getCurrentTimestamp();
@@ -1234,11 +1258,38 @@ export class NPCAIManager {
       // Update threat assessment
       this.updateThreatAssessment(npc);
       
-      // Calculate avoidance vectors for collision avoidance
-      this.updateAvoidanceVector(npc);
-      
-      // Update NPC position with enhanced movement
-      this.updateNPCPositionEnhanced(npc, deltaTime, currentTime);
+      const npcActor = this.npcActors.get(npc.id);
+      if (npcActor) {
+        // Use Actor-based movement - no need to manually update position
+        // The actor system handles physics, collision, and movement
+        
+        // Update waypoint navigation if using pathfinding
+        this.updateActorWaypointNavigation(npcActor);
+        
+        // Check for station arrival
+        this.checkActorStationArrival(npcActor);
+      } else {
+        // Fallback to old movement system for NPCs without actors
+        this.updateAvoidanceVector(npc);
+        this.updateNPCPositionEnhanced(npc, deltaTime, currentTime);
+      }
+    }
+  }
+
+  /**
+   * Update waypoint navigation for NPCActor
+   */
+  private updateActorWaypointNavigation(npcActor: NPCActor): void {
+    // Let the actor handle waypoint progression
+    npcActor.updateWaypointNavigation();
+  }
+
+  /**
+   * Check if NPC actor has reached its target station
+   */
+  private checkActorStationArrival(npcActor: NPCActor): void {
+    if (npcActor.hasReachedStation()) {
+      npcActor.dockAtStation();
     }
   }
 
