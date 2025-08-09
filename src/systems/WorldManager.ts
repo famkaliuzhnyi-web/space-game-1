@@ -15,6 +15,7 @@ export class WorldManager {
   } | null = null;
   private sceneManager: SceneManager | null = null;
   private pendingDockingTarget: string | null = null;
+  private npcAIManager: any = null; // NPCAIManager reference for getting NPC ships
 
   constructor() {
     this.galaxy = this.generateInitialGalaxy();
@@ -49,6 +50,13 @@ export class WorldManager {
     if (this.playerShip) {
       this.sceneManager.setPlayerShip(this.playerShip);
     }
+  }
+
+  /**
+   * Set the NPC AI manager for getting NPC ships
+   */
+  setNPCAIManager(npcAIManager: any): void {
+    this.npcAIManager = npcAIManager;
   }
 
   /**
@@ -222,16 +230,37 @@ export class WorldManager {
             description: 'Exclusive resort station catering to the wealthy elite.'
           }
         );
-        planets.push({
-          id: 'earth',
-          name: 'Earth',
-          type: 'terrestrial',
-          position: { x: position.x, y: position.y - 50 },
-          radius: 20,
-          habitable: true,
-          population: 8000000000,
-          description: 'Birthplace of humanity.'
-        });
+        planets.push(
+          {
+            id: 'earth',
+            name: 'Earth',
+            type: 'terrestrial',
+            position: { x: position.x, y: position.y - 50 },
+            radius: 20,
+            habitable: true,
+            population: 8000000000,
+            description: 'Birthplace of humanity.'
+          },
+          {
+            id: 'mars',
+            name: 'Mars',
+            type: 'desert',
+            position: { x: position.x + 30, y: position.y - 80 },
+            radius: 15,
+            habitable: false,
+            population: 50000000,
+            description: 'The red planet, first human colony beyond Earth.'
+          },
+          {
+            id: 'jupiter',
+            name: 'Jupiter',
+            type: 'gas-giant',
+            position: { x: position.x - 60, y: position.y + 70 },
+            radius: 35,
+            habitable: false,
+            description: 'Massive gas giant with numerous mining stations in its orbit.'
+          }
+        );
         break;
 
       case 'alpha-centauri':
@@ -256,6 +285,27 @@ export class WorldManager {
             dockingCapacity: 35,
             services: ['refuel', 'repair', 'trading', 'manufacturing'],
             description: 'Major industrial complex processing raw materials from system mines.'
+          }
+        );
+        planets.push(
+          {
+            id: 'proxima-b',
+            name: 'Proxima Centauri b',
+            type: 'terrestrial',
+            position: { x: position.x + 20, y: position.y - 40 },
+            radius: 18,
+            habitable: true,
+            population: 5000000,
+            description: 'Rocky planet in the habitable zone, humanity\'s first interstellar colony.'
+          },
+          {
+            id: 'alpha-centauri-mining',
+            name: 'Centauri Mining World',
+            type: 'desert',
+            position: { x: position.x - 30, y: position.y + 50 },
+            radius: 12,
+            habitable: false,
+            description: 'Mineral-rich desert world, heavily strip-mined for rare elements.'
           }
         );
         break;
@@ -284,6 +334,27 @@ export class WorldManager {
             description: 'Neutral diplomatic station facilitating inter-faction negotiations.'
           }
         );
+        planets.push(
+          {
+            id: 'sirius-research-world',
+            name: 'Sirius Research World',
+            type: 'ice',
+            position: { x: position.x, y: position.y - 60 },
+            radius: 22,
+            habitable: false,
+            description: 'Frozen world with advanced underground research facilities.'
+          },
+          {
+            id: 'sirius-ocean',
+            name: 'Sirius Ocean World',
+            type: 'ocean',
+            position: { x: position.x + 40, y: position.y + 30 },
+            radius: 25,
+            habitable: true,
+            population: 2000000,
+            description: 'Water world with floating cities and oceanic research stations.'
+          }
+        );
         break;
 
       case 'vega':
@@ -308,6 +379,27 @@ export class WorldManager {
             dockingCapacity: 15,
             services: ['black_market', 'smuggling_missions', 'pirate_contracts'],
             description: 'Notorious pirate haven where no questions are asked and credits talk.'
+          }
+        );
+        planets.push(
+          {
+            id: 'vega-prime',
+            name: 'Vega Prime',
+            type: 'terrestrial',
+            position: { x: position.x + 25, y: position.y + 40 },
+            radius: 19,
+            habitable: true,
+            population: 100000000,
+            description: 'Cosmopolitan world known for its entertainment districts and liberal laws.'
+          },
+          {
+            id: 'vega-asteroid-haven',
+            name: 'Vega Asteroid Base',
+            type: 'desert',
+            position: { x: position.x - 50, y: position.y - 35 },
+            radius: 8,
+            habitable: false,
+            description: 'Hollowed-out asteroid serving as a pirate stronghold and black market hub.'
           }
         );
         break;
@@ -360,6 +452,37 @@ export class WorldManager {
             dockingCapacity: 35,
             services: ['trading', 'colonist_transport', 'supply_missions', 'construction'],
             description: 'Colonial administration center coordinating frontier settlement efforts.'
+          },
+          {
+            id: 'kepler-deep-space',
+            name: 'Kepler Deep Space Station',
+            type: 'observatory',
+            position: { x: position.x - 40, y: position.y - 15 },
+            faction: 'Scientific Alliance',
+            dockingCapacity: 15,
+            services: ['refuel', 'deep_space_missions', 'sensor_array', 'long_range_scanning'],
+            description: 'Advanced sensor array monitoring the galactic edge for threats and opportunities.'
+          }
+        );
+        planets.push(
+          {
+            id: 'kepler-442b',
+            name: 'Kepler-442b',
+            type: 'terrestrial',
+            position: { x: position.x, y: position.y + 45 },
+            radius: 21,
+            habitable: true,
+            population: 1000000,
+            description: 'Super-Earth with perfect conditions for human colonization.'
+          },
+          {
+            id: 'kepler-mining-world',
+            name: 'Kepler Mining World',
+            type: 'desert',
+            position: { x: position.x - 35, y: position.y + 15 },
+            radius: 11,
+            habitable: false,
+            description: 'Resource-rich world supplying the growing frontier colonies.'
           }
         );
         break;
@@ -392,6 +515,46 @@ export class WorldManager {
             dockingCapacity: 15,
             services: ['research', 'deep_space_missions', 'astronomical_data', 'long_range_scanning'],
             description: 'Remote observatory studying distant galaxies and cosmic phenomena.'
+          }
+        );
+        planets.push(
+          {
+            id: 'trappist-1b',
+            name: 'TRAPPIST-1b',
+            type: 'terrestrial',
+            position: { x: position.x - 20, y: position.y - 15 },
+            radius: 14,
+            habitable: false,
+            description: 'Innermost planet, too hot for habitation but rich in minerals.'
+          },
+          {
+            id: 'trappist-1e',
+            name: 'TRAPPIST-1e',
+            type: 'terrestrial',
+            position: { x: position.x + 15, y: position.y + 20 },
+            radius: 16,
+            habitable: true,
+            population: 500000,
+            description: 'Potentially habitable world with a small research colony.'
+          },
+          {
+            id: 'trappist-1f',
+            name: 'TRAPPIST-1f',
+            type: 'ocean',
+            position: { x: position.x + 35, y: position.y - 10 },
+            radius: 17,
+            habitable: true,
+            population: 200000,
+            description: 'Ocean world with underwater cities and research facilities.'
+          },
+          {
+            id: 'trappist-1h',
+            name: 'TRAPPIST-1h',
+            type: 'ice',
+            position: { x: position.x - 30, y: position.y + 25 },
+            radius: 13,
+            habitable: false,
+            description: 'Frozen outer planet used as a research station and ice mining operation.'
           }
         );
         break;
@@ -948,6 +1111,20 @@ export class WorldManager {
         type: 'ship',
         object: this.playerShip,
         position: this.playerShip.location.coordinates
+      });
+    }
+
+    // Add NPC ships if available
+    if (this.npcAIManager) {
+      const npcShips = this.npcAIManager.getNPCsInSystem(currentSystem.id);
+      npcShips.forEach((npcShip: any) => {
+        if (npcShip.position.coordinates) {
+          objects.push({
+            type: 'npc-ship',
+            object: npcShip,
+            position: npcShip.position.coordinates
+          });
+        }
       });
     }
 

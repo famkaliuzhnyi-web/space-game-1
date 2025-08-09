@@ -119,6 +119,9 @@ export class Engine implements GameEngine {
     // Connect scene manager to NPC AI manager for actor-based movement
     this.systemManager.getNPCAIManager().setSceneManager(this.sceneManager);
     
+    // Connect NPC AI manager to world manager for NPC rendering
+    this.systemManager.getWorldManager().setNPCAIManager(this.systemManager.getNPCAIManager());
+    
     // Create a separate canvas for 3D rendering (overlay)
     this.create3DCanvas();
     
