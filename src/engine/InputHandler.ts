@@ -60,9 +60,9 @@ export class InputHandler {
       camera.zoom = Math.max(0.1, Math.min(3, camera.zoom + zoomChange));
     }
 
-    // Handle right-click drag for camera panning
+    // Handle middle-click drag for camera panning (changed from right-click)
     const dragState = inputManager.getDragState();
-    if (dragState.isDragging && dragState.button === 2) {
+    if (dragState.isDragging && dragState.button === 1) {
       // Apply drag movement to camera (inverted for natural feel)
       const dragSpeed = 1 / camera.zoom; // Slower drag when zoomed in
       camera.x -= dragState.deltaX * dragSpeed;
@@ -72,10 +72,12 @@ export class InputHandler {
       inputManager.resetDragStartPosition();
     }
 
-    // Handle click events for navigation (only left clicks)
+    // Handle click events for navigation
     const clickEvents = inputManager.getClickEvents();
     for (const clickEvent of clickEvents) {
-      if (clickEvent.button === 0) { // Left click only
+      if (clickEvent.button === 0) { // Left click for ship movement
+        this.handleClick(clickEvent.position.x, clickEvent.position.y, camera);
+      } else if (clickEvent.button === 2) { // Right click for ship commands/navigation
         this.handleClick(clickEvent.position.x, clickEvent.position.y, camera);
       }
     }

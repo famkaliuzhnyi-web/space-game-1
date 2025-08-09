@@ -12,7 +12,7 @@ describe('WorldManager', () => {
     it('should create a galaxy with sectors', () => {
       const galaxy = worldManager.getGalaxy();
       expect(galaxy).toBeDefined();
-      expect(galaxy.sectors).toHaveLength(3); // Now we have 3 sectors
+      expect(galaxy.sectors).toHaveLength(6); // Now we have 6 sectors
       expect(galaxy.sectors[0].id).toBe('core-sector');
     });
 

@@ -183,12 +183,12 @@ describe('InputHandler', () => {
       expect(camera.zoom).toBeLessThan(initialZoom);
     });
 
-    it('should pan camera with right-click drag', () => {
+    it('should pan camera with middle-click drag', () => {
       const initialX = camera.x;
       const initialY = camera.y;
       
-      // Set up right-click drag state
-      mockInputManager.setDragState(true, 2, { x: 100, y: 100 }, { x: 150, y: 130 });
+      // Set up middle-click drag state (changed from right-click to button 1)
+      mockInputManager.setDragState(true, 1, { x: 100, y: 100 }, { x: 150, y: 130 });
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       
