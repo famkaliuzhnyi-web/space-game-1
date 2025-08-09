@@ -59,6 +59,13 @@ export class InputManager {
   }
 
   private handleMouseDown(event: MouseEvent): void {
+    // Update mouse position first
+    const rect = this.canvas.getBoundingClientRect();
+    this.inputState.mouse.position = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    
     this.inputState.mouse.buttons[event.button] = true;
     
     // Start drag tracking for both middle-click (button 1) and left-click (button 0) for map dragging
@@ -101,20 +108,20 @@ export class InputManager {
       y: event.clientY - rect.top,
     };
     
-    // Check if we should start actual dragging
-    if (this.dragState.isDragging && !this.dragState.dragStarted) {
-      const deltaX = this.inputState.mouse.position.x - this.dragState.startPosition.x;
-      const deltaY = this.inputState.mouse.position.y - this.dragState.startPosition.y;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      
-      if (distance >= this.dragState.dragThreshold) {
-        this.dragState.dragStarted = true;
-      }
-    }
-    
-    // Update drag position if actually dragging
-    if (this.dragState.isDragging && this.dragState.dragStarted) {
+    // Always update current position when potential dragging is active
+    if (this.dragState.isDragging) {
       this.dragState.currentPosition = { ...this.inputState.mouse.position };
+      
+      // Check if we should start actual dragging
+      if (!this.dragState.dragStarted) {
+        const deltaX = this.dragState.currentPosition.x - this.dragState.startPosition.x;
+        const deltaY = this.dragState.currentPosition.y - this.dragState.startPosition.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        if (distance >= this.dragState.dragThreshold) {
+          this.dragState.dragStarted = true;
+        }
+      }
     }
   }
 
@@ -188,13 +195,18 @@ export class InputManager {
    * Get current drag state with drag threshold check
    */
   getDragState() {
+    const deltaX = this.dragState.currentPosition.x - this.dragState.startPosition.x;
+    const deltaY = this.dragState.currentPosition.y - this.dragState.startPosition.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
     return {
       isDragging: this.dragState.isDragging && this.dragState.dragStarted,
       button: this.dragState.button,
       startPosition: { ...this.dragState.startPosition },
       currentPosition: { ...this.dragState.currentPosition },
-      deltaX: this.dragState.currentPosition.x - this.dragState.startPosition.x,
-      deltaY: this.dragState.currentPosition.y - this.dragState.startPosition.y
+      deltaX: deltaX,
+      deltaY: deltaY,
+      dragDistance: distance
     };
   }
 

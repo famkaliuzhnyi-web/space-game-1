@@ -31,6 +31,19 @@ describe('Control Fixes (#103)', () => {
     canvas.width = 800;
     canvas.height = 600;
     
+    // Mock getBoundingClientRect to return consistent values
+    canvas.getBoundingClientRect = vi.fn(() => ({
+      top: 0,
+      left: 0,
+      right: 800,
+      bottom: 600,
+      width: 800,
+      height: 600,
+      x: 0,
+      y: 0,
+      toJSON: () => ({})
+    }));
+    
     inputManager = new InputManager(canvas);
     inputHandler = new InputHandler(canvas);
     timeManager = new TimeManager();
