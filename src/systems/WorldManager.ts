@@ -130,8 +130,50 @@ export class WorldManager {
       description: 'The manufacturing heart of human space, dominated by massive industrial operations.'
     };
 
+    const miningSector: Sector = {
+      id: 'mining-sector',
+      name: 'Mining Sector',
+      position: { x: 600, y: 300 },
+      systems: [
+        this.createTestSystem('mining-belt-alpha', 'Mining Belt Alpha', { x: 700, y: 400 }),
+        this.createTestSystem('mining-belt-beta', 'Mining Belt Beta', { x: 800, y: 350 }),
+        this.createTestSystem('mining-belt-gamma', 'Mining Belt Gamma', { x: 750, y: 450 }),
+        this.createTestSystem('deep-core-system', 'Deep Core Mining System', { x: 850, y: 400 })
+      ],
+      controllingFaction: 'Mining Guild',
+      description: 'Rich asteroid belts and mining operations extracting raw materials for the production chain.'
+    };
+
+    const manufacturingSector: Sector = {
+      id: 'manufacturing-sector',
+      name: 'Manufacturing Sector',
+      position: { x: 500, y: 600 },
+      systems: [
+        this.createTestSystem('assembly-prime', 'Assembly Prime System', { x: 600, y: 700 }),
+        this.createTestSystem('component-forge', 'Component Forge System', { x: 700, y: 650 }),
+        this.createTestSystem('refinery-central', 'Central Refinery System', { x: 550, y: 750 }),
+        this.createTestSystem('shipyard-nexus', 'Shipyard Nexus System', { x: 650, y: 600 })
+      ],
+      controllingFaction: 'Manufacturing Alliance',
+      description: 'Advanced manufacturing facilities that process raw materials into finished products and ships.'
+    };
+
+    const expansionSector: Sector = {
+      id: 'expansion-sector',
+      name: 'Expansion Sector',
+      position: { x: 900, y: 100 },
+      systems: [
+        this.createTestSystem('new-horizon', 'New Horizon System', { x: 1000, y: 200 }),
+        this.createTestSystem('distant-reach', 'Distant Reach System', { x: 1100, y: 150 }),
+        this.createTestSystem('outer-rim', 'Outer Rim System', { x: 950, y: 250 }),
+        this.createTestSystem('frontier-edge', 'Frontier Edge System', { x: 1050, y: 100 })
+      ],
+      controllingFaction: 'Expansion Fleet',
+      description: 'Newly settled systems on the very edge of known space, requiring constant supply chains.'
+    };
+
     return {
-      sectors: [coreSector, frontierSector, industrialSector],
+      sectors: [coreSector, frontierSector, industrialSector, miningSector, manufacturingSector, expansionSector],
       currentPlayerLocation: {
         sectorId: 'core-sector',
         systemId: 'sol-system',
@@ -418,6 +460,261 @@ export class WorldManager {
             dockingCapacity: 25,
             services: ['fuel_depot', 'energy_trading', 'stellar_harvesting', 'power_systems'],
             description: 'Advanced stellar energy collection facility powering industrial operations.'
+          }
+        );
+        break;
+
+      // MINING SECTOR SYSTEMS
+      case 'mining-belt-alpha':
+        // Primary iron and common metals mining
+        stations.push(
+          {
+            id: 'alpha-iron-mines',
+            name: 'Alpha Belt Iron Mines',
+            type: 'mining',
+            position: { x: position.x - 20, y: position.y },
+            faction: 'Mining Guild',
+            dockingCapacity: 30,
+            services: ['refuel', 'basic_repair', 'raw_materials_trading', 'mining_equipment'],
+            description: 'Massive iron ore extraction operation in the Alpha asteroid belt.'
+          },
+          {
+            id: 'alpha-copper-extraction',
+            name: 'Alpha Copper Extraction Facility',
+            type: 'mining',
+            position: { x: position.x + 25, y: position.y - 15 },
+            faction: 'Mining Guild',
+            dockingCapacity: 20,
+            services: ['refuel', 'copper_ore_trading', 'mining_contracts', 'equipment_maintenance'],
+            description: 'Specialized copper mining operation producing materials for ship electronics.'
+          }
+        );
+        break;
+
+      case 'mining-belt-beta':
+        // Titanium and rare metals mining
+        stations.push(
+          {
+            id: 'beta-titanium-mines',
+            name: 'Beta Belt Titanium Extraction',
+            type: 'mining',
+            position: { x: position.x, y: position.y - 25 },
+            faction: 'Mining Guild',
+            dockingCapacity: 25,
+            services: ['refuel', 'repair', 'titanium_ore_trading', 'heavy_mining_equipment'],
+            description: 'Premier titanium mining facility providing materials for ship hull construction.'
+          },
+          {
+            id: 'beta-processing-station',
+            name: 'Beta Ore Processing Station',
+            type: 'industrial',
+            position: { x: position.x + 30, y: position.y + 20 },
+            faction: 'Mining Guild',
+            dockingCapacity: 35,
+            services: ['ore_processing', 'refined_materials', 'bulk_transport', 'quality_control'],
+            description: 'Initial processing facility that prepares raw ores for transport to refineries.'
+          }
+        );
+        break;
+
+      case 'mining-belt-gamma':
+        // Rare earth elements and exotic materials
+        stations.push(
+          {
+            id: 'gamma-rare-earth-facility',
+            name: 'Gamma Rare Earth Facility',
+            type: 'mining',
+            position: { x: position.x - 15, y: position.y + 20 },
+            faction: 'Mining Guild',
+            dockingCapacity: 20,
+            services: ['rare_materials_extraction', 'exotic_ore_trading', 'specialized_equipment', 'research_support'],
+            description: 'High-tech mining operation extracting rare earth elements for advanced ship systems.'
+          }
+        );
+        break;
+
+      case 'deep-core-system':
+        // Deep space mining headquarters
+        stations.push(
+          {
+            id: 'deep-core-command',
+            name: 'Deep Core Mining Command',
+            type: 'industrial',
+            position: { x: position.x, y: position.y },
+            faction: 'Mining Guild',
+            dockingCapacity: 50,
+            services: ['mining_coordination', 'bulk_storage', 'transport_hub', 'guild_administration'],
+            description: 'Central command station coordinating all mining operations across the sector.'
+          },
+          {
+            id: 'deep-core-depot',
+            name: 'Deep Core Supply Depot',
+            type: 'trade',
+            position: { x: position.x + 40, y: position.y - 30 },
+            faction: 'Mining Guild',
+            dockingCapacity: 60,
+            services: ['bulk_trading', 'mining_supplies', 'equipment_sales', 'transport_services'],
+            description: 'Major supply depot providing equipment and services to mining operations.'
+          }
+        );
+        break;
+
+      // MANUFACTURING SECTOR SYSTEMS  
+      case 'refinery-central':
+        // Central refining operations
+        stations.push(
+          {
+            id: 'central-steel-refinery',
+            name: 'Central Steel Refinery',
+            type: 'industrial',
+            position: { x: position.x, y: position.y - 20 },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 40,
+            services: ['ore_refining', 'steel_production', 'alloy_manufacturing', 'quality_testing'],
+            description: 'Massive refinery converting raw ores into steel alloys for ship construction.'
+          },
+          {
+            id: 'titanium-processing-plant',
+            name: 'Titanium Processing Plant',
+            type: 'industrial',
+            position: { x: position.x + 35, y: position.y + 15 },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 30,
+            services: ['titanium_refining', 'hull_plate_manufacturing', 'precision_machining', 'surface_treatment'],
+            description: 'Specialized facility creating titanium plates for advanced ship hulls.'
+          }
+        );
+        break;
+
+      case 'component-forge':
+        // Ship component manufacturing
+        stations.push(
+          {
+            id: 'component-manufacturing-hub',
+            name: 'Component Manufacturing Hub',
+            type: 'industrial',
+            position: { x: position.x, y: position.y },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 45,
+            services: ['component_assembly', 'electronics_manufacturing', 'subsystem_production', 'testing_facilities'],
+            description: 'Advanced facility producing ship components from processed materials.'
+          },
+          {
+            id: 'fusion-drive-facility',
+            name: 'Fusion Drive Manufacturing',
+            type: 'industrial',
+            position: { x: position.x - 30, y: position.y + 25 },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 25,
+            services: ['fusion_drive_production', 'propulsion_systems', 'drive_testing', 'advanced_engineering'],
+            description: 'Specialized facility manufacturing fusion drives for starship propulsion.'
+          }
+        );
+        break;
+
+      case 'assembly-prime':
+        // Ship hull assembly
+        stations.push(
+          {
+            id: 'hull-assembly-station',
+            name: 'Prime Hull Assembly Station',
+            type: 'industrial',
+            position: { x: position.x, y: position.y - 30 },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 50,
+            services: ['hull_assembly', 'structural_engineering', 'framework_construction', 'hull_testing'],
+            description: 'Massive facility assembling ship hulls from processed titanium plates and components.'
+          }
+        );
+        break;
+
+      case 'shipyard-nexus':
+        // Final ship construction and delivery
+        stations.push(
+          {
+            id: 'nexus-shipyard-alpha',
+            name: 'Nexus Shipyard Alpha',
+            type: 'shipyard',
+            position: { x: position.x - 25, y: position.y },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 30,
+            services: ['ship_construction', 'final_assembly', 'system_integration', 'delivery_coordination'],
+            description: 'Premier shipyard facility completing final ship assembly and delivery.'
+          },
+          {
+            id: 'nexus-shipyard-beta',
+            name: 'Nexus Shipyard Beta',
+            type: 'shipyard',
+            position: { x: position.x + 30, y: position.y + 20 },
+            faction: 'Manufacturing Alliance',
+            dockingCapacity: 25,
+            services: ['ship_construction', 'custom_orders', 'upgrade_installation', 'quality_assurance'],
+            description: 'Specialized shipyard for custom ship orders and advanced modifications.'
+          }
+        );
+        break;
+
+      // EXPANSION SECTOR SYSTEMS
+      case 'new-horizon':
+        // New colony requiring supply chain
+        stations.push(
+          {
+            id: 'horizon-colony-hub',
+            name: 'New Horizon Colony Hub',
+            type: 'colonial',
+            position: { x: position.x, y: position.y },
+            faction: 'Expansion Fleet',
+            dockingCapacity: 35,
+            services: ['colonist_services', 'supply_distribution', 'ship_delivery_reception', 'frontier_coordination'],
+            description: 'Growing colony that represents the end point of the complete production chain.'
+          }
+        );
+        break;
+
+      case 'distant-reach':
+        // Remote trading post
+        stations.push(
+          {
+            id: 'reach-trading-post',
+            name: 'Distant Reach Trading Post',
+            type: 'trade',
+            position: { x: position.x, y: position.y },
+            faction: 'Expansion Fleet',
+            dockingCapacity: 20,
+            services: ['frontier_trading', 'ship_sales', 'supply_depot', 'exploration_support'],
+            description: 'Remote trading station where completed ships are delivered to frontier operations.'
+          }
+        );
+        break;
+
+      case 'outer-rim':
+        // Military outpost needing ships
+        stations.push(
+          {
+            id: 'rim-defense-station',
+            name: 'Outer Rim Defense Station',
+            type: 'military',
+            position: { x: position.x, y: position.y },
+            faction: 'Expansion Fleet',
+            dockingCapacity: 40,
+            services: ['military_operations', 'fleet_maintenance', 'ship_procurement', 'defense_coordination'],
+            description: 'Military station requiring a constant supply of ships from the production chain.'
+          }
+        );
+        break;
+
+      case 'frontier-edge':
+        // Deep space exploration base
+        stations.push(
+          {
+            id: 'edge-exploration-base',
+            name: 'Frontier Edge Exploration Base',
+            type: 'exploration',
+            position: { x: position.x, y: position.y },
+            faction: 'Expansion Fleet',
+            dockingCapacity: 15,
+            services: ['exploration_missions', 'deep_space_operations', 'ship_resupply', 'survey_coordination'],
+            description: 'Cutting-edge exploration facility that relies on the production chain for ship supplies.'
           }
         );
         break;

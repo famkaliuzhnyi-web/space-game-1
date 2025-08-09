@@ -559,7 +559,8 @@ export class EconomicSystem {
       'habitat': 90000,
       'security': 25000,
       'prison': 8000,
-      'energy': 20000
+      'energy': 20000,
+      'shipyard': 85000
     };
     
     const base = basePopulation[station.type] || 30000;
@@ -661,7 +662,8 @@ export class EconomicSystem {
       'habitat': 700000,
       'security': 800000,
       'prison': 400000,
-      'energy': 1300000
+      'energy': 1300000,
+      'shipyard': 1500000
     };
     
     const base = baseCredits[station.type] || 500000;
