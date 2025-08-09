@@ -101,12 +101,13 @@ export class ShipActor extends Actor {
    */
   update(deltaTime: number): void {
     if (!this.targetPosition) {
-      // Apply friction to gradually stop
-      this.velocity.x *= 0.95;
-      this.velocity.y *= 0.95;
+      // Apply stronger friction to gradually stop
+      const frictionFactor = Math.pow(0.85, deltaTime * 60); // Frame rate independent friction
+      this.velocity.x *= frictionFactor;
+      this.velocity.y *= frictionFactor;
       
       // Stop if velocity is very low
-      if (Math.abs(this.velocity.x) < 1 && Math.abs(this.velocity.y) < 1) {
+      if (Math.abs(this.velocity.x) < 0.5 && Math.abs(this.velocity.y) < 0.5) {
         this.velocity = { x: 0, y: 0 };
         this.ship.location.isInTransit = false;
       }
@@ -116,28 +117,26 @@ export class ShipActor extends Actor {
       const dy = this.targetPosition.y - this.position.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Improved arrival threshold - larger and more forgiving
+      // Arrival threshold - balanced to prevent oscillation but allow small movements
       const arrivalRadius = 15;
       
       if (distance < arrivalRadius) {
-        // Smooth arrival - gradually reduce speed as we approach
-        const arrivalFactor = Math.max(0.2, distance / arrivalRadius);
+        // Near target - apply smooth deceleration
+        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
         
-        // More aggressive deceleration when very close
-        if (distance < 8) {
-          this.velocity.x *= 0.5;
-          this.velocity.y *= 0.5;
-        } else {
-          this.velocity.x *= arrivalFactor;
-          this.velocity.y *= arrivalFactor;
+        // Calculate desired final approach speed based on distance
+        const maxApproachSpeed = Math.max(4, distance * 0.6); // Slower as we get closer
+        
+        if (currentSpeed > maxApproachSpeed) {
+          // Decelerate more aggressively
+          const decelerationFactor = Math.max(0.3, maxApproachSpeed / currentSpeed);
+          this.velocity.x *= decelerationFactor;
+          this.velocity.y *= decelerationFactor;
         }
         
-        // Only stop completely when very close and moving slowly
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        if (distance < 10 && currentSpeed < 8) {
-          // Final stop - set position close to target and stop all movement
-          this.position.x = this.targetPosition.x;
-          this.position.y = this.targetPosition.y;
+        // Stop when very close and moving slowly
+        if (distance < 8 && currentSpeed < 6) {
+          // Don't snap to exact position - just stop near target
           this.velocity = { x: 0, y: 0 };
           this.targetPosition = null;
           this.ship.location.isInTransit = false;
@@ -148,6 +147,15 @@ export class ShipActor extends Actor {
             this.movementCompleteCallback = undefined; // Clear callback after use
             callback();
           }
+        } else {
+          // Continue gentle movement toward target
+          const directionX = dx / distance;
+          const directionY = dy / distance;
+          
+          // Apply gentle thrust toward target, but still meaningful for small distances
+          const gentleThrust = Math.min(40, this.acceleration * 0.4);
+          this.velocity.x += directionX * gentleThrust * deltaTime;
+          this.velocity.y += directionY * gentleThrust * deltaTime;
         }
       } else {
         // Calculate desired direction
@@ -172,18 +180,20 @@ export class ShipActor extends Actor {
           this.rotation += Math.sign(rotationDiff) * maxRotationChange;
         }
         
-        // Predictive deceleration - start slowing down before reaching target
+        // Improved predictive deceleration - start slowing down well before reaching target
         const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        const brakingDistance = Math.max(40, (currentSpeed * currentSpeed) / (2 * this.acceleration * 0.8));
+        
+        // Calculate stopping distance conservatively 
+        const stoppingDistance = Math.max(60, (currentSpeed * currentSpeed) / (this.acceleration * 0.5));
         
         let targetAcceleration;
-        if (distance < brakingDistance) {
-          // Deceleration phase - reduce thrust as we approach target
-          const decelerationFactor = Math.max(0.2, distance / brakingDistance);
-          targetAcceleration = this.acceleration * decelerationFactor * 0.4; // Stronger deceleration
+        if (distance < stoppingDistance) {
+          // Deceleration phase - reduce thrust significantly as we approach target
+          const decelerationFactor = Math.max(0.1, Math.pow(distance / stoppingDistance, 2.5));
+          targetAcceleration = this.acceleration * decelerationFactor * 0.3; // Strong deceleration
         } else {
           // Normal acceleration phase
-          targetAcceleration = this.acceleration;
+          targetAcceleration = this.acceleration * 0.9;
           
           // Only apply full thrust if we're reasonably aligned with target
           const alignmentFactor = Math.max(0.4, Math.cos(Math.abs(rotationDiff)));
@@ -195,11 +205,12 @@ export class ShipActor extends Actor {
         this.velocity.x += directionX * accelerationForce;
         this.velocity.y += directionY * accelerationForce;
         
-        // Dynamic speed limiting based on distance to target to prevent overshoot
+        // Progressive speed limiting based on distance to target to prevent overshoot
         let effectiveMaxSpeed = this.maxSpeed;
-        if (distance < 80) {
-          // More aggressive speed reduction when close to target
-          effectiveMaxSpeed = Math.max(15, this.maxSpeed * Math.pow(distance / 80, 1.5));
+        if (distance < 100) {
+          // Conservative speed reduction when approaching target
+          const speedFactor = Math.max(0.2, Math.pow(distance / 100, 2));
+          effectiveMaxSpeed = Math.max(20, this.maxSpeed * speedFactor);
         }
         
         // Limit maximum speed
