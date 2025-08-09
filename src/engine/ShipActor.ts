@@ -1,6 +1,7 @@
 import { Actor } from './Actor';
 import { Ship } from '../types/player';
 import { Vector2D } from '../types';
+import { shipTextureManager } from './ShipTextureManager';
 
 /**
  * Ship Actor implementing physics-based movement and behavior.
@@ -14,6 +15,7 @@ export class ShipActor extends Actor {
   private rotationSpeed: number;
   private thrustParticles: Array<{ x: number; y: number; life: number }> = [];
   private movementCompleteCallback?: () => void;
+  private useTextures: boolean = true;
 
   constructor(ship: Ship) {
     super(ship.id, ship.location.coordinates || { x: 0, y: 0 });
@@ -277,6 +279,117 @@ export class ShipActor extends Actor {
   private renderShipHull(context: CanvasRenderingContext2D): void {
     const category = this.ship.class.category;
     
+    // Try to render with textures first
+    if (this.useTextures && this.renderWithTextures(context, category)) {
+      return;
+    }
+    
+    // Fallback to original solid color rendering
+    this.renderSolidColorHull(context, category);
+  }
+
+  /**
+   * Render ship hull using textures
+   */
+  private renderWithTextures(context: CanvasRenderingContext2D, category: string): boolean {
+    // Get appropriate textures for this ship class
+    const hullTexture = this.getHullTexture(category);
+    const engineTexture = shipTextureManager.getTexture('engine-thruster-small');
+    const cockpitTexture = this.getCockpitTexture(category);
+    
+    if (!hullTexture) {
+      return false; // Texture not loaded, fallback to solid colors
+    }
+    
+    try {
+      // Render main hull texture
+      const hullWidth = this.getHullWidth(category);
+      const hullHeight = this.getHullHeight(category);
+      
+      context.drawImage(
+        hullTexture, 
+        -hullWidth/2, -hullHeight/2, 
+        hullWidth, hullHeight
+      );
+      
+      // Render engine texture if available
+      if (engineTexture) {
+        const engineX = -hullWidth/2 - 8;
+        const engineY = -6;
+        context.drawImage(engineTexture, engineX, engineY, 12, 12);
+      }
+      
+      // Render cockpit texture if available
+      if (cockpitTexture) {
+        const cockpitX = hullWidth/4;
+        const cockpitY = -4;
+        context.drawImage(cockpitTexture, cockpitX, cockpitY, 8, 8);
+      }
+      
+      return true;
+    } catch (error) {
+      console.warn('Failed to render textured ship hull:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get hull texture based on ship category
+   */
+  private getHullTexture(category: string): HTMLImageElement | null {
+    switch (category) {
+      case 'heavy-freight':
+        return shipTextureManager.getTexture('hull-panel-large');
+      case 'transport':
+        return shipTextureManager.getTexture('hull-panel-medium');
+      case 'courier':
+      case 'combat':
+      case 'explorer':
+      default:
+        return shipTextureManager.getTexture('hull-panel-small');
+    }
+  }
+
+  /**
+   * Get cockpit texture based on ship category
+   */
+  private getCockpitTexture(category: string): HTMLImageElement | null {
+    if (category === 'heavy-freight' || category === 'transport') {
+      return shipTextureManager.getTexture('bridge-section');
+    } else {
+      return shipTextureManager.getTexture('cockpit-small');
+    }
+  }
+
+  /**
+   * Get hull dimensions based on ship category
+   */
+  private getHullWidth(category: string): number {
+    switch (category) {
+      case 'heavy-freight': return 20;
+      case 'transport': return 16;
+      case 'combat': return 14;
+      case 'courier': return 10;
+      case 'explorer':
+      default: return 12;
+    }
+  }
+
+  private getHullHeight(category: string): number {
+    switch (category) {
+      case 'heavy-freight': return 16;
+      case 'transport': return 12;
+      case 'combat': return 10;
+      case 'courier': return 8;
+      case 'explorer':
+      default: return 10;
+    }
+  }
+
+  /**
+   * Fallback solid color hull rendering (original implementation)
+   */
+  private renderSolidColorHull(context: CanvasRenderingContext2D, category: string): void {
     switch (category) {
       case 'courier':
         // Small, sleek design
@@ -370,5 +483,43 @@ export class ShipActor extends Actor {
    */
   getCurrentSpeed(): number {
     return Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+  }
+
+  /**
+   * Enable or disable texture rendering
+   */
+  setUseTextures(use: boolean): void {
+    this.useTextures = use;
+  }
+
+  /**
+   * Preload textures for this ship
+   */
+  async preloadTextures(): Promise<void> {
+    const category = this.ship.class.category;
+    const texturesToLoad = [];
+    
+    // Add hull texture
+    switch (category) {
+      case 'heavy-freight':
+        texturesToLoad.push('hull-panel-large');
+        break;
+      case 'transport':
+        texturesToLoad.push('hull-panel-medium');
+        break;
+      default:
+        texturesToLoad.push('hull-panel-small');
+    }
+    
+    // Add engine and cockpit textures
+    texturesToLoad.push('engine-thruster-small');
+    
+    if (category === 'heavy-freight' || category === 'transport') {
+      texturesToLoad.push('bridge-section');
+    } else {
+      texturesToLoad.push('cockpit-small');
+    }
+    
+    await shipTextureManager.loadTextures(texturesToLoad);
   }
 }

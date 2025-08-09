@@ -8,6 +8,7 @@ import { SceneManager } from './SceneManager';
 import { PoolManager } from './ObjectPool';
 import { performanceMonitor } from './PerformanceMonitor';
 import { resourceManager } from './ResourceManager';
+import { shipTextureManager } from './ShipTextureManager';
 import { audioEngine } from './AudioEngine';
 
 /**
@@ -110,6 +111,9 @@ export class Engine implements GameEngine {
     // Ensure singleton is initialized
     audioEngine.getContext(); // Initialize the audio context
     
+    // Initialize ship texture manager
+    this.initializeTextureManager();
+    
     // Connect scene manager to world manager before systems start
     this.systemManager.getWorldManager().setSceneManager(this.sceneManager);
     
@@ -174,6 +178,24 @@ export class Engine implements GameEngine {
     
     // Insert after the main canvas
     this.canvas.parentElement.insertBefore(this.canvas3D, this.canvas.nextSibling);
+  }
+
+  /**
+   * Initialize the ship texture manager
+   */
+  private async initializeTextureManager(): Promise<void> {
+    try {
+      await shipTextureManager.initialize();
+      
+      // Preload essential textures for immediate use
+      await shipTextureManager.preloadEssentialTextures();
+      
+      console.log('Ship texture manager initialized successfully');
+      console.log('Texture stats:', shipTextureManager.getStats());
+    } catch (error) {
+      console.warn('Failed to initialize ship texture manager:', error);
+      console.log('Ships will render with solid colors instead of textures');
+    }
   }
 
   /**
