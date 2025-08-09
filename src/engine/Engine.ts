@@ -5,6 +5,10 @@ import { GameLoop } from './GameLoop';
 import { InputHandler } from './InputHandler';
 import { SystemManager } from './SystemManager';
 import { SceneManager } from './SceneManager';
+import { PoolManager } from './ObjectPool';
+import { performanceMonitor } from './PerformanceMonitor';
+import { resourceManager } from './ResourceManager';
+import { audioEngine } from './AudioEngine';
 
 /**
  * Main game engine class with modular architecture.
@@ -61,6 +65,9 @@ export class Engine implements GameEngine {
   private inputHandler: InputHandler;
   private systemManager: SystemManager;
   private sceneManager: SceneManager;
+  
+  // Modern engine systems
+  private poolManager: PoolManager;
 
   /**
    * Initialize the game engine with a canvas element.
@@ -92,6 +99,15 @@ export class Engine implements GameEngine {
     this.inputHandler = new InputHandler(canvas);
     this.systemManager = new SystemManager(canvas);
     this.sceneManager = new SceneManager();
+    
+    // Initialize modern engine systems
+    this.poolManager = PoolManager.getInstance();
+    
+    // Initialize performance monitoring
+    performanceMonitor.setupGPUProfiling(canvas);
+    
+    // Initialize audio engine
+    audioEngine; // Initialize singleton
     
     // Connect scene manager to world manager before systems start
     this.systemManager.getWorldManager().setSceneManager(this.sceneManager);
@@ -170,12 +186,21 @@ export class Engine implements GameEngine {
   start(): void {
     if (this.gameLoop.getIsRunning()) return;
     
+    // Start performance monitoring
+    performanceMonitor.start();
+    
     this.systemManager.startSystems();
     
     // Initialize scene with player ship
     this.initializeScene();
     
     this.gameLoop.start();
+    
+    console.log('Game Engine started with industry-standard optimizations:');
+    console.log('- Object Pooling: Enabled');
+    console.log('- Performance Monitoring: Enabled');
+    console.log('- Resource Management: Enabled');
+    console.log('- 3D Audio Engine: Enabled');
   }
 
   /**
@@ -192,6 +217,7 @@ export class Engine implements GameEngine {
    * ```
    */
   stop(): void {
+    performanceMonitor.stop();
     this.systemManager.stopSystems();
     this.gameLoop.stop();
   }
@@ -223,18 +249,36 @@ export class Engine implements GameEngine {
    * @param deltaTime - Time elapsed since last update in seconds
    */
   update = (deltaTime: number): void => {
-    // Update all game systems
-    this.systemManager.updateSystems(deltaTime);
+    // Begin performance frame measurement
+    performanceMonitor.beginFrame();
     
-    // Update scene and actors
-    this.sceneManager.update(deltaTime);
+    // Update all game systems with profiling
+    performanceMonitor.profileSystem('SystemManager', () => {
+      this.systemManager.updateSystems(deltaTime);
+    });
     
-    // Handle input and update camera
-    this.inputHandler.updateCamera(
-      this.camera, 
-      deltaTime, 
-      this.systemManager.getInputManager()
-    );
+    // Update scene and actors with profiling
+    performanceMonitor.profileSystem('SceneManager', () => {
+      this.sceneManager.update(deltaTime);
+    });
+    
+    // Handle input and update camera with profiling
+    performanceMonitor.profileSystem('InputHandler', () => {
+      this.inputHandler.updateCamera(
+        this.camera, 
+        deltaTime, 
+        this.systemManager.getInputManager()
+      );
+    });
+    
+    // Update 3D audio listener position based on camera
+    audioEngine.updateListener({
+      position: { x: this.camera.x, y: this.camera.y, z: 0 },
+      orientation: {
+        forward: { x: 0, y: 0, z: -1 },
+        up: { x: 0, y: 1, z: 0 }
+      }
+    });
   };
 
   /**
@@ -244,32 +288,37 @@ export class Engine implements GameEngine {
    * elements, and effects to the canvas.
    */
   render = (): void => {
-    if (this.renderMode === '3D' && this.renderer3D && this.canvas3D) {
-      // Hide 2D canvas and show 3D canvas
-      this.canvas.style.display = 'none';
-      this.canvas3D.style.display = 'block';
-      
-      // Use 3D renderer
-      this.renderer3D.render(
-        this.camera,
-        this.systemManager.getWorldManager(),
-        this.systemManager.getTimeManager()
-      );
-    } else {
-      // Show 2D canvas and hide 3D canvas
-      this.canvas.style.display = 'block';
-      if (this.canvas3D) {
-        this.canvas3D.style.display = 'none';
+    performanceMonitor.profileSystem('Renderer', () => {
+      if (this.renderMode === '3D' && this.renderer3D && this.canvas3D) {
+        // Hide 2D canvas and show 3D canvas
+        this.canvas.style.display = 'none';
+        this.canvas3D.style.display = 'block';
+        
+        // Use 3D renderer
+        this.renderer3D.render(
+          this.camera,
+          this.systemManager.getWorldManager(),
+          this.systemManager.getTimeManager()
+        );
+      } else {
+        // Show 2D canvas and hide 3D canvas
+        this.canvas.style.display = 'block';
+        if (this.canvas3D) {
+          this.canvas3D.style.display = 'none';
+        }
+        
+        // Use 2D renderer (fallback and default)
+        this.renderer2D.render(
+          this.camera,
+          this.systemManager.getWorldManager(),
+          this.systemManager.getTimeManager(),
+          this.sceneManager
+        );
       }
-      
-      // Use 2D renderer (fallback and default)
-      this.renderer2D.render(
-        this.camera,
-        this.systemManager.getWorldManager(),
-        this.systemManager.getTimeManager(),
-        this.sceneManager
-      );
-    }
+    });
+    
+    // End performance frame measurement
+    performanceMonitor.endFrame();
   };
 
   // System accessor methods for backward compatibility and external access
@@ -376,6 +425,34 @@ export class Engine implements GameEngine {
   }
 
   /**
+   * Get the object pool manager for performance optimization
+   */
+  getPoolManager() {
+    return this.poolManager;
+  }
+
+  /**
+   * Get the performance monitor for real-time metrics
+   */
+  getPerformanceMonitor() {
+    return performanceMonitor;
+  }
+
+  /**
+   * Get the resource manager for asset loading
+   */
+  getResourceManager() {
+    return resourceManager;
+  }
+
+  /**
+   * Get the audio engine for 3D positional audio
+   */
+  getAudioEngine() {
+    return audioEngine;
+  }
+
+  /**
    * Initialize the scene with player ship and actors
    */
   private initializeScene(): void {
@@ -444,6 +521,12 @@ export class Engine implements GameEngine {
     this.gameLoop.dispose();
     this.systemManager.dispose();
     this.sceneManager.dispose();
+    
+    // Clean up modern systems
+    performanceMonitor.dispose();
+    resourceManager.dispose();
+    audioEngine.dispose();
+    this.poolManager.dispose();
     
     // Clean up 3D renderer if it exists
     if (this.renderer3D) {
