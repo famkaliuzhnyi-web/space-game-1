@@ -3,6 +3,7 @@ import { WorldManager } from '../systems/WorldManager';
 import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
 import { Camera } from './Renderer';
+import { StarGenerator } from './StarGenerator';
 
 /**
  * Three.js-based 3D renderer for the space game engine.
@@ -17,6 +18,7 @@ export class ThreeRenderer {
   private spaceObjects: Map<string, THREE.Object3D> = new Map();
   private ambientLight!: THREE.AmbientLight; // Initialized in setupLighting
   private sunLight!: THREE.DirectionalLight; // Initialized in setupLighting
+  private starGenerator: StarGenerator;
 
   // Dummy mesh cache for performance
   private dummyMeshCache: Map<string, THREE.BufferGeometry> = new Map();
@@ -29,6 +31,17 @@ export class ThreeRenderer {
     this.canvas = canvas;
     
     try {
+      // Initialize star generator for 3D space
+      this.starGenerator = new StarGenerator({
+        seed: 42, // Same seed as 2D renderer for consistency
+        starDensity: 100, // Lower density for 3D space performance
+        cellSize: 1000,   // Larger cells for 3D space
+        minSize: 1,
+        maxSize: 3,
+        minBrightness: 0.3,
+        maxBrightness: 1.0
+      });
+      
       // Initialize Three.js renderer with error handling
       this.renderer = new THREE.WebGLRenderer({ 
         canvas: canvas,
@@ -98,27 +111,44 @@ export class ThreeRenderer {
   }
 
   /**
-   * Create a field of stars in the background
+   * Create a field of stars using seed-based generation
    */
   private createStarField(): void {
-    const starGeometry = new THREE.BufferGeometry();
-    const starCount = 5000;
-    const positions = new Float32Array(starCount * 3);
+    // Generate initial set of stars for a large area around the origin
+    const stars = this.starGenerator.generateStarsInViewport(
+      0, 0, // Center at origin
+      8000, 8000, // Large area to populate
+      1.0 // No parallax for initial generation
+    );
 
-    for (let i = 0; i < starCount * 3; i += 3) {
-      // Create stars in a large sphere around the scene
-      positions[i] = (Math.random() - 0.5) * 8000;     // x
-      positions[i + 1] = (Math.random() - 0.5) * 8000; // y
-      positions[i + 2] = (Math.random() - 0.5) * 8000; // z
-    }
+    const starGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(stars.length * 3);
+    const colors = new Float32Array(stars.length * 3);
+
+    stars.forEach((star, i) => {
+      const index = i * 3;
+      
+      // Position
+      positions[index] = star.x;
+      positions[index + 1] = -star.y; // Flip Y for 3D space
+      positions[index + 2] = (Math.random() - 0.5) * 2000; // Random Z depth
+      
+      // Color based on brightness
+      const intensity = star.brightness;
+      colors[index] = intensity;     // R
+      colors[index + 1] = intensity; // G
+      colors[index + 2] = intensity; // B
+    });
 
     starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const starMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
       size: 2,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.8,
+      vertexColors: true,
+      sizeAttenuation: false // Keep consistent size regardless of distance
     });
 
     this.stars = new THREE.Points(starGeometry, starMaterial);
