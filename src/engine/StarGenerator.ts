@@ -85,30 +85,37 @@ export class StarGenerator {
   private generateStarsInCell(cellX: number, cellY: number): StarData[] {
     const stars: StarData[] = [];
     
-    // Create a seed for this cell
+    // Create a seed for this cell using improved hashing
     const cellSeed = this.hashCellCoordinates(cellX, cellY, this.config.seed);
+    
+    // Initialize PRNG state for this cell
+    let rngState = cellSeed;
     
     // Determine number of stars in this cell
     const baseStarCount = Math.floor(this.config.starDensity * (this.config.cellSize / 1000) ** 2);
-    const starCount = baseStarCount + (this.fastHash(cellSeed + 1) % 5) - 2; // ±2 variation
+    rngState = this.xorshift32(rngState);
+    const starCount = baseStarCount + (Math.abs(rngState) % 5) - 2; // ±2 variation
     
     // Generate stars at deterministic positions within the cell
     for (let i = 0; i < Math.max(0, starCount); i++) {
-      const starSeed = cellSeed + i * 1000; // Ensure unique seed per star
+      // Generate position within cell using improved randomness
+      rngState = this.xorshift32(rngState);
+      const localX = Math.abs(rngState) % this.config.cellSize;
       
-      // Generate position within cell
-      const localX = (this.fastHash(starSeed) % this.config.cellSize);
-      const localY = (this.fastHash(starSeed + 1) % this.config.cellSize);
+      rngState = this.xorshift32(rngState);
+      const localY = Math.abs(rngState) % this.config.cellSize;
       
       const x = cellX * this.config.cellSize + localX;
       const y = cellY * this.config.cellSize + localY;
       
-      // Generate star properties
+      // Generate star properties with better distribution
+      rngState = this.xorshift32(rngState);
       const sizeRange = this.config.maxSize - this.config.minSize;
-      const size = this.config.minSize + ((this.fastHash(starSeed + 2) % 100) / 100) * sizeRange;
+      const size = this.config.minSize + (Math.abs(rngState) / 0x7fffffff) * sizeRange;
       
+      rngState = this.xorshift32(rngState);
       const brightnessRange = this.config.maxBrightness - this.config.minBrightness;
-      const brightness = this.config.minBrightness + ((this.fastHash(starSeed + 3) % 100) / 100) * brightnessRange;
+      const brightness = this.config.minBrightness + (Math.abs(rngState) / 0x7fffffff) * brightnessRange;
       
       stars.push({ x, y, size, brightness });
     }
@@ -118,23 +125,39 @@ export class StarGenerator {
 
   /**
    * Hash cell coordinates with seed to create deterministic randomness
+   * Uses FNV-1a hash for better distribution
    */
   private hashCellCoordinates(cellX: number, cellY: number, seed: number): number {
-    // Simple hash function that combines cell coordinates with seed
-    let hash = seed;
-    hash = (hash * 31 + cellX) & 0x7fffffff;
-    hash = (hash * 31 + cellY) & 0x7fffffff;
-    return hash;
+    // FNV-1a hash algorithm for better randomness
+    let hash = seed ^ 0x811c9dc5; // FNV offset basis
+    
+    // Hash cellX
+    const xBytes = new Uint8Array(new Int32Array([cellX]).buffer);
+    for (const byte of xBytes) {
+      hash ^= byte;
+      hash = (hash * 0x01000193) >>> 0; // FNV prime
+    }
+    
+    // Hash cellY  
+    const yBytes = new Uint8Array(new Int32Array([cellY]).buffer);
+    for (const byte of yBytes) {
+      hash ^= byte;
+      hash = (hash * 0x01000193) >>> 0; // FNV prime
+    }
+    
+    return hash & 0x7fffffff; // Ensure positive
   }
 
   /**
-   * Fast hash function for generating pseudo-random numbers
-   * Based on the linear congruential generator pattern
+   * Xorshift32 PRNG for high-quality pseudo-random sequences
+   * Much better distribution than linear congruential generators
    */
-  private fastHash(input: number): number {
-    let hash = input;
-    hash = ((hash * 1664525) + 1013904223) & 0x7fffffff;
-    return hash;
+  private xorshift32(state: number): number {
+    if (state === 0) state = 1; // Avoid zero state
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state & 0x7fffffff; // Keep positive
   }
 
   /**
