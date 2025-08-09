@@ -55,10 +55,9 @@ export class Engine implements GameEngine {
   context: CanvasRenderingContext2D;
   private camera: Camera = { x: 0, y: 0, zoom: 1 };
   
-  // Rendering modes
+  // Rendering modes - 3D only
   private renderer2D: Renderer;
   private renderer3D: ThreeRenderer | null = null;
-  private renderMode: '2D' | '3D' = '2D'; // Default to 2D for compatibility
   private canvas3D: HTMLCanvasElement | null = null; // Separate canvas for 3D
   
   // Modular components
@@ -120,22 +119,23 @@ export class Engine implements GameEngine {
     // Connect scene manager to NPC AI manager for actor-based movement
     this.systemManager.getNPCAIManager().setSceneManager(this.sceneManager);
     
+    // Connect NPC AI manager to world manager for NPC rendering
+    this.systemManager.getWorldManager().setNPCAIManager(this.systemManager.getNPCAIManager());
+    
     // Create a separate canvas for 3D rendering (overlay)
     this.create3DCanvas();
     
-    // Initialize 3D renderer (lazy load for performance)
+    // Initialize 3D renderer (required for 3D-only mode)
     if (this.canvas3D) {
       try {
         this.renderer3D = new ThreeRenderer(this.canvas3D);
         console.log('3D renderer initialized successfully');
       } catch (error) {
-        console.warn('3D renderer initialization failed, falling back to 2D only:', error);
-        this.renderer3D = null;
-        if (this.canvas3D) {
-          this.canvas3D.remove();
-          this.canvas3D = null;
-        }
+        console.error('3D renderer initialization failed - this is required for 3D-only mode:', error);
+        throw new Error(`Failed to initialize required 3D renderer: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    } else {
+      throw new Error('Failed to create 3D canvas - required for 3D-only mode');
     }
     
     // Set up game loop callbacks
@@ -165,9 +165,9 @@ export class Engine implements GameEngine {
     this.canvas3D.style.left = '0';
     this.canvas3D.style.width = '100%';
     this.canvas3D.style.height = '100%';
-    this.canvas3D.style.pointerEvents = 'none'; // Let 2D canvas handle events
+    this.canvas3D.style.pointerEvents = 'auto'; // Enable events for 3D navigation
     this.canvas3D.style.zIndex = '1'; // Above 2D canvas
-    this.canvas3D.style.display = 'none'; // Hidden by default
+    this.canvas3D.style.display = 'block'; // Visible by default
     
     // Set initial dimensions - use container dimensions if available, fallback to 2D canvas
     const containerWidth = this.canvas.parentElement.clientWidth || this.canvas.clientWidth || this.canvas.width;
@@ -316,25 +316,25 @@ export class Engine implements GameEngine {
    */
   render = (): void => {
     performanceMonitor.profileSystem('Renderer', () => {
-      if (this.renderMode === '3D' && this.renderer3D && this.canvas3D) {
-        // Hide 2D canvas and show 3D canvas
-        this.canvas.style.display = 'none';
+      if (this.renderer3D && this.canvas3D) {
+        // Use 3D renderer (primary mode)
+        this.canvas.style.display = 'none'; // Hide 2D canvas
         this.canvas3D.style.display = 'block';
         
-        // Use 3D renderer
         this.renderer3D.render(
           this.camera,
           this.systemManager.getWorldManager(),
           this.systemManager.getTimeManager()
         );
       } else {
-        // Show 2D canvas and hide 3D canvas
+        console.error('3D renderer not available - this should not happen in 3D-only mode');
+        
+        // Emergency fallback to 2D renderer
         this.canvas.style.display = 'block';
         if (this.canvas3D) {
           this.canvas3D.style.display = 'none';
         }
         
-        // Use 2D renderer (fallback and default)
         this.renderer2D.render(
           this.camera,
           this.systemManager.getWorldManager(),
@@ -493,6 +493,7 @@ export class Engine implements GameEngine {
 
   /**
    * Switch between 2D and 3D rendering modes.
+   * Note: In 3D-only mode, this method maintains compatibility but always returns to 3D.
    * 
    * @param mode - The rendering mode to switch to ('2D' or '3D')
    * @returns true if the switch was successful, false otherwise
@@ -504,15 +505,18 @@ export class Engine implements GameEngine {
       return false;
     }
     
-    if (mode === '3D' && !this.renderer3D) {
-      console.warn('3D renderer not available, staying in 2D mode');
+    if (mode === '2D') {
+      console.warn('2D mode is not available in 3D-only mode, staying in 3D');
       return false;
     }
     
-    this.renderMode = mode;
+    if (mode === '3D' && !this.renderer3D) {
+      console.error('3D renderer not available - this should not happen in 3D-only mode');
+      return false;
+    }
     
     // If switching to 3D mode and canvas has invalid dimensions, trigger a resize
-    if (mode === '3D' && this.canvas3D && (this.canvas3D.width <= 0 || this.canvas3D.height <= 0)) {
+    if (this.canvas3D && (this.canvas3D.width <= 0 || this.canvas3D.height <= 0)) {
       const containerWidth = this.canvas.parentElement?.clientWidth || this.canvas.clientWidth || this.canvas.width;
       const containerHeight = this.canvas.parentElement?.clientHeight || this.canvas.clientHeight || this.canvas.height;
       
@@ -521,21 +525,23 @@ export class Engine implements GameEngine {
       }
     }
     
-    console.log(`Switched to ${mode} rendering mode`);
+    console.log(`Confirmed ${mode} rendering mode (3D-only)`);
     return true;
   }
 
   /**
    * Get the current rendering mode.
+   * Note: In 3D-only mode, this always returns '3D'.
    * 
-   * @returns Current rendering mode ('2D' or '3D')
+   * @returns Current rendering mode (always '3D' in 3D-only mode)
    */
   getRenderMode(): '2D' | '3D' {
-    return this.renderMode;
+    return '3D'; // Always 3D in 3D-only mode
   }
 
   /**
    * Check if 3D rendering is available.
+   * Note: In 3D-only mode, this should always return true if properly initialized.
    * 
    * @returns true if 3D renderer is initialized and available, false otherwise
    */

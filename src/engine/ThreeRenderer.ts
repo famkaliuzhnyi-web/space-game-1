@@ -27,6 +27,16 @@ export class ThreeRenderer {
   private cameraTarget: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   private cameraPosition: THREE.Vector3 = new THREE.Vector3(0, 0, 300);
 
+  // 3D Navigation and interaction properties
+  private isDragging: boolean = false;
+  private dragStart: { x: number, y: number } = { x: 0, y: 0 };
+  private selectedObject: THREE.Object3D | null = null;
+  private raycaster: THREE.Raycaster = new THREE.Raycaster();
+  private mouse: THREE.Vector2 = new THREE.Vector2();
+
+  // Orbital visualization
+  private planetOrbits: THREE.Group = new THREE.Group();
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     
@@ -72,8 +82,14 @@ export class ThreeRenderer {
       // Create star field
       this.createStarField();
 
+      // Create orbital visualization group
+      this.scene.add(this.planetOrbits);
+
       // Handle window resize
       this.setupResizeHandler();
+
+      // Set up 3D navigation input handlers
+      this.setupInputHandlers();
     } catch (error) {
       console.error('ThreeRenderer initialization failed:', error);
       throw new Error(`Failed to initialize 3D renderer: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -108,6 +124,66 @@ export class ThreeRenderer {
         this.scene.add(this.ambientLight);
       }
     }
+  }
+
+  /**
+   * Create a 3D NPC ship with appropriate styling based on type
+   */
+  private createNPCShip(_x: number, _y: number, npcShip: any): THREE.Object3D {
+    const shipGroup = new THREE.Group();
+    shipGroup.name = `npc-ship-${npcShip.id}`;
+
+    // Main hull - different colors based on NPC type
+    const hullGeometry = new THREE.ConeGeometry(3, 12, 6);
+    let hullColor = 0x666666; // Default gray
+
+    switch (npcShip.type) {
+      case 'trader':
+        hullColor = 0x4a90e2; // Blue
+        break;
+      case 'pirate':
+        hullColor = 0xff4444; // Red
+        break;
+      case 'patrol':
+        hullColor = 0x44ff44; // Green
+        break;
+      case 'civilian':
+        hullColor = 0xffff44; // Yellow
+        break;
+      case 'transport':
+        hullColor = 0x8844ff; // Purple
+        break;
+    }
+
+    const hullMaterial = new THREE.MeshLambertMaterial({ color: hullColor });
+    const hullMesh = new THREE.Mesh(hullGeometry, hullMaterial);
+    hullMesh.rotateZ(Math.PI / 2); // Point to the right
+    shipGroup.add(hullMesh);
+
+    // Engine glow
+    const engineGeometry = new THREE.SphereGeometry(1.5, 8, 8);
+    const engineMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00ffff,
+      transparent: true,
+      opacity: 0.7
+    });
+    const engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
+    engineMesh.position.set(-8, 0, 0);
+    shipGroup.add(engineMesh);
+
+    // Wings/fins
+    const wingGeometry = new THREE.BoxGeometry(2, 8, 1);
+    const wingMaterial = new THREE.MeshLambertMaterial({ color: hullColor });
+    
+    const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
+    leftWing.position.set(2, 0, 2);
+    shipGroup.add(leftWing);
+    
+    const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
+    rightWing.position.set(2, 0, -2);
+    shipGroup.add(rightWing);
+
+    return shipGroup;
   }
 
   /**
@@ -191,10 +267,10 @@ export class ThreeRenderer {
     // Update world objects
     this.updateWorldObjects(worldManager);
 
-    // Animate stars (subtle rotation)
-    if (this.stars) {
-      this.stars.rotation.y += 0.0002;
-    }
+    // Update planet orbits
+    this.createPlanetOrbits(worldManager);
+
+    // Stars should remain fixed in space (no rotation)
 
     // Render the scene
     this.renderer.render(this.scene, this.camera);
@@ -289,6 +365,8 @@ export class ThreeRenderer {
         return this.createPlanet(position.x, position.y, obj.object as Planet);
       case 'ship':
         return this.createShip(position.x, position.y, obj.object);
+      case 'npc-ship':
+        return this.createNPCShip(position.x, position.y, obj.object);
       case 'cargo':
         return this.createCargo(position.x, position.y, obj.object);
       case 'debris':
@@ -677,9 +755,243 @@ export class ThreeRenderer {
   }
 
   /**
+   * Set up 3D navigation input handlers
+   */
+  private setupInputHandlers(): void {
+    // Right-click drag for camera movement
+    this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+    this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+    this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+    
+    // Left-click for object selection
+    this.canvas.addEventListener('click', this.onMouseClick.bind(this));
+    
+    // Mouse wheel for zoom
+    this.canvas.addEventListener('wheel', this.onMouseWheel.bind(this));
+    
+    // Prevent context menu on right-click
+    this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  /**
+   * Handle mouse down events
+   */
+  private onMouseDown(event: MouseEvent): void {
+    if (event.button === 2) { // Right mouse button
+      this.isDragging = true;
+      this.dragStart.x = event.clientX;
+      this.dragStart.y = event.clientY;
+    }
+  }
+
+  /**
+   * Handle mouse move events
+   */
+  private onMouseMove(event: MouseEvent): void {
+    if (this.isDragging && event.buttons === 4) { // Right mouse button is down
+      const deltaX = event.clientX - this.dragStart.x;
+      const deltaY = event.clientY - this.dragStart.y;
+      
+      // Calculate movement based on camera distance for consistent feel
+      const distance = this.cameraPosition.distanceTo(this.cameraTarget);
+      const movementSpeed = distance * 0.002;
+      
+      // Move camera target based on mouse movement
+      this.cameraTarget.x -= deltaX * movementSpeed;
+      this.cameraTarget.y += deltaY * movementSpeed; // Invert Y for natural feel
+      
+      // Update camera position to maintain relative position to target
+      this.cameraPosition.x = this.cameraTarget.x;
+      this.cameraPosition.y = this.cameraTarget.y;
+      
+      // Update camera
+      this.camera.position.copy(this.cameraPosition);
+      this.camera.lookAt(this.cameraTarget);
+      
+      // Update drag start position for smooth continuous dragging
+      this.dragStart.x = event.clientX;
+      this.dragStart.y = event.clientY;
+    }
+  }
+
+  /**
+   * Handle mouse up events
+   */
+  private onMouseUp(event: MouseEvent): void {
+    if (event.button === 2) { // Right mouse button
+      this.isDragging = false;
+    }
+  }
+
+  /**
+   * Handle mouse click events for object selection
+   */
+  private onMouseClick(event: MouseEvent): void {
+    if (event.button === 0) { // Left mouse button
+      // Calculate normalized device coordinates
+      const rect = this.canvas.getBoundingClientRect();
+      this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      // Update the picking ray with the camera and mouse position
+      this.raycaster.setFromCamera(this.mouse, this.camera);
+      
+      // Calculate objects intersecting the picking ray
+      const intersects = this.raycaster.intersectObjects([...this.spaceObjects.values()], true);
+      
+      if (intersects.length > 0) {
+        // Select the closest object
+        this.selectObject(intersects[0].object);
+      } else {
+        // Deselect current object
+        this.deselectObject();
+      }
+    }
+  }
+
+  /**
+   * Handle mouse wheel events for zoom
+   */
+  private onMouseWheel(event: WheelEvent): void {
+    event.preventDefault();
+    
+    // Calculate zoom based on wheel delta
+    const zoomSpeed = 0.1;
+    const zoomDelta = event.deltaY > 0 ? 1 + zoomSpeed : 1 - zoomSpeed;
+    
+    // Calculate new camera distance
+    const currentDistance = this.cameraPosition.distanceTo(this.cameraTarget);
+    const newDistance = Math.max(50, Math.min(2000, currentDistance * zoomDelta)); // Clamp zoom
+    
+    // Update camera position to maintain target focus
+    this.cameraPosition.z = this.cameraTarget.z + newDistance;
+    this.camera.position.copy(this.cameraPosition);
+  }
+
+  /**
+   * Select an object and show its information
+   */
+  private selectObject(object: THREE.Object3D): void {
+    // Deselect previous object
+    this.deselectObject();
+    
+    // Find the top-level object in our space objects map
+    let topLevelObject = object;
+    while (topLevelObject.parent && topLevelObject.parent !== this.scene) {
+      topLevelObject = topLevelObject.parent;
+    }
+    
+    this.selectedObject = topLevelObject;
+    
+    // Add visual selection indicator (outline or glow effect)
+    this.addSelectionIndicator(topLevelObject);
+    
+    // TODO: Dispatch event or call callback to show object information panel
+    console.log('Selected object:', topLevelObject.name || 'Unknown object');
+  }
+
+  /**
+   * Deselect the currently selected object
+   */
+  private deselectObject(): void {
+    if (this.selectedObject) {
+      this.removeSelectionIndicator(this.selectedObject);
+      this.selectedObject = null;
+    }
+  }
+
+  /**
+   * Add visual selection indicator to an object
+   */
+  private addSelectionIndicator(object: THREE.Object3D): void {
+    // Create a wireframe outline as selection indicator
+    if (object instanceof THREE.Group && object.children.length > 0) {
+      const mainMesh = object.children[0];
+      if (mainMesh instanceof THREE.Mesh) {
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+          color: 0x00ff00,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.5
+        });
+        
+        const wireframeGeometry = mainMesh.geometry.clone();
+        const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+        wireframeMesh.name = 'selection-indicator';
+        wireframeMesh.scale.setScalar(1.1); // Slightly larger than original
+        
+        object.add(wireframeMesh);
+      }
+    }
+  }
+
+  /**
+   * Create planet orbits for visualization
+   */
+  private createPlanetOrbits(worldManager: WorldManager): void {
+    // Clear existing orbits
+    this.planetOrbits.clear();
+
+    const currentSystem = worldManager.getCurrentSystem();
+    if (!currentSystem || !currentSystem.planets) return;
+
+    // Find system center (star position)
+    const systemCenter = new THREE.Vector3(currentSystem.position.x, -currentSystem.position.y, 0);
+
+    // Create orbit lines for each planet
+    currentSystem.planets.forEach(planet => {
+      const planetPos = new THREE.Vector3(planet.position.x, -planet.position.y, 0);
+      const orbitRadius = planetPos.distanceTo(systemCenter);
+
+      if (orbitRadius > 5) { // Only show orbits for planets with reasonable distance
+        const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.5, orbitRadius + 0.5, 64);
+        const orbitMaterial = new THREE.MeshBasicMaterial({
+          color: 0x444444,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide
+        });
+
+        const orbitMesh = new THREE.Mesh(orbitGeometry, orbitMaterial);
+        orbitMesh.position.copy(systemCenter);
+        orbitMesh.rotateX(Math.PI / 2); // Make it horizontal
+        
+        this.planetOrbits.add(orbitMesh);
+      }
+    });
+  }
+
+  /**
+   * Remove visual selection indicator from an object
+   */
+  private removeSelectionIndicator(object: THREE.Object3D): void {
+    const indicator = object.children.find(child => child.name === 'selection-indicator');
+    if (indicator) {
+      object.remove(indicator);
+      // Clean up geometry and material
+      if (indicator instanceof THREE.Mesh) {
+        indicator.geometry.dispose();
+        if (indicator.material instanceof THREE.Material) {
+          indicator.material.dispose();
+        }
+      }
+    }
+  }
+
+  /**
    * Clean up resources
    */
   dispose(): void {
+    // Remove event listeners
+    this.canvas.removeEventListener('mousedown', this.onMouseDown.bind(this));
+    this.canvas.removeEventListener('mousemove', this.onMouseMove.bind(this));
+    this.canvas.removeEventListener('mouseup', this.onMouseUp.bind(this));
+    this.canvas.removeEventListener('click', this.onMouseClick.bind(this));
+    this.canvas.removeEventListener('wheel', this.onMouseWheel.bind(this));
+    
+    // Deselect any selected object
+    this.deselectObject();
+
     // Dispose of all geometries and materials
     this.spaceObjects.forEach((mesh) => {
       if (mesh instanceof THREE.Mesh) {
