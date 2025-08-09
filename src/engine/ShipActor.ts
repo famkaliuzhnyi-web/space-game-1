@@ -1,6 +1,7 @@
 import { Actor } from './Actor';
 import { Ship } from '../types/player';
 import { Vector2D } from '../types';
+import { shipTextureManager } from './ShipTextureManager';
 
 /**
  * Ship Actor implementing physics-based movement and behavior.
@@ -14,6 +15,7 @@ export class ShipActor extends Actor {
   private rotationSpeed: number;
   private thrustParticles: Array<{ x: number; y: number; life: number }> = [];
   private movementCompleteCallback?: () => void;
+  private useTextures: boolean = true;
 
   constructor(ship: Ship) {
     super(ship.id, ship.location.coordinates || { x: 0, y: 0 });
@@ -95,7 +97,7 @@ export class ShipActor extends Actor {
   }
 
   /**
-   * Update ship movement with physics
+   * Update ship movement with improved physics
    */
   update(deltaTime: number): void {
     if (!this.targetPosition) {
@@ -114,18 +116,38 @@ export class ShipActor extends Actor {
       const dy = this.targetPosition.y - this.position.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      if (distance < 5) {
-        // Arrived at target
-        this.position = { ...this.targetPosition };
-        this.targetPosition = null;
-        this.velocity = { x: 0, y: 0 };
-        this.ship.location.isInTransit = false;
+      // Improved arrival threshold - larger and more forgiving
+      const arrivalRadius = 15;
+      
+      if (distance < arrivalRadius) {
+        // Smooth arrival - gradually reduce speed as we approach
+        const arrivalFactor = Math.max(0.2, distance / arrivalRadius);
         
-        // Call movement completion callback if set
-        if (this.movementCompleteCallback) {
-          const callback = this.movementCompleteCallback;
-          this.movementCompleteCallback = undefined; // Clear callback after use
-          callback();
+        // More aggressive deceleration when very close
+        if (distance < 8) {
+          this.velocity.x *= 0.5;
+          this.velocity.y *= 0.5;
+        } else {
+          this.velocity.x *= arrivalFactor;
+          this.velocity.y *= arrivalFactor;
+        }
+        
+        // Only stop completely when very close and moving slowly
+        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        if (distance < 10 && currentSpeed < 8) {
+          // Final stop - set position close to target and stop all movement
+          this.position.x = this.targetPosition.x;
+          this.position.y = this.targetPosition.y;
+          this.velocity = { x: 0, y: 0 };
+          this.targetPosition = null;
+          this.ship.location.isInTransit = false;
+          
+          // Call movement completion callback if set
+          if (this.movementCompleteCallback) {
+            const callback = this.movementCompleteCallback;
+            this.movementCompleteCallback = undefined; // Clear callback after use
+            callback();
+          }
         }
       } else {
         // Calculate desired direction
@@ -150,16 +172,41 @@ export class ShipActor extends Actor {
           this.rotation += Math.sign(rotationDiff) * maxRotationChange;
         }
         
+        // Predictive deceleration - start slowing down before reaching target
+        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const brakingDistance = Math.max(40, (currentSpeed * currentSpeed) / (2 * this.acceleration * 0.8));
+        
+        let targetAcceleration;
+        if (distance < brakingDistance) {
+          // Deceleration phase - reduce thrust as we approach target
+          const decelerationFactor = Math.max(0.2, distance / brakingDistance);
+          targetAcceleration = this.acceleration * decelerationFactor * 0.4; // Stronger deceleration
+        } else {
+          // Normal acceleration phase
+          targetAcceleration = this.acceleration;
+          
+          // Only apply full thrust if we're reasonably aligned with target
+          const alignmentFactor = Math.max(0.4, Math.cos(Math.abs(rotationDiff)));
+          targetAcceleration *= alignmentFactor;
+        }
+        
         // Apply acceleration towards target
-        const accelerationForce = this.acceleration * deltaTime;
+        const accelerationForce = targetAcceleration * deltaTime;
         this.velocity.x += directionX * accelerationForce;
         this.velocity.y += directionY * accelerationForce;
         
+        // Dynamic speed limiting based on distance to target to prevent overshoot
+        let effectiveMaxSpeed = this.maxSpeed;
+        if (distance < 80) {
+          // More aggressive speed reduction when close to target
+          effectiveMaxSpeed = Math.max(15, this.maxSpeed * Math.pow(distance / 80, 1.5));
+        }
+        
         // Limit maximum speed
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        if (currentSpeed > this.maxSpeed) {
-          this.velocity.x = (this.velocity.x / currentSpeed) * this.maxSpeed;
-          this.velocity.y = (this.velocity.y / currentSpeed) * this.maxSpeed;
+        if (currentSpeed > effectiveMaxSpeed) {
+          const speedReduction = effectiveMaxSpeed / currentSpeed;
+          this.velocity.x *= speedReduction;
+          this.velocity.y *= speedReduction;
         }
       }
     }
@@ -232,6 +279,117 @@ export class ShipActor extends Actor {
   private renderShipHull(context: CanvasRenderingContext2D): void {
     const category = this.ship.class.category;
     
+    // Try to render with textures first
+    if (this.useTextures && this.renderWithTextures(context, category)) {
+      return;
+    }
+    
+    // Fallback to original solid color rendering
+    this.renderSolidColorHull(context, category);
+  }
+
+  /**
+   * Render ship hull using textures
+   */
+  private renderWithTextures(context: CanvasRenderingContext2D, category: string): boolean {
+    // Get appropriate textures for this ship class
+    const hullTexture = this.getHullTexture(category);
+    const engineTexture = shipTextureManager.getTexture('engine-thruster-small');
+    const cockpitTexture = this.getCockpitTexture(category);
+    
+    if (!hullTexture) {
+      return false; // Texture not loaded, fallback to solid colors
+    }
+    
+    try {
+      // Render main hull texture
+      const hullWidth = this.getHullWidth(category);
+      const hullHeight = this.getHullHeight(category);
+      
+      context.drawImage(
+        hullTexture, 
+        -hullWidth/2, -hullHeight/2, 
+        hullWidth, hullHeight
+      );
+      
+      // Render engine texture if available
+      if (engineTexture) {
+        const engineX = -hullWidth/2 - 8;
+        const engineY = -6;
+        context.drawImage(engineTexture, engineX, engineY, 12, 12);
+      }
+      
+      // Render cockpit texture if available
+      if (cockpitTexture) {
+        const cockpitX = hullWidth/4;
+        const cockpitY = -4;
+        context.drawImage(cockpitTexture, cockpitX, cockpitY, 8, 8);
+      }
+      
+      return true;
+    } catch (error) {
+      console.warn('Failed to render textured ship hull:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get hull texture based on ship category
+   */
+  private getHullTexture(category: string): HTMLImageElement | null {
+    switch (category) {
+      case 'heavy-freight':
+        return shipTextureManager.getTexture('hull-panel-large');
+      case 'transport':
+        return shipTextureManager.getTexture('hull-panel-medium');
+      case 'courier':
+      case 'combat':
+      case 'explorer':
+      default:
+        return shipTextureManager.getTexture('hull-panel-small');
+    }
+  }
+
+  /**
+   * Get cockpit texture based on ship category
+   */
+  private getCockpitTexture(category: string): HTMLImageElement | null {
+    if (category === 'heavy-freight' || category === 'transport') {
+      return shipTextureManager.getTexture('bridge-section');
+    } else {
+      return shipTextureManager.getTexture('cockpit-small');
+    }
+  }
+
+  /**
+   * Get hull dimensions based on ship category
+   */
+  private getHullWidth(category: string): number {
+    switch (category) {
+      case 'heavy-freight': return 20;
+      case 'transport': return 16;
+      case 'combat': return 14;
+      case 'courier': return 10;
+      case 'explorer':
+      default: return 12;
+    }
+  }
+
+  private getHullHeight(category: string): number {
+    switch (category) {
+      case 'heavy-freight': return 16;
+      case 'transport': return 12;
+      case 'combat': return 10;
+      case 'courier': return 8;
+      case 'explorer':
+      default: return 10;
+    }
+  }
+
+  /**
+   * Fallback solid color hull rendering (original implementation)
+   */
+  private renderSolidColorHull(context: CanvasRenderingContext2D, category: string): void {
     switch (category) {
       case 'courier':
         // Small, sleek design
@@ -325,5 +483,43 @@ export class ShipActor extends Actor {
    */
   getCurrentSpeed(): number {
     return Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+  }
+
+  /**
+   * Enable or disable texture rendering
+   */
+  setUseTextures(use: boolean): void {
+    this.useTextures = use;
+  }
+
+  /**
+   * Preload textures for this ship
+   */
+  async preloadTextures(): Promise<void> {
+    const category = this.ship.class.category;
+    const texturesToLoad = [];
+    
+    // Add hull texture
+    switch (category) {
+      case 'heavy-freight':
+        texturesToLoad.push('hull-panel-large');
+        break;
+      case 'transport':
+        texturesToLoad.push('hull-panel-medium');
+        break;
+      default:
+        texturesToLoad.push('hull-panel-small');
+    }
+    
+    // Add engine and cockpit textures
+    texturesToLoad.push('engine-thruster-small');
+    
+    if (category === 'heavy-freight' || category === 'transport') {
+      texturesToLoad.push('bridge-section');
+    } else {
+      texturesToLoad.push('cockpit-small');
+    }
+    
+    await shipTextureManager.loadTextures(texturesToLoad);
   }
 }

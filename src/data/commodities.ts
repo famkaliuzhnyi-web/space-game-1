@@ -40,8 +40,112 @@ export const COMMODITIES: Record<string, Commodity> = {
     legalStatus: 'legal',
     perishable: false
   },
+
+  'titanium-ore': {
+    id: 'titanium-ore',
+    name: 'Titanium Ore',
+    category: 'raw-materials',
+    description: 'Lightweight, strong metal ore used in ship hull construction',
+    basePrice: 180,
+    unitSize: 1,
+    unitMass: 3.2,
+    volatility: 0.25,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'copper-ore': {
+    id: 'copper-ore',
+    name: 'Copper Ore',
+    category: 'raw-materials',
+    description: 'Conductive metal ore essential for ship wiring and electronics',
+    basePrice: 65,
+    unitSize: 1,
+    unitMass: 2.8,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
   
   // Manufactured Goods
+  'steel-alloys': {
+    id: 'steel-alloys',
+    name: 'Steel Alloys',
+    category: 'manufactured',
+    description: 'Refined metal alloys used in ship construction',
+    basePrice: 150,
+    unitSize: 1,
+    unitMass: 4.0,
+    volatility: 0.15,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'titanium-plates': {
+    id: 'titanium-plates',
+    name: 'Titanium Plates',
+    category: 'manufactured',
+    description: 'Processed titanium hull plating for ship construction',
+    basePrice: 420,
+    unitSize: 2,
+    unitMass: 6.0,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'ship-components': {
+    id: 'ship-components',
+    name: 'Ship Components',
+    category: 'manufactured',
+    description: 'Basic ship parts including wiring, fittings, and subsystems',
+    basePrice: 680,
+    unitSize: 2,
+    unitMass: 3.5,
+    volatility: 0.25,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'fusion-drives': {
+    id: 'fusion-drives',
+    name: 'Fusion Drives',
+    category: 'manufactured',
+    description: 'Advanced ship propulsion systems',
+    basePrice: 2800,
+    unitSize: 4,
+    unitMass: 12.0,
+    volatility: 0.3,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'ship-hulls': {
+    id: 'ship-hulls',
+    name: 'Ship Hulls',
+    category: 'manufactured',
+    description: 'Complete ship hull assemblies ready for outfitting',
+    basePrice: 4200,
+    unitSize: 8,
+    unitMass: 25.0,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'complete-ships': {
+    id: 'complete-ships',
+    name: 'Complete Ships',
+    category: 'manufactured',
+    description: 'Fully assembled starships ready for delivery',
+    basePrice: 15000,
+    unitSize: 20,
+    unitMass: 100.0,
+    volatility: 0.4,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
   'electronics': {
     id: 'electronics',
     name: 'Electronics',

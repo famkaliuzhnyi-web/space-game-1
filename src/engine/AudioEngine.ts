@@ -524,6 +524,13 @@ export class AudioEngine {
   }
 
   /**
+   * Get the audio context
+   */
+  getContext(): AudioContext {
+    return this.context;
+  }
+
+  /**
    * Get audio engine statistics
    */
   getStats(): {

@@ -8,6 +8,7 @@ import { SceneManager } from './SceneManager';
 import { PoolManager } from './ObjectPool';
 import { performanceMonitor } from './PerformanceMonitor';
 import { resourceManager } from './ResourceManager';
+import { shipTextureManager } from './ShipTextureManager';
 import { audioEngine } from './AudioEngine';
 
 /**
@@ -107,7 +108,11 @@ export class Engine implements GameEngine {
     performanceMonitor.setupGPUProfiling(canvas);
     
     // Initialize audio engine
-    audioEngine; // Initialize singleton
+    // Ensure singleton is initialized
+    audioEngine.getContext(); // Initialize the audio context
+    
+    // Initialize ship texture manager
+    this.initializeTextureManager();
     
     // Connect scene manager to world manager before systems start
     this.systemManager.getWorldManager().setSceneManager(this.sceneManager);
@@ -122,6 +127,7 @@ export class Engine implements GameEngine {
     if (this.canvas3D) {
       try {
         this.renderer3D = new ThreeRenderer(this.canvas3D);
+        console.log('3D renderer initialized successfully');
       } catch (error) {
         console.warn('3D renderer initialization failed, falling back to 2D only:', error);
         this.renderer3D = null;
@@ -163,12 +169,33 @@ export class Engine implements GameEngine {
     this.canvas3D.style.zIndex = '1'; // Above 2D canvas
     this.canvas3D.style.display = 'none'; // Hidden by default
     
-    // Match the dimensions of the main canvas
-    this.canvas3D.width = this.canvas.width;
-    this.canvas3D.height = this.canvas.height;
+    // Set initial dimensions - use container dimensions if available, fallback to 2D canvas
+    const containerWidth = this.canvas.parentElement.clientWidth || this.canvas.clientWidth || this.canvas.width;
+    const containerHeight = this.canvas.parentElement.clientHeight || this.canvas.clientHeight || this.canvas.height;
+    
+    this.canvas3D.width = containerWidth;
+    this.canvas3D.height = containerHeight;
     
     // Insert after the main canvas
     this.canvas.parentElement.insertBefore(this.canvas3D, this.canvas.nextSibling);
+  }
+
+  /**
+   * Initialize the ship texture manager
+   */
+  private async initializeTextureManager(): Promise<void> {
+    try {
+      await shipTextureManager.initialize();
+      
+      // Preload essential textures for immediate use
+      await shipTextureManager.preloadEssentialTextures();
+      
+      console.log('Ship texture manager initialized successfully');
+      console.log('Texture stats:', shipTextureManager.getStats());
+    } catch (error) {
+      console.warn('Failed to initialize ship texture manager:', error);
+      console.log('Ships will render with solid colors instead of textures');
+    }
   }
 
   /**
@@ -483,6 +510,17 @@ export class Engine implements GameEngine {
     }
     
     this.renderMode = mode;
+    
+    // If switching to 3D mode and canvas has invalid dimensions, trigger a resize
+    if (mode === '3D' && this.canvas3D && (this.canvas3D.width <= 0 || this.canvas3D.height <= 0)) {
+      const containerWidth = this.canvas.parentElement?.clientWidth || this.canvas.clientWidth || this.canvas.width;
+      const containerHeight = this.canvas.parentElement?.clientHeight || this.canvas.clientHeight || this.canvas.height;
+      
+      if (containerWidth > 0 && containerHeight > 0) {
+        this.resizeCanvas(containerWidth, containerHeight);
+      }
+    }
+    
     console.log(`Switched to ${mode} rendering mode`);
     return true;
   }
@@ -558,6 +596,12 @@ export class Engine implements GameEngine {
    * ```
    */
   resizeCanvas(width: number, height: number): void {
+    // Don't resize to 0 dimensions
+    if (width <= 0 || height <= 0) {
+      console.warn('Ignoring invalid canvas resize dimensions:', width, 'x', height);
+      return;
+    }
+    
     this.renderer2D.resizeCanvas(width, height);
     
     // Also resize 3D canvas and renderer if available

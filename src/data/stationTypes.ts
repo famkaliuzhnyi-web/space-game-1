@@ -25,7 +25,10 @@ export type StationType =
   | 'monastery'
   | 'casino_station'
   | 'manufacturing_hub'
-  | 'data_center';
+  | 'data_center'
+  | 'colonial'
+  | 'exploration'
+  | 'energy';
 
 export interface EnhancedStationInfo {
   id: string;

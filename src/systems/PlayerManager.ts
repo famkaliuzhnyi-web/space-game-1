@@ -297,11 +297,13 @@ export class PlayerManager implements InventoryManager {
     return this.player.currentStationId;
   }
 
-  setCurrentStation(stationId: string): void {
-    this.player.currentStationId = stationId;
+  setCurrentStation(stationId: string | null): void {
+    this.player.currentStationId = stationId || '';
     const currentShip = this.getCurrentShip();
-    currentShip.location.stationId = stationId;
-    this.player.statistics.stationsVisited.add(stationId);
+    currentShip.location.stationId = stationId || undefined;
+    if (stationId) {
+      this.player.statistics.stationsVisited.add(stationId);
+    }
   }
 
   // InventoryManager implementation
