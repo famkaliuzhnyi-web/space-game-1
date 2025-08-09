@@ -6,3 +6,7 @@ export { GameLoop } from './GameLoop';
 export { InputHandler } from './InputHandler';
 export type { ClickHandler } from './InputHandler';
 export { SystemManager } from './SystemManager';
+export { Actor } from './Actor';
+export { Scene } from './Scene';
+export { ShipActor } from './ShipActor';
+export { SceneManager } from './SceneManager';

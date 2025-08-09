@@ -1,5 +1,6 @@
 import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget } from '../types/world';
 import { Ship } from '../types/player';
+import { SceneManager } from '../engine/SceneManager';
 
 export class WorldManager {
   private galaxy: Galaxy;
@@ -11,6 +12,7 @@ export class WorldManager {
     startTime: number;
     duration: number;
   } | null = null;
+  private sceneManager: SceneManager | null = null;
 
   constructor() {
     this.galaxy = this.generateInitialGalaxy();
@@ -21,6 +23,23 @@ export class WorldManager {
    */
   setPlayerShip(ship: Ship): void {
     this.playerShip = ship;
+    
+    // Also set ship in scene manager if available
+    if (this.sceneManager) {
+      this.sceneManager.setPlayerShip(ship);
+    }
+  }
+
+  /**
+   * Set the scene manager for actor-based movement
+   */
+  setSceneManager(sceneManager: SceneManager): void {
+    this.sceneManager = sceneManager;
+    
+    // Set current ship if available
+    if (this.playerShip) {
+      this.sceneManager.setPlayerShip(this.playerShip);
+    }
   }
 
   /**
@@ -515,7 +534,12 @@ export class WorldManager {
       worldY = boundedY;
     }
 
-    // Start smooth movement animation
+    // Use scene manager for actor-based movement if available
+    if (this.sceneManager) {
+      return this.sceneManager.moveShipTo(worldX, worldY);
+    }
+
+    // Fallback to legacy movement system
     this.shipMovement = {
       isMoving: true,
       startPos: { ...this.playerShip.location.coordinates },
