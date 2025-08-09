@@ -10,6 +10,8 @@ import { CombatManager } from '../systems/CombatManager';
 import { InvestmentManager } from '../systems/InvestmentManager';
 import { TutorialManager } from '../systems/TutorialManager';
 import { QuestManager } from '../systems/QuestManager';
+import { MovementSystem } from '../systems/MovementSystem';
+import { SceneManager } from '../systems/SceneManager';
 
 /**
  * System manager for dependency injection and system lifecycle management.
@@ -38,6 +40,8 @@ export class SystemManager {
   private investmentManager: InvestmentManager;
   private tutorialManager: TutorialManager;
   private questManager: QuestManager;
+  private movementSystem: MovementSystem;
+  private sceneManager: SceneManager;
 
   constructor(canvas: HTMLCanvasElement) {
     // Initialize all systems
@@ -124,6 +128,18 @@ export class SystemManager {
       this.eventManager
     );
     
+    // Initialize movement system with required dependencies
+    this.movementSystem = new MovementSystem(
+      this.worldManager,
+      this.timeManager
+    );
+    
+    // Initialize scene manager with required dependencies
+    this.sceneManager = new SceneManager(
+      this.worldManager,
+      this.playerManager
+    );
+    
     // Link systems that need to communicate
     this.playerManager.setProgressionSystem(this.characterProgressionSystem);
     this.contractManager.setProgressionSystem(this.characterProgressionSystem);
@@ -174,6 +190,12 @@ export class SystemManager {
     
     // Update investment system
     this.investmentManager.updateInvestments();
+    
+    // Update movement system
+    this.movementSystem.update(deltaTime);
+    
+    // Update scene manager
+    this.sceneManager.update(deltaTime);
     
     // Update quest system
     this.questManager.update(deltaTime);
@@ -283,6 +305,14 @@ export class SystemManager {
 
   getQuestManager(): QuestManager {
     return this.questManager;
+  }
+
+  getMovementSystem(): MovementSystem {
+    return this.movementSystem;
+  }
+
+  getSceneManager(): SceneManager {
+    return this.sceneManager;
   }
 
   /**

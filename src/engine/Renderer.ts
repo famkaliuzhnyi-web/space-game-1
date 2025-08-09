@@ -1,6 +1,7 @@
 import { WorldManager } from '../systems/WorldManager';
 import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
+import { Scene } from './Scene';
 
 export interface Camera {
   x: number;
@@ -66,13 +67,18 @@ export class Renderer {
   /**
    * Main render method - orchestrates the entire rendering pipeline
    */
-  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager): void {
+  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager, scene?: Scene | null): void {
     this.clearCanvas();
     this.setupCamera(camera);
     
     // Render world content
     this.renderStars(camera);
     this.renderWorldObjects(worldManager);
+    
+    // Render scene actors (ships, etc.)
+    if (scene) {
+      scene.render(this.context, camera);
+    }
     
     this.resetCamera();
     

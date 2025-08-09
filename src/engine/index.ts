@@ -5,3 +5,7 @@ export { GameLoop } from './GameLoop';
 export { InputHandler } from './InputHandler';
 export type { ClickHandler } from './InputHandler';
 export { SystemManager } from './SystemManager';
+export { Scene } from './Scene';
+export type { IScene } from './Scene';
+export { Actor } from './Actor';
+export type { Vector2, Transform } from './Actor';

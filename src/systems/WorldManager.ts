@@ -485,4 +485,28 @@ export class WorldManager {
     }
     return allStations;
   }
+
+  /**
+   * Get a station by its ID
+   */
+  getStationById(stationId: string): Station | undefined {
+    for (const sector of this.galaxy.sectors) {
+      for (const system of sector.systems) {
+        const station = system.stations.find(s => s.id === stationId);
+        if (station) return station;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Get a system by its ID
+   */
+  getSystemById(systemId: string): StarSystem | undefined {
+    for (const sector of this.galaxy.sectors) {
+      const system = sector.systems.find(s => s.id === systemId);
+      if (system) return system;
+    }
+    return undefined;
+  }
 }

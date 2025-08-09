@@ -3,6 +3,8 @@ import { Renderer, Camera } from './Renderer';
 import { GameLoop } from './GameLoop';
 import { InputHandler } from './InputHandler';
 import { SystemManager } from './SystemManager';
+import { Scene } from './Scene';
+import { ShipMovementController } from '../utils/ShipMovementController';
 
 /**
  * Main game engine class with modular architecture.
@@ -53,6 +55,10 @@ export class Engine implements GameEngine {
   private gameLoop: GameLoop;
   private inputHandler: InputHandler;
   private systemManager: SystemManager;
+  
+  // Scene management
+  private currentScene: Scene | null = null;
+  private _shipMovementController: ShipMovementController | null = null;
 
   /**
    * Initialize the game engine with a canvas element.
@@ -90,7 +96,7 @@ export class Engine implements GameEngine {
     
     // Set up input handler
     this.inputHandler.setClickHandler((worldX, worldY) => {
-      InputHandler.handleWorldClick(worldX, worldY, this.systemManager.getWorldManager());
+      this.handleWorldClick(worldX, worldY);
     });
     
     // Ensure canvas has a dark background
@@ -114,6 +120,17 @@ export class Engine implements GameEngine {
     if (this.gameLoop.getIsRunning()) return;
     
     this.systemManager.startSystems();
+    
+    // Initialize current scene and player ship
+    const sceneManager = this.systemManager.getSceneManager();
+    const scene = sceneManager.getCurrentSystemScene();
+    this.setScene(scene);
+    console.log('Scene initialized:', scene.id, scene.name);
+    
+    // Create player ship actor
+    const shipActor = sceneManager.createPlayerShipActor();
+    console.log('Player ship actor created:', shipActor?.id, shipActor?.getPosition());
+    
     this.gameLoop.start();
   }
 
@@ -165,6 +182,11 @@ export class Engine implements GameEngine {
     // Update all game systems
     this.systemManager.updateSystems(deltaTime);
     
+    // Update current scene
+    if (this.currentScene) {
+      this.currentScene.update(deltaTime);
+    }
+    
     // Handle input and update camera
     this.inputHandler.updateCamera(
       this.camera, 
@@ -183,7 +205,8 @@ export class Engine implements GameEngine {
     this.renderer.render(
       this.camera,
       this.systemManager.getWorldManager(),
-      this.systemManager.getTimeManager()
+      this.systemManager.getTimeManager(),
+      this.currentScene
     );
   };
 
@@ -281,6 +304,107 @@ export class Engine implements GameEngine {
 
   getQuestManager() {
     return this.systemManager.getQuestManager();
+  }
+
+  getMovementSystem() {
+    return this.systemManager.getMovementSystem();
+  }
+
+  getSceneManager() {
+    return this.systemManager.getSceneManager();
+  }
+
+  /**
+   * Get ship movement controller for easy movement commands
+   */
+  getShipMovementController(): ShipMovementController {
+    if (!this._shipMovementController) {
+      this._shipMovementController = new ShipMovementController(this);
+    }
+    return this._shipMovementController;
+  }
+
+  /**
+   * Handle world click events with enhanced movement system
+   */
+  private handleWorldClick(worldX: number, worldY: number): void {
+    console.log('World click at:', worldX, worldY);
+    const worldManager = this.systemManager.getWorldManager();
+    const movementController = this.getShipMovementController();
+    
+    // Check if click is on any navigable object
+    const objects = worldManager.getAllVisibleObjects();
+    
+    for (const obj of objects) {
+      const distance = Math.sqrt(
+        Math.pow(worldX - obj.position.x, 2) + 
+        Math.pow(worldY - obj.position.y, 2)
+      );
+
+      // Check if click is within object bounds
+      let clickRadius = 20; // Default click radius
+      if (obj.type === 'station') clickRadius = 15;
+      if (obj.type === 'planet' && 'radius' in obj.object) clickRadius = (obj.object as any).radius || 25;
+      if (obj.type === 'star') clickRadius = 30;
+
+      if (distance <= clickRadius) {
+        if (obj.type === 'station' && 'id' in obj.object) {
+          // Use enhanced movement system for station navigation
+          const stationId = (obj.object as any).id;
+          console.log('Clicking on station:', stationId);
+          const success = movementController.movePlayerShipToStation(stationId);
+          
+          if (success) {
+            // Update player location for backward compatibility
+            worldManager.navigateToTarget(stationId);
+          }
+        }
+        break;
+      }
+    }
+    
+    // If no object was clicked, move to the clicked coordinates
+    // This allows free movement in space
+    if (!this.isClickOnObject(worldX, worldY, objects)) {
+      console.log('Moving to coordinates:', worldX, worldY);
+      movementController.movePlayerShipToCoordinates(worldX, worldY);
+    }
+  }
+
+  /**
+   * Check if a click is on any object
+   */
+  private isClickOnObject(worldX: number, worldY: number, objects: any[]): boolean {
+    for (const obj of objects) {
+      const distance = Math.sqrt(
+        Math.pow(worldX - obj.position.x, 2) + 
+        Math.pow(worldY - obj.position.y, 2)
+      );
+
+      let clickRadius = 20;
+      if (obj.type === 'station') clickRadius = 15;
+      if (obj.type === 'planet' && 'radius' in obj.object) clickRadius = (obj.object as any).radius || 25;
+      if (obj.type === 'star') clickRadius = 30;
+
+      if (distance <= clickRadius) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Set the current scene
+   */
+  setScene(scene: Scene): void {
+    this.currentScene = scene;
+  }
+
+  /**
+   * Get the current scene
+   */
+  getCurrentScene(): Scene | null {
+    return this.currentScene;
   }
 
   /**
