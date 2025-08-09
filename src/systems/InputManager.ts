@@ -59,9 +59,9 @@ export class InputManager {
   private handleMouseDown(event: MouseEvent): void {
     this.inputState.mouse.buttons[event.button] = true;
     
-    // Start drag tracking for middle-click (button 1) for map dragging
-    // This avoids conflicts with left-click (ship movement) and right-click (ship commands)
-    if (event.button === 1) {
+    // Start drag tracking for both middle-click (button 1) and left-click (button 0) for map dragging
+    // Left-click drag will be cancelled if it turns out to be clicking on an object
+    if (event.button === 1 || event.button === 0) {
       this.dragState.isDragging = true;
       this.dragState.button = event.button;
       this.dragState.startPosition = { ...this.inputState.mouse.position };
@@ -170,16 +170,26 @@ export class InputManager {
   }
 
   /**
-   * Get current drag state
+   * Get current drag state with drag threshold check
    */
   getDragState() {
+    // Calculate drag distance to determine if this is actually a drag operation
+    const dragDistance = Math.sqrt(
+      Math.pow(this.dragState.currentPosition.x - this.dragState.startPosition.x, 2) +
+      Math.pow(this.dragState.currentPosition.y - this.dragState.startPosition.y, 2)
+    );
+    
+    // Only consider it a drag if moved more than 5 pixels
+    const isDragOperation = this.dragState.isDragging && dragDistance > 5;
+    
     return {
-      isDragging: this.dragState.isDragging,
+      isDragging: isDragOperation,
       button: this.dragState.button,
       startPosition: { ...this.dragState.startPosition },
       currentPosition: { ...this.dragState.currentPosition },
       deltaX: this.dragState.currentPosition.x - this.dragState.startPosition.x,
-      deltaY: this.dragState.currentPosition.y - this.dragState.startPosition.y
+      deltaY: this.dragState.currentPosition.y - this.dragState.startPosition.y,
+      dragDistance: dragDistance
     };
   }
 
@@ -190,6 +200,14 @@ export class InputManager {
     if (this.dragState.isDragging) {
       this.dragState.startPosition = { ...this.dragState.currentPosition };
     }
+  }
+
+  /**
+   * Cancel current drag operation (e.g., when clicking on an object)
+   */
+  cancelDrag(): void {
+    this.dragState.isDragging = false;
+    this.dragState.button = -1;
   }
 
   dispose(): void {

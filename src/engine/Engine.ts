@@ -143,8 +143,8 @@ export class Engine implements GameEngine {
     this.gameLoop.setRenderCallback(this.render.bind(this));
     
     // Set up input handler
-    this.inputHandler.setClickHandler((worldX, worldY) => {
-      InputHandler.handleWorldClick(worldX, worldY, this.systemManager.getWorldManager());
+    this.inputHandler.setClickHandler((worldX, worldY, action) => {
+      InputHandler.handleWorldClick(worldX, worldY, this.systemManager.getWorldManager(), action);
     });
     
     // Ensure canvas has a dark background
