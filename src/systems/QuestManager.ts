@@ -34,13 +34,13 @@ import { ENDGAME_QUESTS } from '../data/endgameContent';
  * - Save/load support for quest progress and story flags
  */
 export class QuestManager {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _factionManager: FactionManager;
   private characterManager: CharacterManager;
   private playerManager: PlayerManager;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _timeManager: TimeManager;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private _eventManager: EventManager;
 
   private questSystemState: QuestSystemState = {

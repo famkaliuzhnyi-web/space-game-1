@@ -72,6 +72,13 @@ export class TimeManager {
   }
 
   /**
+   * Check if the time system is currently running (not paused)
+   */
+  getIsRunning(): boolean {
+    return this.isRunning;
+  }
+
+  /**
    * Get the current game time
    */
   getCurrentTime(): GameTime {

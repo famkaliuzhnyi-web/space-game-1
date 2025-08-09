@@ -59,8 +59,9 @@ export class InputManager {
   private handleMouseDown(event: MouseEvent): void {
     this.inputState.mouse.buttons[event.button] = true;
     
-    // Start drag tracking for right-click (button 2)
-    if (event.button === 2) {
+    // Start drag tracking for middle-click (button 1) for map dragging
+    // This avoids conflicts with left-click (ship movement) and right-click (ship commands)
+    if (event.button === 1) {
       this.dragState.isDragging = true;
       this.dragState.button = event.button;
       this.dragState.startPosition = { ...this.inputState.mouse.position };
@@ -72,7 +73,7 @@ export class InputManager {
     // Detect click: mouse was down and is now up
     if (this.inputState.mouse.buttons[event.button]) {
       // Only register clicks if not dragging (to prevent click after drag)
-      if (!this.dragState.isDragging || event.button !== 2) {
+      if (!this.dragState.isDragging || event.button !== 1) {
         this.clickEvents.push({
           button: event.button,
           position: { ...this.inputState.mouse.position }

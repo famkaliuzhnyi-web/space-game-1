@@ -306,7 +306,7 @@ export class AudioEngine {
       }
 
       // Connect audio graph
-      let targetGain = this.getTargetGainNode(audioSource.category);
+      const targetGain = this.getTargetGainNode(audioSource.category);
       
       if (audioSource.pannerNode) {
         audioSource.source.connect(audioSource.gainNode);

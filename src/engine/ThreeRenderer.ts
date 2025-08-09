@@ -260,12 +260,12 @@ export class ThreeRenderer {
   /**
    * Main render method - orchestrates the entire 3D rendering pipeline
    */
-  render(camera: Camera, worldManager: WorldManager, _timeManager: TimeManager): void {
+  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager): void {
     // Update camera position based on 2D camera for consistency
     this.updateCameraFromGameCamera(camera);
 
-    // Update world objects
-    this.updateWorldObjects(worldManager);
+    // Update world objects (with pause state for animations)
+    this.updateWorldObjects(worldManager, timeManager);
 
     // Update planet orbits
     this.createPlanetOrbits(worldManager);
@@ -300,10 +300,11 @@ export class ThreeRenderer {
   /**
    * Update all world objects in the 3D scene
    */
-  private updateWorldObjects(worldManager: WorldManager): void {
+  private updateWorldObjects(worldManager: WorldManager, timeManager?: TimeManager): void {
     const objects = worldManager.getAllVisibleObjects();
     const currentStation = worldManager.getCurrentStation() || null;
     const currentObjectIds = new Set<string>();
+    const isTimeRunning = timeManager ? timeManager.getIsRunning() : true;
 
     objects.forEach(obj => {
       const objectId = `${obj.type}-${obj.position.x}-${obj.position.y}`;
@@ -325,8 +326,10 @@ export class ThreeRenderer {
         // Update position
         mesh.position.set(obj.position.x, -obj.position.y, 0); // Flip Y for 3D space
         
-        // Add subtle animations
-        this.animate3DObject(mesh, obj.type);
+        // Add subtle animations only if time is running (not paused)
+        if (isTimeRunning) {
+          this.animate3DObject(mesh, obj.type);
+        }
       }
     });
 
@@ -904,23 +907,24 @@ export class ThreeRenderer {
    * Add visual selection indicator to an object
    */
   private addSelectionIndicator(object: THREE.Object3D): void {
-    // Create a wireframe outline as selection indicator
+    // Create an outline effect as selection indicator instead of wireframe
     if (object instanceof THREE.Group && object.children.length > 0) {
       const mainMesh = object.children[0];
       if (mainMesh instanceof THREE.Mesh) {
-        const wireframeMaterial = new THREE.MeshBasicMaterial({
+        // Create outline using edge geometry
+        const edges = new THREE.EdgesGeometry(mainMesh.geometry);
+        const outlineMaterial = new THREE.LineBasicMaterial({
           color: 0x00ff00,
-          wireframe: true,
+          linewidth: 2,
           transparent: true,
-          opacity: 0.5
+          opacity: 0.8
         });
         
-        const wireframeGeometry = mainMesh.geometry.clone();
-        const wireframeMesh = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
-        wireframeMesh.name = 'selection-indicator';
-        wireframeMesh.scale.setScalar(1.1); // Slightly larger than original
+        const outline = new THREE.LineSegments(edges, outlineMaterial);
+        outline.name = 'selection-indicator';
+        outline.scale.setScalar(1.05); // Slightly larger than original for outline effect
         
-        object.add(wireframeMesh);
+        object.add(outline);
       }
     }
   }
@@ -968,8 +972,8 @@ export class ThreeRenderer {
     const indicator = object.children.find(child => child.name === 'selection-indicator');
     if (indicator) {
       object.remove(indicator);
-      // Clean up geometry and material
-      if (indicator instanceof THREE.Mesh) {
+      // Clean up geometry and material for LineSegments
+      if (indicator instanceof THREE.LineSegments) {
         indicator.geometry.dispose();
         if (indicator.material instanceof THREE.Material) {
           indicator.material.dispose();
