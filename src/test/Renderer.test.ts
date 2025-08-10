@@ -33,7 +33,15 @@ describe('Renderer', () => {
       scale: vi.fn(),
       createRadialGradient: vi.fn().mockReturnValue({
         addColorStop: vi.fn()
-      })
+      }),
+      // Add canvas path methods for shape rendering
+      beginPath: vi.fn(),
+      moveTo: vi.fn(),
+      lineTo: vi.fn(),
+      arc: vi.fn(),
+      closePath: vi.fn(),
+      fill: vi.fn(),
+      stroke: vi.fn()
     } as any;
 
     mockCanvas = {

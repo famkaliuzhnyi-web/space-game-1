@@ -4,6 +4,7 @@ import { Station, Planet } from '../types/world';
 import { Ship } from '../types/player';
 import { SceneManager } from './SceneManager';
 import { StarGenerator } from './StarGenerator';
+import { getStationVisualConfig } from '../utils/stationVisuals';
 
 export interface Camera {
   x: number;
@@ -229,18 +230,59 @@ export class Renderer {
   }
 
   /**
-   * Render a station with current location indicator
+   * Render a station with type-specific visual styling
    */
   private renderStation(x: number, y: number, station: Station, isCurrent: boolean): void {
     this.context.save();
     
-    // Station structure
-    this.context.fillStyle = isCurrent ? '#00ff00' : '#aaaaaa';
-    this.context.fillRect(x - 8, y - 3, 16, 6);
-    this.context.fillRect(x - 3, y - 8, 6, 16);
+    // Get visual configuration based on station type
+    const visualConfig = getStationVisualConfig(station);
     
-    // Docking lights
-    this.context.fillStyle = '#00ccff';
+    // Scale size based on zoom for better visibility
+    const baseSize = 8;
+    const scaledSize = baseSize * visualConfig.size;
+    
+    // Enhanced glow effect for current station or high-intensity stations
+    if (isCurrent || visualConfig.glowIntensity > 1.0) {
+      const glowRadius = scaledSize * 2;
+      const gradient = this.context.createRadialGradient(x, y, 0, x, y, glowRadius);
+      gradient.addColorStop(0, visualConfig.lightColor + '40'); // 25% opacity
+      gradient.addColorStop(1, 'transparent');
+      
+      this.context.fillStyle = gradient;
+      this.context.fillRect(x - glowRadius, y - glowRadius, glowRadius * 2, glowRadius * 2);
+    }
+    
+    // Primary color (current station gets enhanced brightness)
+    const primaryColor = isCurrent ? this.brightenColor(visualConfig.primaryColor, 30) : visualConfig.primaryColor;
+    const secondaryColor = isCurrent ? this.brightenColor(visualConfig.secondaryColor, 20) : visualConfig.secondaryColor;
+    
+    // Render station based on its shape type
+    switch (visualConfig.shape) {
+      case 'cross':
+        this.renderCrossStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      case 'diamond':
+        this.renderDiamondStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      case 'triangle':
+        this.renderTriangleStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      case 'hexagon':
+        this.renderHexagonStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      case 'square':
+        this.renderSquareStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      case 'circle':
+        this.renderCircleStation(x, y, scaledSize, primaryColor, secondaryColor);
+        break;
+      default:
+        this.renderCrossStation(x, y, scaledSize, primaryColor, secondaryColor);
+    }
+    
+    // Central docking lights
+    this.context.fillStyle = visualConfig.lightColor;
     this.context.fillRect(x - 2, y - 2, 4, 4);
     
     // Name label
@@ -250,6 +292,143 @@ export class Renderer {
     this.context.fillText(station.name, x, y + 20);
     
     this.context.restore();
+  }
+
+  /**
+   * Render cross-shaped station (traditional)
+   */
+  private renderCrossStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    this.context.fillStyle = primary;
+    this.context.fillRect(x - size, y - size/3, size * 2, size * 2/3); // Horizontal bar
+    this.context.fillStyle = secondary;
+    this.context.fillRect(x - size/3, y - size, size * 2/3, size * 2); // Vertical bar
+  }
+
+  /**
+   * Render diamond-shaped station
+   */
+  private renderDiamondStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    this.context.fillStyle = primary;
+    this.context.beginPath();
+    this.context.moveTo(x, y - size);
+    this.context.lineTo(x + size, y);
+    this.context.lineTo(x, y + size);
+    this.context.lineTo(x - size, y);
+    this.context.closePath();
+    this.context.fill();
+    
+    // Inner diamond with secondary color
+    this.context.fillStyle = secondary;
+    const innerSize = size * 0.6;
+    this.context.beginPath();
+    this.context.moveTo(x, y - innerSize);
+    this.context.lineTo(x + innerSize, y);
+    this.context.lineTo(x, y + innerSize);
+    this.context.lineTo(x - innerSize, y);
+    this.context.closePath();
+    this.context.fill();
+  }
+
+  /**
+   * Render triangular station array
+   */
+  private renderTriangleStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    this.context.fillStyle = primary;
+    this.context.beginPath();
+    this.context.moveTo(x, y - size);
+    this.context.lineTo(x + size, y + size);
+    this.context.lineTo(x - size, y + size);
+    this.context.closePath();
+    this.context.fill();
+    
+    // Inner triangle with secondary color
+    this.context.fillStyle = secondary;
+    const innerSize = size * 0.5;
+    this.context.beginPath();
+    this.context.moveTo(x, y - innerSize);
+    this.context.lineTo(x + innerSize, y + innerSize);
+    this.context.lineTo(x - innerSize, y + innerSize);
+    this.context.closePath();
+    this.context.fill();
+  }
+
+  /**
+   * Render hexagonal platform
+   */
+  private renderHexagonStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    this.context.fillStyle = primary;
+    this.context.beginPath();
+    const angle = Math.PI / 3; // 60 degrees
+    for (let i = 0; i < 6; i++) {
+      const px = x + size * Math.cos(i * angle);
+      const py = y + size * Math.sin(i * angle);
+      if (i === 0) {
+        this.context.moveTo(px, py);
+      } else {
+        this.context.lineTo(px, py);
+      }
+    }
+    this.context.closePath();
+    this.context.fill();
+    
+    // Inner hexagon with secondary color
+    this.context.fillStyle = secondary;
+    this.context.beginPath();
+    const innerSize = size * 0.6;
+    for (let i = 0; i < 6; i++) {
+      const px = x + innerSize * Math.cos(i * angle);
+      const py = y + innerSize * Math.sin(i * angle);
+      if (i === 0) {
+        this.context.moveTo(px, py);
+      } else {
+        this.context.lineTo(px, py);
+      }
+    }
+    this.context.closePath();
+    this.context.fill();
+  }
+
+  /**
+   * Render square framework station
+   */
+  private renderSquareStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    this.context.fillStyle = primary;
+    this.context.fillRect(x - size, y - size, size * 2, size * 2);
+    
+    // Inner square with secondary color
+    this.context.fillStyle = secondary;
+    const innerSize = size * 0.6;
+    this.context.fillRect(x - innerSize, y - innerSize, innerSize * 2, innerSize * 2);
+  }
+
+  /**
+   * Render circular station complex
+   */
+  private renderCircleStation(x: number, y: number, size: number, primary: string, secondary: string): void {
+    // Outer circle
+    this.context.fillStyle = primary;
+    this.context.beginPath();
+    this.context.arc(x, y, size, 0, Math.PI * 2);
+    this.context.fill();
+    
+    // Inner circle with secondary color
+    this.context.fillStyle = secondary;
+    this.context.beginPath();
+    this.context.arc(x, y, size * 0.6, 0, Math.PI * 2);
+    this.context.fill();
+  }
+
+  /**
+   * Brighten a color by a percentage for current station highlighting
+   */
+  private brightenColor(color: string, percent: number): string {
+    // Simple brightness enhancement by converting hex to RGB and brightening
+    const hex = color.replace('#', '');
+    const r = Math.min(255, parseInt(hex.substr(0, 2), 16) + percent);
+    const g = Math.min(255, parseInt(hex.substr(2, 2), 16) + percent);
+    const b = Math.min(255, parseInt(hex.substr(4, 2), 16) + percent);
+    
+    return `rgb(${r}, ${g}, ${b})`;
   }
 
   /**
