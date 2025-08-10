@@ -126,7 +126,10 @@ const wrongDistance = distance3D(playerPos, stationPos);
 Use actual Z coordinates for proper layering:
 ```typescript
 // ThreeRenderer - uses actual Z from coordinate
+// Note: Y coordinate is inverted for 3D space (-obj.position.y)
+// and rotation is also inverted to maintain correct orientation
 mesh.position.set(obj.position.x, -obj.position.y, obj.position.z);
+mesh.rotation.z = -rotation; // Inverted to match Y coordinate flip
 
 // 2D Renderer - can ignore Z or use for sorting
 const sortedObjects = objects.sort((a, b) => b.position.z - a.position.z);
