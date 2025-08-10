@@ -358,6 +358,60 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  // Handler for creating a character from a predefined scenario
+  const handleCreateCharacterFromScenario = (scenario: StartingScenario) => {
+    if (engineRef.current) {
+      try {
+        const characterManager = engineRef.current.getCharacterManager();
+        
+        // Generate a default character name based on scenario
+        const defaultName = `${scenario.name.replace(/\s+/g, '')}Player`;
+        
+        // Create default appearance
+        const defaultAppearance = {
+          gender: 'male' as const,
+          skinTone: 'medium' as const,
+          hairColor: 'brown' as const,
+          eyeColor: 'blue' as const,
+          age: scenario.characterSetup.forcedAppearance?.age || 30,
+          portrait: 'default-male' as const
+        };
+        
+        // Apply forced appearance from scenario if present
+        const appearance = {
+          ...defaultAppearance,
+          ...(scenario.characterSetup.forcedAppearance || {})
+        };
+        
+        // Create character using scenario setup
+        const character = characterManager.createCharacter(
+          'player-character',
+          defaultName,
+          appearance,
+          scenario.characterSetup.backgroundId || 'civilian', // Fallback to default background
+          scenario.characterSetup.attributeModifiers || {},
+          scenario.characterSetup.skillModifiers || {}
+        );
+
+        if (character) {
+          console.log(`Created character from scenario: ${scenario.name}`);
+          // Apply the scenario settings to the player
+          handleScenarioApplication(scenario);
+          // Show character panel to review the created character
+          setActivePanel('character');
+        } else {
+          console.error('Failed to create character from scenario');
+          // Fallback to character creation panel
+          setShowCharacterCreation(true);
+        }
+      } catch (error) {
+        console.error('Failed to create character from scenario:', error);
+        // Fallback to character creation panel
+        setShowCharacterCreation(true);
+      }
+    }
+  };
+
   const handleOpenMarket = () => {
     if (engineRef.current) {
       // Get the current station's market (use actual station ID)
@@ -1147,7 +1201,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
               setSelectedScenario(scenario);
               startTransition(() => {
                 setShowScenarioSelection(false);
-                setShowCharacterCreation(true);
+                // For predefined scenarios, create character automatically
+                handleCreateCharacterFromScenario(scenario);
               });
             }}
             onCustomStart={() => {
