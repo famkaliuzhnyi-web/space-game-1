@@ -236,7 +236,7 @@ describe('InputHandler', () => {
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       
-      expect(clickHandler).toHaveBeenCalledWith(50, 50); // Should match camera position
+      expect(clickHandler).toHaveBeenCalledWith(50, 50, 'move'); // Should match camera position with action
     });
   });
 
@@ -263,7 +263,7 @@ describe('InputHandler', () => {
         }
       ]);
       
-      InputHandler.handleWorldClick(10, 10, worldManager);
+      InputHandler.handleWorldClick(10, 10, worldManager, 'command');
       expect(spy).toHaveBeenCalledWith('test-station');
     });
 
@@ -290,13 +290,13 @@ describe('InputHandler', () => {
       ]);
       
       // Click within station radius (15)
-      InputHandler.handleWorldClick(10, 10, worldManager);
+      InputHandler.handleWorldClick(10, 10, worldManager, 'command');
       expect(spy).toHaveBeenCalled();
       
       spy.mockClear();
       
       // Click outside station radius
-      InputHandler.handleWorldClick(20, 20, worldManager);
+      InputHandler.handleWorldClick(20, 20, worldManager, 'command');
       expect(spy).not.toHaveBeenCalled();
     });
   });
