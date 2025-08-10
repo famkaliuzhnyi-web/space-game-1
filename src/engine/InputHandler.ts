@@ -52,19 +52,41 @@ export class InputHandler {
       camera.zoom = Math.max(camera.zoom - deltaTime, 0.1);
     }
 
-    // Handle mouse wheel zoom with improved sensitivity
+    // Handle mouse wheel zoom with zoom-to-cursor functionality
     const wheelDelta = inputManager.getWheelDelta();
     if (wheelDelta !== 0) {
       const zoomSpeed = 0.002; // Increased from 0.001 for better responsiveness
       const zoomChange = -wheelDelta * zoomSpeed; // Negative to make wheel up zoom in
-      camera.zoom = Math.max(0.1, Math.min(3, camera.zoom + zoomChange));
+      const newZoom = Math.max(0.1, Math.min(3, camera.zoom + zoomChange));
+      
+      // Only apply zoom-to-cursor if zoom actually changes
+      if (newZoom !== camera.zoom) {
+        // Get mouse position for zoom-to-cursor behavior
+        const mousePos = inputManager.getMousePosition();
+        
+        // Calculate world position under cursor BEFORE zoom change
+        const worldXBeforeZoom = (mousePos.x - this.canvas.width / 2) / camera.zoom + camera.x;
+        const worldYBeforeZoom = (mousePos.y - this.canvas.height / 2) / camera.zoom + camera.y;
+        
+        // Apply zoom change
+        camera.zoom = newZoom;
+        
+        // Calculate world position under cursor AFTER zoom change
+        const worldXAfterZoom = (mousePos.x - this.canvas.width / 2) / camera.zoom + camera.x;
+        const worldYAfterZoom = (mousePos.y - this.canvas.height / 2) / camera.zoom + camera.y;
+        
+        // Adjust camera position to keep the same world position under cursor
+        camera.x += worldXBeforeZoom - worldXAfterZoom;
+        camera.y += worldYBeforeZoom - worldYAfterZoom;
+      }
     }
 
     // Handle drag for camera panning (middle-click or left-click when no object is clicked)
     const dragState = inputManager.getDragState();
     if (dragState.isDragging && (dragState.button === 1 || dragState.button === 0)) {
       // Apply drag movement to camera (inverted for natural feel)
-      const dragSpeed = 1 / camera.zoom; // Slower drag when zoomed in
+      // Use consistent drag speed that accounts for zoom level for smooth panning
+      const dragSpeed = 1 / camera.zoom; // Slower drag when zoomed in for precision
       camera.x -= dragState.deltaX * dragSpeed;
       camera.y -= dragState.deltaY * dragSpeed;
       
@@ -99,11 +121,16 @@ export class InputHandler {
 
   /**
    * Handle click interactions with coordinate transformation
+   * Properly accounts for all camera changes: position (from drag), zoom level, and initial camera setup
    */
   private handleClick(x: number, y: number, camera: Camera, inputManager?: InputManager, action: 'move' | 'command' = 'move'): void {
     if (!this.clickHandler) return;
 
     // Convert screen coordinates to world coordinates
+    // This transformation accounts for:
+    // - Camera position (camera.x, camera.y) - updated by dragging and initial positioning
+    // - Zoom level (camera.zoom) - updated by mouse wheel and keyboard zoom
+    // - Screen center offset to convert from screen space to camera-relative space
     const worldX = (x - this.canvas.width / 2) / camera.zoom + camera.x;
     const worldY = (y - this.canvas.height / 2) / camera.zoom + camera.y;
 
