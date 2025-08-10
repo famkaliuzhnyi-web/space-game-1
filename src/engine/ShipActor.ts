@@ -2,6 +2,7 @@ import { Actor } from './Actor';
 import { Ship } from '../types/player';
 import { Vector2D } from '../types';
 import { shipTextureManager } from './ShipTextureManager';
+import { createLayeredPosition } from '../utils/coordinates';
 
 /**
  * Ship Actor implementing physics-based movement and behavior.
@@ -191,7 +192,7 @@ export class ShipActor extends Actor {
     this.position.y += this.velocity.y * deltaTime;
     
     // Update ship's location in the ship object
-    this.ship.location.coordinates = { ...this.position };
+    this.ship.location.coordinates = createLayeredPosition(this.position.x, this.position.y, 'ship');
     
     // Update thrust particles
     this.updateThrustParticles(deltaTime);

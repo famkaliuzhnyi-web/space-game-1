@@ -19,6 +19,7 @@ import { Station, StarSystem } from '../types/world';
 import { SceneManager } from '../engine/SceneManager';
 import { NPCActor } from '../engine/NPCActor';
 import { NPCScheduleManager } from './NPCScheduleManager';
+import { createLayeredPosition } from '../utils/coordinates';
 
 /**
  * NPCAIManager handles all NPC ship behavior, AI decision-making, and interactions.
@@ -1601,7 +1602,7 @@ export class NPCAIManager {
     
     if (distance <= 5) {
       // Reached target
-      npc.position.coordinates = { ...npc.movement.targetCoordinates! };
+      npc.position.coordinates = createLayeredPosition(npc.movement.targetCoordinates!.x, npc.movement.targetCoordinates!.y, 'ship');
       npc.movement.currentVelocity = { x: 0, y: 0 };
       
       // If target was a station, dock there

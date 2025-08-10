@@ -1,6 +1,7 @@
 import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget } from '../types/world';
 import { Ship } from '../types/player';
 import { SceneManager } from '../engine/SceneManager';
+import { createLayeredPosition, convertLegacyCoords } from '../utils/coordinates';
 
 export class WorldManager {
   private galaxy: Galaxy;
@@ -75,7 +76,7 @@ export class WorldManager {
       (this.shipMovement.targetPos.y - this.shipMovement.startPos.y) * progress;
 
     // Update ship coordinates
-    this.playerShip.location.coordinates = { x: currentX, y: currentY };
+    this.playerShip.location.coordinates = createLayeredPosition(currentX, currentY, 'ship');
 
     // Check if movement is complete
     if (progress >= 1.0) {
@@ -100,13 +101,13 @@ export class WorldManager {
     const coreSector: Sector = {
       id: 'core-sector',
       name: 'Core Worlds Sector',
-      position: { x: 0, y: 0 },
+      position: createLayeredPosition(0, 0, 'star'),
       systems: [
-        this.createTestSystem('sol-system', 'Sol System', { x: 100, y: 100 }),
-        this.createTestSystem('alpha-centauri', 'Alpha Centauri', { x: 200, y: 150 }),
-        this.createTestSystem('sirius', 'Sirius System', { x: 300, y: 200 }),
-        this.createTestSystem('vega', 'Vega System', { x: 400, y: 120 }),
-        this.createTestSystem('arcturus', 'Arcturus System', { x: 150, y: 300 })
+        this.createTestSystem('sol-system', 'Sol System', createLayeredPosition(100, 100, 'star')),
+        this.createTestSystem('alpha-centauri', 'Alpha Centauri', createLayeredPosition(200, 150, 'star')),
+        this.createTestSystem('sirius', 'Sirius System', createLayeredPosition(300, 200, 'star')),
+        this.createTestSystem('vega', 'Vega System', createLayeredPosition(400, 120, 'star')),
+        this.createTestSystem('arcturus', 'Arcturus System', createLayeredPosition(150, 300, 'star'))
       ],
       controllingFaction: 'Earth Federation',
       description: 'The heart of human civilization, containing Sol and the most developed systems.'
@@ -115,11 +116,11 @@ export class WorldManager {
     const frontierSector: Sector = {
       id: 'frontier-sector',
       name: 'Frontier Sector',
-      position: { x: 500, y: 0 },
+      position: createLayeredPosition(500, 0, "star"),
       systems: [
-        this.createTestSystem('kepler-442', 'Kepler-442 System', { x: 600, y: 100 }),
-        this.createTestSystem('gliese-667c', 'Gliese 667C System', { x: 700, y: 200 }),
-        this.createTestSystem('trappist-1', 'TRAPPIST-1 System', { x: 800, y: 150 })
+        this.createTestSystem('kepler-442', 'Kepler-442 System', createLayeredPosition(600, 100, "star")),
+        this.createTestSystem('gliese-667c', 'Gliese 667C System', createLayeredPosition(700, 200, "star")),
+        this.createTestSystem('trappist-1', 'TRAPPIST-1 System', createLayeredPosition(800, 150, "star"))
       ],
       controllingFaction: 'Outer Colonies Coalition',
       description: 'The expanding frontier of human space, filled with opportunities and dangers.'
@@ -128,11 +129,11 @@ export class WorldManager {
     const industrialSector: Sector = {
       id: 'industrial-sector',
       name: 'Industrial Sector',
-      position: { x: 0, y: 400 },
+      position: createLayeredPosition(0, 400, "star"),
       systems: [
-        this.createTestSystem('bernard-star', 'Barnard\'s Star System', { x: 100, y: 500 }),
-        this.createTestSystem('wolf-359', 'Wolf 359 System', { x: 200, y: 550 }),
-        this.createTestSystem('ross-128', 'Ross 128 System', { x: 300, y: 480 })
+        this.createTestSystem('bernard-star', 'Barnard\'s Star System', createLayeredPosition(100, 500, "star")),
+        this.createTestSystem('wolf-359', 'Wolf 359 System', createLayeredPosition(200, 550, "star")),
+        this.createTestSystem('ross-128', 'Ross 128 System', createLayeredPosition(300, 480, "star"))
       ],
       controllingFaction: 'Industrial Consortium',
       description: 'The manufacturing heart of human space, dominated by massive industrial operations.'
@@ -141,12 +142,12 @@ export class WorldManager {
     const miningSector: Sector = {
       id: 'mining-sector',
       name: 'Mining Sector',
-      position: { x: 600, y: 300 },
+      position: createLayeredPosition(600, 300, "star"),
       systems: [
-        this.createTestSystem('mining-belt-alpha', 'Mining Belt Alpha', { x: 700, y: 400 }),
-        this.createTestSystem('mining-belt-beta', 'Mining Belt Beta', { x: 800, y: 350 }),
-        this.createTestSystem('mining-belt-gamma', 'Mining Belt Gamma', { x: 750, y: 450 }),
-        this.createTestSystem('deep-core-system', 'Deep Core Mining System', { x: 850, y: 400 })
+        this.createTestSystem('mining-belt-alpha', 'Mining Belt Alpha', createLayeredPosition(700, 400, "star")),
+        this.createTestSystem('mining-belt-beta', 'Mining Belt Beta', createLayeredPosition(800, 350, "star")),
+        this.createTestSystem('mining-belt-gamma', 'Mining Belt Gamma', createLayeredPosition(750, 450, "star")),
+        this.createTestSystem('deep-core-system', 'Deep Core Mining System', createLayeredPosition(850, 400, "star"))
       ],
       controllingFaction: 'Mining Guild',
       description: 'Rich asteroid belts and mining operations extracting raw materials for the production chain.'
@@ -155,12 +156,12 @@ export class WorldManager {
     const manufacturingSector: Sector = {
       id: 'manufacturing-sector',
       name: 'Manufacturing Sector',
-      position: { x: 500, y: 600 },
+      position: createLayeredPosition(500, 600, "star"),
       systems: [
-        this.createTestSystem('assembly-prime', 'Assembly Prime System', { x: 600, y: 700 }),
-        this.createTestSystem('component-forge', 'Component Forge System', { x: 700, y: 650 }),
-        this.createTestSystem('refinery-central', 'Central Refinery System', { x: 550, y: 750 }),
-        this.createTestSystem('shipyard-nexus', 'Shipyard Nexus System', { x: 650, y: 600 })
+        this.createTestSystem('assembly-prime', 'Assembly Prime System', createLayeredPosition(600, 700, "star")),
+        this.createTestSystem('component-forge', 'Component Forge System', createLayeredPosition(700, 650, "star")),
+        this.createTestSystem('refinery-central', 'Central Refinery System', createLayeredPosition(550, 750, "star")),
+        this.createTestSystem('shipyard-nexus', 'Shipyard Nexus System', createLayeredPosition(650, 600, "star"))
       ],
       controllingFaction: 'Manufacturing Alliance',
       description: 'Advanced manufacturing facilities that process raw materials into finished products and ships.'
@@ -169,12 +170,12 @@ export class WorldManager {
     const expansionSector: Sector = {
       id: 'expansion-sector',
       name: 'Expansion Sector',
-      position: { x: 900, y: 100 },
+      position: createLayeredPosition(900, 100, "star"),
       systems: [
-        this.createTestSystem('new-horizon', 'New Horizon System', { x: 1000, y: 200 }),
-        this.createTestSystem('distant-reach', 'Distant Reach System', { x: 1100, y: 150 }),
-        this.createTestSystem('outer-rim', 'Outer Rim System', { x: 950, y: 250 }),
-        this.createTestSystem('frontier-edge', 'Frontier Edge System', { x: 1050, y: 100 })
+        this.createTestSystem('new-horizon', 'New Horizon System', createLayeredPosition(1000, 200, "star")),
+        this.createTestSystem('distant-reach', 'Distant Reach System', createLayeredPosition(1100, 150, "star")),
+        this.createTestSystem('outer-rim', 'Outer Rim System', createLayeredPosition(950, 250, "star")),
+        this.createTestSystem('frontier-edge', 'Frontier Edge System', createLayeredPosition(1050, 100, "star"))
       ],
       controllingFaction: 'Expansion Fleet',
       description: 'Newly settled systems on the very edge of known space, requiring constant supply chains.'
@@ -203,7 +204,7 @@ export class WorldManager {
             id: 'earth-station',
             name: 'Earth Station Alpha',
             type: 'trade',
-            position: { x: position.x, y: position.y - 30 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 30 }, "station"),
             faction: 'Earth Federation',
             dockingCapacity: 50,
             services: ['refuel', 'repair', 'trading', 'missions'],
@@ -213,7 +214,7 @@ export class WorldManager {
             id: 'sol-military-base',
             name: 'Sol Defense Platform',
             type: 'military',
-            position: { x: position.x - 40, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x - 40, y: position.y + 20 }, "station"),
             faction: 'Earth Federation',
             dockingCapacity: 30,
             services: ['refuel', 'repair', 'military_contracts', 'weapons'],
@@ -223,7 +224,7 @@ export class WorldManager {
             id: 'sol-luxury-resort',
             name: 'Orbital Paradise Resort',
             type: 'luxury',
-            position: { x: position.x + 60, y: position.y - 10 },
+            position: convertLegacyCoords({ x: position.x + 60, y: position.y - 10 }, "station"),
             faction: 'Neutral',
             dockingCapacity: 25,
             services: ['refuel', 'luxury_trading', 'entertainment', 'high_end_missions'],
@@ -235,7 +236,7 @@ export class WorldManager {
             id: 'earth',
             name: 'Earth',
             type: 'terrestrial',
-            position: { x: position.x, y: position.y - 120 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 120 }, "station"),
             radius: 20,
             habitable: true,
             population: 8000000000,
@@ -245,7 +246,7 @@ export class WorldManager {
             id: 'mars',
             name: 'Mars',
             type: 'desert',
-            position: { x: position.x + 80, y: position.y - 180 },
+            position: convertLegacyCoords({ x: position.x + 80, y: position.y - 180 }, "station"),
             radius: 15,
             habitable: false,
             population: 50000000,
@@ -255,7 +256,7 @@ export class WorldManager {
             id: 'jupiter',
             name: 'Jupiter',
             type: 'gas-giant',
-            position: { x: position.x - 150, y: position.y + 200 },
+            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 200 }, "station"),
             radius: 35,
             habitable: false,
             description: 'Massive gas giant with numerous mining stations in its orbit.'
@@ -270,7 +271,7 @@ export class WorldManager {
             id: 'centauri-outpost',
             name: 'Centauri Mining Outpost',
             type: 'mining',
-            position: { x: position.x + 10, y: position.y - 20 },
+            position: convertLegacyCoords({ x: position.x + 10, y: position.y - 20 }, "station"),
             faction: 'Industrial Consortium',
             dockingCapacity: 20,
             services: ['refuel', 'trading', 'mining_contracts'],
@@ -280,7 +281,7 @@ export class WorldManager {
             id: 'centauri-refinery',
             name: 'Centauri Processing Station',
             type: 'industrial',
-            position: { x: position.x - 25, y: position.y + 15 },
+            position: convertLegacyCoords({ x: position.x - 25, y: position.y + 15 }, "station"),
             faction: 'Industrial Consortium',
             dockingCapacity: 35,
             services: ['refuel', 'repair', 'trading', 'manufacturing'],
@@ -292,7 +293,7 @@ export class WorldManager {
             id: 'proxima-b',
             name: 'Proxima Centauri b',
             type: 'terrestrial',
-            position: { x: position.x + 20, y: position.y - 40 },
+            position: convertLegacyCoords({ x: position.x + 20, y: position.y - 40 }, "station"),
             radius: 18,
             habitable: true,
             population: 5000000,
@@ -302,7 +303,7 @@ export class WorldManager {
             id: 'alpha-centauri-mining',
             name: 'Centauri Mining World',
             type: 'desert',
-            position: { x: position.x - 30, y: position.y + 50 },
+            position: convertLegacyCoords({ x: position.x - 30, y: position.y + 50 }, "station"),
             radius: 12,
             habitable: false,
             description: 'Mineral-rich desert world, heavily strip-mined for rare elements.'
@@ -317,7 +318,7 @@ export class WorldManager {
             id: 'sirius-research',
             name: 'Sirius Research Station',
             type: 'research',
-            position: { x: position.x - 15, y: position.y + 25 },
+            position: convertLegacyCoords({ x: position.x - 15, y: position.y + 25 }, "station"),
             faction: 'Scientific Alliance',
             dockingCapacity: 15,
             services: ['repair', 'research', 'data_trading', 'tech_missions'],
@@ -327,7 +328,7 @@ export class WorldManager {
             id: 'sirius-diplomatic',
             name: 'Sirius Diplomatic Station',
             type: 'diplomatic',
-            position: { x: position.x + 30, y: position.y - 10 },
+            position: convertLegacyCoords({ x: position.x + 30, y: position.y - 10 }, "station"),
             faction: 'Neutral',
             dockingCapacity: 20,
             services: ['refuel', 'diplomatic_missions', 'faction_relations', 'mediation'],
@@ -339,7 +340,7 @@ export class WorldManager {
             id: 'sirius-research-world',
             name: 'Sirius Research World',
             type: 'ice',
-            position: { x: position.x, y: position.y - 60 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 60 }, "station"),
             radius: 22,
             habitable: false,
             description: 'Frozen world with advanced underground research facilities.'
@@ -348,7 +349,7 @@ export class WorldManager {
             id: 'sirius-ocean',
             name: 'Sirius Ocean World',
             type: 'ocean',
-            position: { x: position.x + 40, y: position.y + 30 },
+            position: convertLegacyCoords({ x: position.x + 40, y: position.y + 30 }, "station"),
             radius: 25,
             habitable: true,
             population: 2000000,
@@ -364,7 +365,7 @@ export class WorldManager {
             id: 'vega-entertainment',
             name: 'Vega Entertainment Complex',
             type: 'entertainment',
-            position: { x: position.x, y: position.y - 20 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 20 }, "station"),
             faction: 'Neutral',
             dockingCapacity: 40,
             services: ['refuel', 'entertainment', 'gambling', 'information_trading'],
@@ -374,7 +375,7 @@ export class WorldManager {
             id: 'vega-smugglers-den',
             name: 'Vega Freeport',
             type: 'pirate',
-            position: { x: position.x - 35, y: position.y + 30 },
+            position: convertLegacyCoords({ x: position.x - 35, y: position.y + 30 }, "station"),
             faction: 'Pirates',
             dockingCapacity: 15,
             services: ['black_market', 'smuggling_missions', 'pirate_contracts'],
@@ -386,7 +387,7 @@ export class WorldManager {
             id: 'vega-prime',
             name: 'Vega Prime',
             type: 'terrestrial',
-            position: { x: position.x + 25, y: position.y + 40 },
+            position: convertLegacyCoords({ x: position.x + 25, y: position.y + 40 }, "station"),
             radius: 19,
             habitable: true,
             population: 100000000,
@@ -396,7 +397,7 @@ export class WorldManager {
             id: 'vega-asteroid-haven',
             name: 'Vega Asteroid Base',
             type: 'desert',
-            position: { x: position.x - 50, y: position.y - 35 },
+            position: convertLegacyCoords({ x: position.x - 50, y: position.y - 35 }, "station"),
             radius: 8,
             habitable: false,
             description: 'Hollowed-out asteroid serving as a pirate stronghold and black market hub.'
@@ -411,7 +412,7 @@ export class WorldManager {
             id: 'arcturus-agricultural',
             name: 'Arcturus Agricultural Station',
             type: 'agricultural',
-            position: { x: position.x + 20, y: position.y - 15 },
+            position: convertLegacyCoords({ x: position.x + 20, y: position.y - 15 }, "station"),
             faction: 'Earth Federation',
             dockingCapacity: 30,
             services: ['refuel', 'trading', 'food_production', 'bio_research'],
@@ -421,7 +422,7 @@ export class WorldManager {
             id: 'arcturus-medical',
             name: 'Arcturus Medical Center',
             type: 'medical',
-            position: { x: position.x - 20, y: position.y + 25 },
+            position: convertLegacyCoords({ x: position.x - 20, y: position.y + 25 }, "station"),
             faction: 'Medical Corps',
             dockingCapacity: 25,
             services: ['medical_treatment', 'pharmaceutical_trading', 'research', 'humanitarian_missions'],
@@ -437,7 +438,7 @@ export class WorldManager {
             id: 'kepler-survey',
             name: 'Kepler Survey Station',
             type: 'exploration',
-            position: { x: position.x, y: position.y - 25 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 25 }, "station"),
             faction: 'Outer Colonies Coalition',
             dockingCapacity: 20,
             services: ['refuel', 'repair', 'exploration_missions', 'cartography'],
@@ -447,7 +448,7 @@ export class WorldManager {
             id: 'kepler-colonial',
             name: 'New Kepler Colony Hub',
             type: 'colonial',
-            position: { x: position.x + 30, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x + 30, y: position.y + 20 }, "station"),
             faction: 'Outer Colonies Coalition',
             dockingCapacity: 35,
             services: ['trading', 'colonist_transport', 'supply_missions', 'construction'],
@@ -457,7 +458,7 @@ export class WorldManager {
             id: 'kepler-deep-space',
             name: 'Kepler Deep Space Station',
             type: 'observatory',
-            position: { x: position.x - 40, y: position.y - 15 },
+            position: convertLegacyCoords({ x: position.x - 40, y: position.y - 15 }, "station"),
             faction: 'Scientific Alliance',
             dockingCapacity: 15,
             services: ['refuel', 'deep_space_missions', 'sensor_array', 'long_range_scanning'],
@@ -469,7 +470,7 @@ export class WorldManager {
             id: 'kepler-442b',
             name: 'Kepler-442b',
             type: 'terrestrial',
-            position: { x: position.x, y: position.y + 45 },
+            position: convertLegacyCoords({ x: position.x, y: position.y + 45 }, "station"),
             radius: 21,
             habitable: true,
             population: 1000000,
@@ -479,7 +480,7 @@ export class WorldManager {
             id: 'kepler-mining-world',
             name: 'Kepler Mining World',
             type: 'desert',
-            position: { x: position.x - 35, y: position.y + 15 },
+            position: convertLegacyCoords({ x: position.x - 35, y: position.y + 15 }, "station"),
             radius: 11,
             habitable: false,
             description: 'Resource-rich world supplying the growing frontier colonies.'
@@ -494,7 +495,7 @@ export class WorldManager {
             id: 'gliese-salvage',
             name: 'Gliese Salvage Yards',
             type: 'salvage',
-            position: { x: position.x - 10, y: position.y + 30 },
+            position: convertLegacyCoords({ x: position.x - 10, y: position.y + 30 }, "station"),
             faction: 'Salvage Guild',
             dockingCapacity: 25,
             services: ['salvage_missions', 'scrap_trading', 'ship_breaking', 'rare_parts'],
@@ -510,7 +511,7 @@ export class WorldManager {
             id: 'trappist-observatory',
             name: 'TRAPPIST Deep Space Observatory',
             type: 'observatory',
-            position: { x: position.x, y: position.y - 30 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 30 }, "station"),
             faction: 'Scientific Alliance',
             dockingCapacity: 15,
             services: ['research', 'deep_space_missions', 'astronomical_data', 'long_range_scanning'],
@@ -522,7 +523,7 @@ export class WorldManager {
             id: 'trappist-1b',
             name: 'TRAPPIST-1b',
             type: 'terrestrial',
-            position: { x: position.x - 20, y: position.y - 15 },
+            position: convertLegacyCoords({ x: position.x - 20, y: position.y - 15 }, "station"),
             radius: 14,
             habitable: false,
             description: 'Innermost planet, too hot for habitation but rich in minerals.'
@@ -531,7 +532,7 @@ export class WorldManager {
             id: 'trappist-1e',
             name: 'TRAPPIST-1e',
             type: 'terrestrial',
-            position: { x: position.x + 15, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x + 15, y: position.y + 20 }, "station"),
             radius: 16,
             habitable: true,
             population: 500000,
@@ -541,7 +542,7 @@ export class WorldManager {
             id: 'trappist-1f',
             name: 'TRAPPIST-1f',
             type: 'ocean',
-            position: { x: position.x + 35, y: position.y - 10 },
+            position: convertLegacyCoords({ x: position.x + 35, y: position.y - 10 }, "station"),
             radius: 17,
             habitable: true,
             population: 200000,
@@ -551,7 +552,7 @@ export class WorldManager {
             id: 'trappist-1h',
             name: 'TRAPPIST-1h',
             type: 'ice',
-            position: { x: position.x - 30, y: position.y + 25 },
+            position: convertLegacyCoords({ x: position.x - 30, y: position.y + 25 }, "station"),
             radius: 13,
             habitable: false,
             description: 'Frozen outer planet used as a research station and ice mining operation.'
@@ -566,7 +567,7 @@ export class WorldManager {
             id: 'barnard-foundry',
             name: 'Barnard Heavy Industries',
             type: 'foundry',
-            position: { x: position.x, y: position.y - 20 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 20 }, "station"),
             faction: 'Industrial Consortium',
             dockingCapacity: 40,
             services: ['ship_construction', 'heavy_manufacturing', 'industrial_trading', 'bulk_transport'],
@@ -576,7 +577,7 @@ export class WorldManager {
             id: 'barnard-worker-habitat',
             name: 'Barnard Worker Habitat',
             type: 'habitat',
-            position: { x: position.x + 35, y: position.y + 15 },
+            position: convertLegacyCoords({ x: position.x + 35, y: position.y + 15 }, "station"),
             faction: 'Industrial Consortium',
             dockingCapacity: 50,
             services: ['residential', 'worker_transport', 'basic_trading', 'recreational'],
@@ -592,7 +593,7 @@ export class WorldManager {
             id: 'wolf-security',
             name: 'Wolf 359 Security Station',
             type: 'security',
-            position: { x: position.x - 25, y: position.y },
+            position: convertLegacyCoords({ x: position.x - 25, y: position.y }, "station"),
             faction: 'Security Forces',
             dockingCapacity: 30,
             services: ['security_missions', 'law_enforcement', 'prisoner_transport', 'bounty_hunting'],
@@ -602,7 +603,7 @@ export class WorldManager {
             id: 'wolf-prison',
             name: 'Wolf Penitentiary Complex',
             type: 'prison',
-            position: { x: position.x + 40, y: position.y + 25 },
+            position: convertLegacyCoords({ x: position.x + 40, y: position.y + 25 }, "station"),
             faction: 'Security Forces',
             dockingCapacity: 10,
             services: ['prisoner_transport', 'rehabilitation_programs', 'restricted_access'],
@@ -618,7 +619,7 @@ export class WorldManager {
             id: 'ross-energy',
             name: 'Ross Stellar Energy Plant',
             type: 'energy',
-            position: { x: position.x, y: position.y - 30 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 30 }, "station"),
             faction: 'Industrial Consortium',
             dockingCapacity: 25,
             services: ['fuel_depot', 'energy_trading', 'stellar_harvesting', 'power_systems'],
@@ -635,7 +636,7 @@ export class WorldManager {
             id: 'alpha-iron-mines',
             name: 'Alpha Belt Iron Mines',
             type: 'mining',
-            position: { x: position.x - 20, y: position.y },
+            position: convertLegacyCoords({ x: position.x - 20, y: position.y }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 30,
             services: ['refuel', 'basic_repair', 'raw_materials_trading', 'mining_equipment'],
@@ -645,7 +646,7 @@ export class WorldManager {
             id: 'alpha-copper-extraction',
             name: 'Alpha Copper Extraction Facility',
             type: 'mining',
-            position: { x: position.x + 25, y: position.y - 15 },
+            position: convertLegacyCoords({ x: position.x + 25, y: position.y - 15 }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 20,
             services: ['refuel', 'copper_ore_trading', 'mining_contracts', 'equipment_maintenance'],
@@ -661,7 +662,7 @@ export class WorldManager {
             id: 'beta-titanium-mines',
             name: 'Beta Belt Titanium Extraction',
             type: 'mining',
-            position: { x: position.x, y: position.y - 25 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 25 }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 25,
             services: ['refuel', 'repair', 'titanium_ore_trading', 'heavy_mining_equipment'],
@@ -671,7 +672,7 @@ export class WorldManager {
             id: 'beta-processing-station',
             name: 'Beta Ore Processing Station',
             type: 'industrial',
-            position: { x: position.x + 30, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x + 30, y: position.y + 20 }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 35,
             services: ['ore_processing', 'refined_materials', 'bulk_transport', 'quality_control'],
@@ -687,7 +688,7 @@ export class WorldManager {
             id: 'gamma-rare-earth-facility',
             name: 'Gamma Rare Earth Facility',
             type: 'mining',
-            position: { x: position.x - 15, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x - 15, y: position.y + 20 }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 20,
             services: ['rare_materials_extraction', 'exotic_ore_trading', 'specialized_equipment', 'research_support'],
@@ -703,7 +704,7 @@ export class WorldManager {
             id: 'deep-core-command',
             name: 'Deep Core Mining Command',
             type: 'industrial',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 50,
             services: ['mining_coordination', 'bulk_storage', 'transport_hub', 'guild_administration'],
@@ -713,7 +714,7 @@ export class WorldManager {
             id: 'deep-core-depot',
             name: 'Deep Core Supply Depot',
             type: 'trade',
-            position: { x: position.x + 40, y: position.y - 30 },
+            position: convertLegacyCoords({ x: position.x + 40, y: position.y - 30 }, "station"),
             faction: 'Mining Guild',
             dockingCapacity: 60,
             services: ['bulk_trading', 'mining_supplies', 'equipment_sales', 'transport_services'],
@@ -730,7 +731,7 @@ export class WorldManager {
             id: 'central-steel-refinery',
             name: 'Central Steel Refinery',
             type: 'industrial',
-            position: { x: position.x, y: position.y - 20 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 20 }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 40,
             services: ['ore_refining', 'steel_production', 'alloy_manufacturing', 'quality_testing'],
@@ -740,7 +741,7 @@ export class WorldManager {
             id: 'titanium-processing-plant',
             name: 'Titanium Processing Plant',
             type: 'industrial',
-            position: { x: position.x + 35, y: position.y + 15 },
+            position: convertLegacyCoords({ x: position.x + 35, y: position.y + 15 }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 30,
             services: ['titanium_refining', 'hull_plate_manufacturing', 'precision_machining', 'surface_treatment'],
@@ -756,7 +757,7 @@ export class WorldManager {
             id: 'component-manufacturing-hub',
             name: 'Component Manufacturing Hub',
             type: 'industrial',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 45,
             services: ['component_assembly', 'electronics_manufacturing', 'subsystem_production', 'testing_facilities'],
@@ -766,7 +767,7 @@ export class WorldManager {
             id: 'fusion-drive-facility',
             name: 'Fusion Drive Manufacturing',
             type: 'industrial',
-            position: { x: position.x - 30, y: position.y + 25 },
+            position: convertLegacyCoords({ x: position.x - 30, y: position.y + 25 }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 25,
             services: ['fusion_drive_production', 'propulsion_systems', 'drive_testing', 'advanced_engineering'],
@@ -782,7 +783,7 @@ export class WorldManager {
             id: 'hull-assembly-station',
             name: 'Prime Hull Assembly Station',
             type: 'industrial',
-            position: { x: position.x, y: position.y - 30 },
+            position: convertLegacyCoords({ x: position.x, y: position.y - 30 }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 50,
             services: ['hull_assembly', 'structural_engineering', 'framework_construction', 'hull_testing'],
@@ -798,7 +799,7 @@ export class WorldManager {
             id: 'nexus-shipyard-alpha',
             name: 'Nexus Shipyard Alpha',
             type: 'shipyard',
-            position: { x: position.x - 25, y: position.y },
+            position: convertLegacyCoords({ x: position.x - 25, y: position.y }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 30,
             services: ['ship_construction', 'final_assembly', 'system_integration', 'delivery_coordination'],
@@ -808,7 +809,7 @@ export class WorldManager {
             id: 'nexus-shipyard-beta',
             name: 'Nexus Shipyard Beta',
             type: 'shipyard',
-            position: { x: position.x + 30, y: position.y + 20 },
+            position: convertLegacyCoords({ x: position.x + 30, y: position.y + 20 }, "station"),
             faction: 'Manufacturing Alliance',
             dockingCapacity: 25,
             services: ['ship_construction', 'custom_orders', 'upgrade_installation', 'quality_assurance'],
@@ -825,7 +826,7 @@ export class WorldManager {
             id: 'horizon-colony-hub',
             name: 'New Horizon Colony Hub',
             type: 'colonial',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Expansion Fleet',
             dockingCapacity: 35,
             services: ['colonist_services', 'supply_distribution', 'ship_delivery_reception', 'frontier_coordination'],
@@ -841,7 +842,7 @@ export class WorldManager {
             id: 'reach-trading-post',
             name: 'Distant Reach Trading Post',
             type: 'trade',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Expansion Fleet',
             dockingCapacity: 20,
             services: ['frontier_trading', 'ship_sales', 'supply_depot', 'exploration_support'],
@@ -857,7 +858,7 @@ export class WorldManager {
             id: 'rim-defense-station',
             name: 'Outer Rim Defense Station',
             type: 'military',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Expansion Fleet',
             dockingCapacity: 40,
             services: ['military_operations', 'fleet_maintenance', 'ship_procurement', 'defense_coordination'],
@@ -873,7 +874,7 @@ export class WorldManager {
             id: 'edge-exploration-base',
             name: 'Frontier Edge Exploration Base',
             type: 'exploration',
-            position: { x: position.x, y: position.y },
+            position: convertLegacyCoords({ x: position.x, y: position.y }, "station"),
             faction: 'Expansion Fleet',
             dockingCapacity: 15,
             services: ['exploration_missions', 'deep_space_operations', 'ship_resupply', 'survey_coordination'],
@@ -933,7 +934,7 @@ export class WorldManager {
     }
     
     // Fallback to origin if no current location
-    return { x: 0, y: 0 };
+    return createLayeredPosition(0, 0, 'ship');
   }
 
   getAvailableTargets(): NavigationTarget[] {
@@ -941,7 +942,7 @@ export class WorldManager {
     if (!currentSector) return [];
 
     const targets: NavigationTarget[] = [];
-    const currentPos = this.getCurrentSystem()?.position || { x: 0, y: 0 };
+    const currentPos = this.getCurrentSystem()?.position || createLayeredPosition(0, 0, 'star');
 
     // Add systems in current sector
     currentSector.systems.forEach(system => {
@@ -1047,7 +1048,7 @@ export class WorldManager {
     this.shipMovement = {
       isMoving: true,
       startPos: { ...this.playerShip.location.coordinates },
-      targetPos: { x: worldX, y: worldY },
+      targetPos: createLayeredPosition(worldX, worldY, 'ship'),
       startTime: Date.now(),
       duration: 3000 // 3 seconds for movement
     };

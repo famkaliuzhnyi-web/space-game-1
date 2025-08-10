@@ -1,4 +1,5 @@
 import { NPCScheduleContext } from './npc-schedule';
+import { Vector2D, Vector3D } from './index';
 
 export interface NPCShip {
   id: string;
@@ -7,23 +8,23 @@ export interface NPCShip {
   position: {
     systemId: string;
     stationId?: string; // If docked at a station
-    coordinates: { x: number; y: number };
+    coordinates: Vector3D; // Unified 3D coordinates with layer
   };
   movement: {
     targetSystemId?: string;
     targetStationId?: string;
-    targetCoordinates?: { x: number; y: number };
+    targetCoordinates?: Vector2D; // Target is 2D since we only care about XY movement
     speed: number; // Units per second
-    currentVelocity: { x: number; y: number };
+    currentVelocity: Vector2D; // Velocity is 2D
     lastMoveTime: number;
     // Enhanced movement properties for Phase 5.2
-    pathfindingWaypoints?: { x: number; y: number }[];
+    pathfindingWaypoints?: Vector2D[]; // Waypoints are 2D
     currentWaypoint?: number;
-    avoidanceVector?: { x: number; y: number };
+    avoidanceVector?: Vector2D; // Avoidance is 2D
     formation?: {
       leaderId?: string;
       position: 'lead' | 'follow_left' | 'follow_right' | 'follow_rear';
-      offset: { x: number; y: number };
+      offset: Vector2D; // Formation offset is 2D
     };
     maneuverability: number; // 0-100, affects turning speed and agility
     maxAcceleration: number; // Maximum acceleration rate
@@ -219,7 +220,7 @@ export interface FleetFormation {
 
 export interface FleetRole {
   type: 'leader' | 'escort' | 'scout' | 'transport' | 'support';
-  position: { x: number; y: number }; // Relative to leader
+  position: Vector2D; // Relative to leader (2D offset)
   behavior: 'aggressive' | 'defensive' | 'support';
 }
 
@@ -237,7 +238,7 @@ export interface PathfindingNode {
 
 export interface AvoidanceTarget {
   id: string;
-  position: { x: number; y: number };
+  position: Vector2D; // 2D position for avoidance calculations
   radius: number;
   strength: number; // How strongly to avoid (0-100)
   type: 'ship' | 'station' | 'hazard' | 'debris';
@@ -248,7 +249,7 @@ export interface AIDecisionContext {
   nearbyNPCs: NPCShip[];
   nearbyStations: any[]; // Station interfaces
   playerInRange: boolean;
-  playerPosition?: { x: number; y: number };
+  playerPosition?: Vector2D; // Player position for AI decisions (2D)
   marketData?: any; // Market price data
   threatLevel: number;
   timestamp: number;
@@ -267,7 +268,7 @@ export interface TradeDecision {
 export interface CombatDecision {
   action: 'engage' | 'flee' | 'intimidate' | 'ignore' | 'call_backup';
   targetId?: string;
-  tacticalPosition?: { x: number; y: number };
+  tacticalPosition?: Vector2D; // Tactical movement target (2D)
   confidence: number;
   reasoning: string;
 }
