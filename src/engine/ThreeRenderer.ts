@@ -994,7 +994,8 @@ export class ThreeRenderer {
 
         const orbitMesh = new THREE.Mesh(orbitGeometry, orbitMaterial);
         orbitMesh.position.copy(systemCenter);
-        orbitMesh.rotateX(Math.PI / 2); // Make it horizontal
+        // Orbits should be in the XY plane (horizontal), no need to rotate around X-axis
+        // orbitMesh.rotateX(Math.PI / 2); // Removed: This was causing wrong axis rendering
         
         this.planetOrbits.add(orbitMesh);
       }
