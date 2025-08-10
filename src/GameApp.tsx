@@ -1,7 +1,11 @@
 import React from 'react';
 import { GameCanvas } from './components/game';
 
-const GameApp: React.FC = () => {
+interface GameAppProps {
+  debugMode?: boolean;
+}
+
+const GameApp: React.FC<GameAppProps> = ({ debugMode = false }) => {
   return (
     <div style={{ 
       width: '100vw', 
@@ -9,7 +13,7 @@ const GameApp: React.FC = () => {
       overflow: 'hidden', // Prevent scrolling
       position: 'relative'
     }}>
-      <GameCanvas className="full-screen-canvas" />
+      <GameCanvas className="full-screen-canvas" debugMode={debugMode} />
     </div>
   );
 };

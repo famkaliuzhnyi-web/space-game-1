@@ -343,6 +343,103 @@ export const STARTING_SCENARIOS: Record<string, StartingScenario> = {
         contractIds: ['corporate-supply-route-1', 'executive-transport-1']
       }
     }
+  },
+
+  'debug-tester': {
+    id: 'debug-tester',
+    name: 'Debug Tester',
+    description: 'Development/testing scenario with maximum resources, all faction relationships positive, and best equipment for comprehensive testing.',
+    difficulty: 'easy',
+    category: 'balanced',
+    
+    characterSetup: {
+      backgroundId: 'merchant',
+      attributeModifiers: {
+        strength: 15,
+        intelligence: 15, 
+        charisma: 15,
+        endurance: 15,
+        dexterity: 15,
+        perception: 15
+      },
+      skillModifiers: {
+        trading: 20,
+        negotiation: 20,
+        economics: 20,
+        engineering: 20,
+        piloting: 20,
+        navigation: 20,
+        combat: 20,
+        tactics: 20,
+        security: 20,
+        networking: 20,
+        investigation: 20,
+        leadership: 20
+      },
+      startingEquipment: ['executive-datapad', 'corporate-suit', 'engineering-tool', 'salvage-scanner']
+    },
+    
+    startingCredits: 1000000,
+    startingLocation: 'terra-prime-station',
+    
+    startingShip: {
+      shipClassId: 'heavy-freighter',
+      shipName: 'Debug Explorer',
+      condition: {
+        hull: 1.0,
+        engines: 1.0,
+        cargo: 1.0,
+        shields: 1.0
+      },
+      equipment: {
+        engines: ['premium-engine', 'high-performance-engine'],
+        cargo: ['automated-cargo-system', 'secure-cargo-hold', 'expanded-cargo-hold'],
+        shields: ['premium-shields', 'reinforced-shields'],
+        weapons: ['security-turret', 'mining-laser'],
+        utility: ['advanced-nav-computer', 'communication-array', 'deep-scanner', 'tractor-beam']
+      }
+    },
+    
+    factionStandings: {
+      'traders-guild': 50,
+      'security-forces': 50,
+      'outer-colonies': 50,
+      'corporate-alliance': 50,
+      'pilots-federation': 50,
+      'salvagers-union': 50,
+      'pirates-syndicate': 25 // Even pirates like debug testers
+    },
+    
+    startingCargo: {
+      'consumer-goods': 50,
+      'food-rations': 50,
+      'luxury-goods': 50,
+      'high-tech-components': 50,
+      'scrap-metal': 50,
+      'salvaged-components': 50
+    },
+    
+    startingQuests: ['debug-test-quest-1', 'debug-trade-route', 'debug-exploration'],
+    
+    backgroundStory: 'You are a debug tester with access to unlimited resources and maximum skills. Use this start to test all game systems, mechanics, and features comprehensively.',
+    objectives: [
+      'Test all trading systems and market mechanics',
+      'Verify combat and security systems',
+      'Test character progression and skill systems',
+      'Validate faction interactions and reputation',
+      'Test ship management and fleet operations',
+      'Explore quest and event systems',
+      'Test all UI panels and interactions'
+    ],
+    
+    specialConditions: {
+      tradeDiscountPercent: 25, // 25% better trade prices
+      contractPayoutModifier: 2.0, // Double contract rewards
+      reputationGainModifier: 2.0, // Faster reputation gains
+      hasContracts: {
+        contractIds: ['debug-high-value-contract', 'debug-exploration-contract']
+      }
+    }
   }
 };
 
