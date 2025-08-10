@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide, InfoPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, InfoPanel } from '../ui';
 // Import heavy panels lazily
 import { 
   FleetManagementPanel, 
@@ -1245,18 +1245,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }}
       />
-      
-      {/* New Player Guide - automatically appears for new players */}
-      {engineRef.current && (
-        <NewPlayerGuide
-          tutorialManager={engineRef.current.getTutorialManager()}
-          gameEngine={engineRef.current}
-          onComplete={() => {
-            // Optionally open tutorial panel after guide completion
-            setActivePanel('tutorial');
-          }}
-        />
-      )}
     </div>
   );
 };
