@@ -41,9 +41,11 @@ export interface ShipPerformanceStats {
 export class ShipConstructionSystem {
   
   /**
+   * @deprecated This method is deprecated. Use HubShipConstructionSystem for block-based ship construction.
    * Get all available ship classes for construction
    */
   getAvailableShipClasses(stationType: string = 'trade', _techLevel: number = 1): ShipClass[] {
+    console.warn('ShipConstructionSystem.getAvailableShipClasses is deprecated. Use HubShipConstructionSystem instead.');
     return Object.values(SHIP_CLASSES).filter(shipClass => {
       // Filter by tech level and station type
       switch (stationType) {
