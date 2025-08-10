@@ -374,9 +374,7 @@ export class Engine implements GameEngine {
     return this.systemManager.getCharacterProgressionSystem();
   }
 
-  getTutorialManager() {
-    return this.systemManager.getTutorialManager();
-  }
+
 
   getQuestManager() {
     return this.systemManager.getQuestManager();

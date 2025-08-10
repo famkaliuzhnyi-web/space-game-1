@@ -8,7 +8,7 @@ import { WorldManager } from '../systems/WorldManager';
 import { HackingManager } from '../systems/HackingManager';
 import { CombatManager } from '../systems/CombatManager';
 import { InvestmentManager } from '../systems/InvestmentManager';
-import { TutorialManager } from '../systems/TutorialManager';
+
 import { QuestManager } from '../systems/QuestManager';
 import { NavigationManager } from '../systems/NavigationManager';
 
@@ -37,7 +37,7 @@ export class SystemManager {
   private hackingManager: HackingManager;
   private combatManager: CombatManager;
   private investmentManager: InvestmentManager;
-  private tutorialManager: TutorialManager;
+
   private questManager: QuestManager;
   private navigationManager: NavigationManager;
 
@@ -110,12 +110,7 @@ export class SystemManager {
       this.playerManager.getFactionManager(),
       this.economicSystem
     );
-    
-    // Initialize tutorial manager with required dependencies
-    this.tutorialManager = new TutorialManager(
-      this.playerManager,
-      this.characterManager
-    );
+
     
     // Initialize quest manager with required dependencies
     this.questManager = new QuestManager(
@@ -295,9 +290,7 @@ export class SystemManager {
     return this.investmentManager;
   }
 
-  getTutorialManager(): TutorialManager {
-    return this.tutorialManager;
-  }
+
 
   getQuestManager(): QuestManager {
     return this.questManager;
