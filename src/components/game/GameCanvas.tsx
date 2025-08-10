@@ -26,6 +26,7 @@ import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
 import { Contact, InteractionType } from '../../types/contacts';
 import { StartingScenario } from '../../types/startingScenarios';
+import { STARTING_SCENARIOS } from '../../data/startingScenarios';
 
 // Extend Window interface for our custom properties
 interface WindowWithCustomProperties extends Window {
@@ -36,10 +37,12 @@ interface GameCanvasProps {
   width?: number;
   height?: number;
   className?: string;
+  debugMode?: boolean;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
-  className = '' 
+  className = '',
+  debugMode = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -221,16 +224,49 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // Check if character exists, prompt for scenario selection or character creation
         const characterManager = engineRef.current.getCharacterManager();
         const existingCharacter = characterManager.getCharacter();
+        
         if (!existingCharacter) {
-          // Check if we need to show scenario selection first
-          if (!selectedScenario) {
-            startTransition(() => {
-              setShowScenarioSelection(true);
-            });
+          if (debugMode) {
+            // In debug mode, automatically create a debug character and apply debug scenario
+            console.log('Debug mode: Creating debug character automatically');
+            
+            // Create a debug character
+            const debugCharacter = characterManager.createCharacter(
+              'debug-tester-1',
+              'Debug Tester',
+              { 
+                gender: 'other', 
+                age: 30, 
+                portrait: 'debug-avatar',
+                skinTone: 'medium',
+                hairColor: 'brown',
+                eyeColor: 'blue'
+              },
+              'merchant',
+              { strength: 15, intelligence: 15, charisma: 15, endurance: 15, dexterity: 15, perception: 15 },
+              { trading: 10, negotiation: 10, economics: 10, engineering: 10, piloting: 10, navigation: 10, combat: 10, tactics: 10, security: 10, networking: 10, investigation: 10, leadership: 10 }
+            );
+            
+            if (debugCharacter) {
+              // Apply debug scenario
+              const debugScenario = STARTING_SCENARIOS['debug-tester'];
+              if (debugScenario) {
+                setSelectedScenario(debugScenario);
+                handleScenarioApplication(debugScenario);
+                console.log('Debug scenario applied:', debugScenario.name);
+              }
+            }
           } else {
-            startTransition(() => {
-              setShowCharacterCreation(true);
-            });
+            // Normal mode: Check if we need to show scenario selection first
+            if (!selectedScenario) {
+              startTransition(() => {
+                setShowScenarioSelection(true);
+              });
+            } else {
+              startTransition(() => {
+                setShowCharacterCreation(true);
+              });
+            }
           }
         }
       } catch (error) {
@@ -307,7 +343,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         setIsEngineRunning(false);
       }
     };
-  }, []);
+  }, [debugMode]);
 
   const toggleEngine = () => {
     if (!engineRef.current) return;
