@@ -62,15 +62,15 @@ export class ShipActor extends Actor {
    * Calculate rotation speed based on ship class and mass
    */
   private calculateRotationSpeed(): number {
-    // Base turn speed in radians per second, inversely related to mass/size
-    const baseTurnSpeed = 3.0; // radians per second
+    // Highly responsive turn speed for excellent gameplay feel
+    const baseTurnSpeed = 15.0; // radians per second (increased from 8.0 for immediate response)
     
     switch (this.ship.class.category) {
-      case 'courier': return baseTurnSpeed * 1.5; // Light and agile
-      case 'combat': return baseTurnSpeed * 1.2;  // Balanced
+      case 'courier': return baseTurnSpeed * 1.2; // Light and agile
+      case 'combat': return baseTurnSpeed * 1.1;  // Balanced
       case 'explorer': return baseTurnSpeed * 1.0; // Balanced
-      case 'transport': return baseTurnSpeed * 0.8; // Heavier, slower turn
-      case 'heavy-freight': return baseTurnSpeed * 0.5; // Heavy and slow turning
+      case 'transport': return baseTurnSpeed * 0.9; // Heavier, slower turn
+      case 'heavy-freight': return baseTurnSpeed * 0.7; // Heavy and slow turning
       default: return baseTurnSpeed;
     }
   }
@@ -139,10 +139,6 @@ export class ShipActor extends Actor {
       return;
     }
 
-    // Calculate direction to target
-    const directionX = dx / distance;
-    const directionY = dy / distance;
-    
     // Calculate target rotation (ship should face movement direction)
     const targetRotation = Math.atan2(dy, dx);
     
@@ -175,25 +171,30 @@ export class ShipActor extends Actor {
       targetSpeed = Math.max(targetSpeed, this.maxSpeed * 0.1); // Minimum 10% of max speed
     }
     
+    // Calculate movement direction based on ship's current rotation (not target direction)
+    // This makes the ship move in the direction it's facing, creating realistic turning movement
+    const shipDirectionX = Math.cos(this.rotation);
+    const shipDirectionY = Math.sin(this.rotation);
+    
     // Apply acceleration or deceleration to reach target speed
     if (currentSpeed < targetSpeed) {
       // Accelerate at exactly the rate to reach max speed in 1 second
       const newSpeed = currentSpeed + this.acceleration * deltaTime;
       const finalSpeed = Math.min(newSpeed, targetSpeed);
       
-      this.velocity.x = directionX * finalSpeed;
-      this.velocity.y = directionY * finalSpeed;
+      this.velocity.x = shipDirectionX * finalSpeed;
+      this.velocity.y = shipDirectionY * finalSpeed;
     } else if (currentSpeed > targetSpeed) {
       // Decelerate at the same rate as acceleration 
       const newSpeed = currentSpeed - this.acceleration * deltaTime;
       const finalSpeed = Math.max(newSpeed, targetSpeed);
       
-      this.velocity.x = directionX * finalSpeed;
-      this.velocity.y = directionY * finalSpeed;
+      this.velocity.x = shipDirectionX * finalSpeed;
+      this.velocity.y = shipDirectionY * finalSpeed;
     } else {
-      // Maintain current speed in target direction
-      this.velocity.x = directionX * currentSpeed;
-      this.velocity.y = directionY * currentSpeed;
+      // Maintain current speed in ship's facing direction
+      this.velocity.x = shipDirectionX * currentSpeed;
+      this.velocity.y = shipDirectionY * currentSpeed;
     }
     
     // Apply velocity to position
