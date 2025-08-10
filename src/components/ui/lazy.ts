@@ -9,3 +9,4 @@ export const AchievementsPanel = lazy(() => import('./AchievementsPanel'));
 export const SecurityPanel = lazy(() => import('./SecurityPanel').then(module => ({ default: module.SecurityPanel })));
 export const QuestPanel = lazy(() => import('./QuestPanel'));
 export const CharacterCreationPanel = lazy(() => import('./CharacterCreationPanel').then(module => ({ default: module.CharacterCreationPanel })));
+export const ScenarioSelectionPanel = lazy(() => import('./ScenarioSelectionPanel').then(module => ({ default: module.ScenarioSelectionPanel })));
