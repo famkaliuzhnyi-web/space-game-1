@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, Suspense } from 'react';
+import React, { useRef, useEffect, useState, Suspense, startTransition } from 'react';
 import { Engine } from '../../engine';
 import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide, InfoPanel } from '../ui';
 // Import heavy panels lazily
@@ -57,6 +57,39 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // Info panel state for object selection
   const [selectedObject, setSelectedObject] = useState<any>(null);
   const [showInfoPanel, setShowInfoPanel] = useState(false);
+
+  // Helper function to safely update panels that contain lazy components
+  const setActivePanelWithTransition = (panelName: typeof activePanel) => {
+    // Panels that use lazy-loaded components should be wrapped in startTransition
+    const lazyPanels = ['ship', 'achievements', 'security', 'hacking', 'combat', 'investment', 'quests'];
+    
+    if (panelName && lazyPanels.includes(panelName)) {
+      startTransition(() => {
+        setActivePanel(panelName);
+      });
+    } else {
+      setActivePanel(panelName);
+    }
+  };
+
+  // Helper function for toggling panels with lazy components
+  const toggleActivePanelWithTransition = (panelName: typeof activePanel) => {
+    const newPanel = activePanel === panelName ? null : panelName;
+    setActivePanelWithTransition(newPanel);
+  };
+
+  // Helper function to safely close panels (with transition for lazy components)
+  const closePanelWithTransition = () => {
+    const lazyPanels = ['ship', 'achievements', 'security', 'hacking', 'combat', 'investment', 'quests'];
+    
+    if (activePanel && lazyPanels.includes(activePanel)) {
+      startTransition(() => {
+        setActivePanel(null);
+      });
+    } else {
+      setActivePanel(null);
+    }
+  };
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -191,9 +224,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         if (!existingCharacter) {
           // Check if we need to show scenario selection first
           if (!selectedScenario) {
-            setShowScenarioSelection(true);
+            startTransition(() => {
+              setShowScenarioSelection(true);
+            });
           } else {
-            setShowCharacterCreation(true);
+            startTransition(() => {
+              setShowCharacterCreation(true);
+            });
           }
         }
       } catch (error) {
@@ -227,27 +264,27 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       if (event.code === 'Escape') {
         setActivePanel(null);
       } else if (event.code === 'KeyN' && !event.shiftKey) {
-        setActivePanel(prevActivePanel => prevActivePanel === 'navigation' ? null : 'navigation');
+        toggleActivePanelWithTransition('navigation');
       } else if (event.code === 'KeyN' && event.shiftKey) {
         setShowNPCs(prevShowNPCs => !prevShowNPCs);
       } else if (event.code === 'KeyS') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'ship' ? null : 'ship');
+        toggleActivePanelWithTransition('ship');
       } else if (event.code === 'KeyF') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'factions' ? null : 'factions');
+        toggleActivePanelWithTransition('factions');
       } else if (event.code === 'KeyP') {
         handleOpenContacts();
       } else if (event.code === 'KeyE') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'events' ? null : 'events');
+        toggleActivePanelWithTransition('events');
       } else if (event.code === 'KeyL') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'security' ? null : 'security');
+        toggleActivePanelWithTransition('security');
       } else if (event.code === 'KeyH') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'hacking' ? null : 'hacking');
+        toggleActivePanelWithTransition('hacking');
       } else if (event.code === 'KeyG') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'combat' ? null : 'combat');
+        toggleActivePanelWithTransition('combat');
       } else if (event.code === 'KeyI') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'investment' ? null : 'investment');
+        toggleActivePanelWithTransition('investment');
       } else if (event.code === 'KeyQ') {
-        setActivePanel(prevActivePanel => prevActivePanel === 'quests' ? null : 'quests');
+        toggleActivePanelWithTransition('quests');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -881,7 +918,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           {isEngineRunning ? 'Pause' : 'Start'}
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'navigation' ? null : 'navigation')} 
+          onClick={() => toggleActivePanelWithTransition('navigation')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'navigation' ? '#4a90e2' : undefined
@@ -921,7 +958,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Routes
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'inventory' ? null : 'inventory')} 
+          onClick={() => toggleActivePanelWithTransition('inventory')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'inventory' ? '#4a90e2' : undefined
@@ -931,7 +968,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Inventory
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'ship' ? null : 'ship')} 
+          onClick={() => toggleActivePanelWithTransition('ship')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'ship' ? '#4a90e2' : undefined
@@ -941,7 +978,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Ship
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'character' ? null : 'character')} 
+          onClick={() => toggleActivePanelWithTransition('character')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'character' ? '#4a90e2' : undefined
@@ -961,7 +998,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Contacts
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'events' ? null : 'events')} 
+          onClick={() => toggleActivePanelWithTransition('events')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'events' ? '#4a90e2' : undefined
@@ -971,7 +1008,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Events {activeEvents.length > 0 && `(${activeEvents.length})`}
         </button>
         <button 
-          onClick={() => setActivePanel(activePanel === 'quests' ? null : 'quests')} 
+          onClick={() => toggleActivePanelWithTransition('quests')} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
             backgroundColor: activePanel === 'quests' ? '#4a90e2' : undefined
@@ -1033,7 +1070,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       <Suspense fallback={<LoadingPanel />}>
         <FleetManagementPanel
           isVisible={showShipManagement}
-          onClose={() => setActivePanel(null)}
+          onClose={closePanelWithTransition}
           playerCredits={playerCredits}
           currentShipId={currentShipId}
           ownedShips={ownedShips}
@@ -1104,49 +1141,63 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       {/* Starting Scenario Selection Panel */}
       {showScenarioSelection && (
-        <ScenarioSelectionPanel
-          onScenarioSelected={(scenario) => {
-            setSelectedScenario(scenario);
-            setShowScenarioSelection(false);
-            setShowCharacterCreation(true);
-          }}
-          onCustomStart={() => {
-            setSelectedScenario(null);
-            setShowScenarioSelection(false);
-            setShowCharacterCreation(true);
-          }}
-          onCancel={() => {
-            setShowScenarioSelection(false);
-            // Could add logic to return to main menu here
-          }}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <ScenarioSelectionPanel
+            onScenarioSelected={(scenario) => {
+              setSelectedScenario(scenario);
+              startTransition(() => {
+                setShowScenarioSelection(false);
+                setShowCharacterCreation(true);
+              });
+            }}
+            onCustomStart={() => {
+              setSelectedScenario(null);
+              startTransition(() => {
+                setShowScenarioSelection(false);
+                setShowCharacterCreation(true);
+              });
+            }}
+            onCancel={() => {
+              startTransition(() => {
+                setShowScenarioSelection(false);
+              });
+              // Could add logic to return to main menu here
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Character Creation Panel */}
       {engineRef.current && showCharacterCreation && (
-        <CharacterCreationPanel
-          characterManager={engineRef.current.getCharacterManager()}
-          onComplete={(success) => {
-            setShowCharacterCreation(false);
-            if (success && selectedScenario) {
-              // Apply selected scenario after character creation
-              handleScenarioApplication(selectedScenario);
-            }
-            if (success) {
-              setActivePanel('character');
-            }
-          }}
-          onCancel={() => setShowCharacterCreation(false)}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <CharacterCreationPanel
+            characterManager={engineRef.current.getCharacterManager()}
+            onComplete={(success) => {
+              startTransition(() => {
+                setShowCharacterCreation(false);
+                if (success) {
+                  setActivePanel('character');
+                }
+              });
+              if (success && selectedScenario) {
+                // Apply selected scenario after character creation
+                handleScenarioApplication(selectedScenario);
+              }
+            }}
+            onCancel={() => startTransition(() => setShowCharacterCreation(false))}
+          />
+        </Suspense>
       )}
 
       {/* Achievements Panel */}
       {engineRef.current && showAchievements && (
-        <AchievementsPanel
-          isVisible={showAchievements}
-          onClose={() => setActivePanel(null)}
-          achievementManager={engineRef.current.getAchievementManager()}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <AchievementsPanel
+            isVisible={showAchievements}
+            onClose={closePanelWithTransition}
+            achievementManager={engineRef.current.getAchievementManager()}
+          />
+        </Suspense>
       )}
 
       {/* Events Panel */}
@@ -1160,22 +1211,26 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       {/* Security Panel */}
       {engineRef.current && showSecurity && (
-        <SecurityPanel
-          securityManager={engineRef.current.getSecurityManager()}
-          currentLocation={engineRef.current.getWorldManager().getCurrentSystem()?.id || 'unknown'}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <SecurityPanel
+            securityManager={engineRef.current.getSecurityManager()}
+            currentLocation={engineRef.current.getWorldManager().getCurrentSystem()?.id || 'unknown'}
+          />
+        </Suspense>
       )}
 
       {/* Hacking Panel */}
       {engineRef.current && showHacking && (
-        <HackingPanel
-          hackingManager={engineRef.current.getHackingManager()}
-          onClose={() => setActivePanel(null)}
-          onCreditsChange={() => {
-            // Update player credits display
-            setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
-          }}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <HackingPanel
+            hackingManager={engineRef.current.getHackingManager()}
+            onClose={closePanelWithTransition}
+            onCreditsChange={() => {
+              // Update player credits display
+              setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
+            }}
+          />
+        </Suspense>
       )}
 
       {/* Combat Panel */}
@@ -1183,7 +1238,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         <Suspense fallback={<LoadingPanel />}>
           <CombatPanel
             combatManager={engineRef.current.getCombatManager()}
-            onClose={() => setActivePanel(null)}
+            onClose={closePanelWithTransition}
             onCreditsChange={() => {
               // Update player credits display
               setPlayerCredits(engineRef.current!.getPlayerManager().getCredits());
@@ -1214,11 +1269,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
       {/* Quest Panel */}
       {engineRef.current && showQuests && (
-        <QuestPanel
-          isVisible={showQuests}
-          questManager={engineRef.current.getQuestManager()}
-          onClose={() => setActivePanel(null)}
-        />
+        <Suspense fallback={<LoadingPanel />}>
+          <QuestPanel
+            isVisible={showQuests}
+            questManager={engineRef.current.getQuestManager()}
+            onClose={closePanelWithTransition}
+          />
+        </Suspense>
       )}
 
       {/* NPC Panel */}
