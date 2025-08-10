@@ -18,6 +18,7 @@ import { NavigationManager } from './NavigationManager';
 import { Station, StarSystem } from '../types/world';
 import { SceneManager } from '../engine/SceneManager';
 import { NPCActor } from '../engine/NPCActor';
+import { NPCScheduleManager } from './NPCScheduleManager';
 
 /**
  * NPCAIManager handles all NPC ship behavior, AI decision-making, and interactions.
@@ -44,6 +45,7 @@ export class NPCAIManager {
   private playerManager: PlayerManager;
   private navigationManager: NavigationManager | null = null;
   private sceneManager: SceneManager | null = null;
+  private scheduleManager: NPCScheduleManager;
   // These will be used in future updates
   // private factionManager: FactionManager;
   // private economicSystem: EconomicSystem;
@@ -75,6 +77,9 @@ export class NPCAIManager {
     this.timeManager = timeManager;
     this.worldManager = worldManager;
     this.playerManager = playerManager;
+    
+    // Initialize the schedule manager
+    this.scheduleManager = new NPCScheduleManager(timeManager, worldManager);
     
     this.initializePersonalityTemplates();
     this.initializeStartingNPCs();
@@ -246,6 +251,9 @@ export class NPCAIManager {
     // Initialize market behavior for traders
     if (npcType === 'trader') {
       this.initializeMarketBehavior(npc, system);
+      
+      // Start the 8-step trading schedule for trader NPCs
+      this.scheduleManager.startSchedule(npcId, 'trader_main');
     }
 
     return npc;
@@ -541,11 +549,28 @@ export class NPCAIManager {
    * Make AI decision for specific NPC
    */
   private makeAIDecision(npc: NPCShip): void {
+    // First, check if NPC has an active schedule and update it
+    if (this.scheduleManager.hasActiveSchedule(npc.id)) {
+      const scheduleUpdated = this.scheduleManager.updateSchedule(npc);
+      
+      if (scheduleUpdated) {
+        // Process any schedule execution requests
+        this.processScheduleExecutionRequests(npc);
+        return; // Schedule system handled the decision
+      }
+    }
+    
+    // Fallback to original AI decision making for non-scheduled NPCs
     const currentGoal = npc.ai.currentGoal;
     
     switch (currentGoal.type) {
       case 'trade':
-        this.processTradeGoal(npc);
+        // For trader NPCs without schedules, start the trading schedule
+        if (npc.type === 'trader') {
+          this.scheduleManager.startSchedule(npc.id, 'trader_main');
+        } else {
+          this.processTradeGoal(npc);
+        }
         break;
       case 'patrol':
         this.processPatrolGoal(npc);
@@ -556,6 +581,60 @@ export class NPCAIManager {
       case 'idle':
         this.processIdleGoal(npc);
         break;
+    }
+  }
+
+  /**
+   * Process schedule execution requests from the schedule manager
+   */
+  private processScheduleExecutionRequests(npc: NPCShip): void {
+    const executionData = this.scheduleManager.getScheduleExecutionData(npc.id);
+    if (!executionData) return;
+
+    // Handle travel requests
+    if (executionData.has('travel_destination')) {
+      const destination = executionData.get('travel_destination');
+      
+      if (destination && npc.position.stationId !== destination) {
+        this.setNPCDestination(npc, destination);
+      }
+    }
+
+    // Handle purchase requests
+    if (executionData.has('purchase_commodity')) {
+      const commodity = executionData.get('purchase_commodity');
+      const quantity = executionData.get('purchase_quantity') || 10;
+      
+      this.attemptNPCPurchase(npc, commodity, quantity);
+      
+      // Clear purchase request after attempting
+      executionData.delete('purchase_commodity');
+      executionData.delete('purchase_quantity');
+    }
+
+    // Handle sell requests
+    if (executionData.has('sell_all_cargo')) {
+      // Sell all cargo types
+      for (const [commodity, quantity] of npc.ship.currentCargo.entries()) {
+        if (quantity > 0) {
+          this.attemptNPCSale(npc, commodity, quantity);
+        }
+      }
+      
+      // Clear sell request after attempting
+      executionData.delete('sell_all_cargo');
+    }
+
+    // Handle escape destination requests
+    if (executionData.has('escape_destination')) {
+      const escapeDestination = executionData.get('escape_destination');
+      
+      if (escapeDestination && npc.position.stationId !== escapeDestination) {
+        this.setNPCDestination(npc, escapeDestination);
+        
+        // Increase speed for escape
+        npc.movement.speed = npc.movement.speed * 1.3;
+      }
     }
   }
 
@@ -2019,8 +2098,13 @@ export class NPCAIManager {
     return system.stations.find(s => s.id === stationId) || null;
   }
 
-  // Public API methods
-  
+  /**
+   * Get the NPC schedule manager for external access
+   */
+  getScheduleManager(): NPCScheduleManager {
+    return this.scheduleManager;
+  }
+
   /**
    * Get all NPCs in a specific system
    */
