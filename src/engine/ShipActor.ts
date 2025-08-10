@@ -45,30 +45,27 @@ export class ShipActor extends Actor {
   }
 
   /**
-   * Calculate acceleration based on ship class
+   * Calculate acceleration based on ship class (simplified: reach max speed in 1 second)
    */
   private calculateAcceleration(): number {
-    switch (this.ship.class.category) {
-      case 'courier': return 200; // Fast acceleration
-      case 'combat': return 150;
-      case 'explorer': return 120;
-      case 'transport': return 80;
-      case 'heavy-freight': return 50; // Slow acceleration
-      default: return 100;
-    }
+    // Acceleration = max speed (since we want to reach max speed in exactly 1 second)
+    return this.maxSpeed;
   }
 
   /**
-   * Calculate rotation speed based on ship class
+   * Calculate rotation speed based on ship class and mass
    */
   private calculateRotationSpeed(): number {
+    // Base turn speed in radians per second, inversely related to mass/size
+    const baseTurnSpeed = 3.0; // radians per second
+    
     switch (this.ship.class.category) {
-      case 'courier': return 4.0; // Fast turning
-      case 'combat': return 3.0;
-      case 'explorer': return 2.5;
-      case 'transport': return 2.0;
-      case 'heavy-freight': return 1.5; // Slow turning
-      default: return 2.0;
+      case 'courier': return baseTurnSpeed * 1.5; // Light and agile
+      case 'combat': return baseTurnSpeed * 1.2;  // Balanced
+      case 'explorer': return baseTurnSpeed * 1.0; // Balanced
+      case 'transport': return baseTurnSpeed * 0.8; // Heavier, slower turn
+      case 'heavy-freight': return baseTurnSpeed * 0.5; // Heavy and slow turning
+      default: return baseTurnSpeed;
     }
   }
 
@@ -97,140 +94,108 @@ export class ShipActor extends Actor {
   }
 
   /**
-   * Update ship movement with improved physics
+   * Update ship movement with simplified physics model
+   * Each ship has turn speed and straight speed based on mass and engines
+   * Acceleration to max speed always happens within 1 second
    */
   update(deltaTime: number): void {
     if (!this.targetPosition) {
-      // Apply stronger friction to gradually stop
-      const frictionFactor = Math.pow(0.75, deltaTime * 60); // Even stronger friction for better stopping
-      this.velocity.x *= frictionFactor;
-      this.velocity.y *= frictionFactor;
+      // No target - stop immediately (no complex friction)
+      this.velocity = { x: 0, y: 0 };
+      this.ship.location.isInTransit = false;
+      return;
+    }
+
+    // Calculate direction to target
+    const dx = this.targetPosition.x - this.position.x;
+    const dy = this.targetPosition.y - this.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Dynamic arrival threshold - larger when moving fast, smaller when slow
+    const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+    const arrivalRadius = Math.max(5, Math.min(15, currentSpeed * 0.1 + 5)); 
+    
+    if (distance <= arrivalRadius) {
+      // Arrived at target
+      this.velocity = { x: 0, y: 0 };
+      this.targetPosition = null;
+      this.ship.location.isInTransit = false;
       
-      // Stop if velocity is very low - very aggressive stopping
-      if (Math.abs(this.velocity.x) < 0.05 && Math.abs(this.velocity.y) < 0.05) {
-        this.velocity = { x: 0, y: 0 };
-        this.ship.location.isInTransit = false;
+      // Call movement completion callback if set
+      if (this.movementCompleteCallback) {
+        const callback = this.movementCompleteCallback;
+        this.movementCompleteCallback = undefined;
+        callback();
       }
+      return;
+    }
+
+    // Calculate direction to target
+    const directionX = dx / distance;
+    const directionY = dy / distance;
+    
+    // Calculate target rotation (ship should face movement direction)
+    const targetRotation = Math.atan2(dy, dx);
+    
+    // Apply rotation towards target with turn speed limit
+    let rotationDiff = targetRotation - this.rotation;
+    
+    // Normalize rotation difference to [-π, π]
+    while (rotationDiff > Math.PI) rotationDiff -= 2 * Math.PI;
+    while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
+    
+    // Apply turn speed limit
+    const maxRotationChange = this.rotationSpeed * deltaTime;
+    if (Math.abs(rotationDiff) <= maxRotationChange) {
+      this.rotation = targetRotation;
     } else {
-      // Calculate direction to target
-      const dx = this.targetPosition.x - this.position.x;
-      const dy = this.targetPosition.y - this.position.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
+      this.rotation += Math.sign(rotationDiff) * maxRotationChange;
+    }
+    
+    // Very aggressive deceleration system to prevent overshoot
+    const decelerationZone = Math.max(60, this.maxSpeed * 1.0); // Start decelerating earlier
+    let targetSpeed = this.maxSpeed;
+    
+    if (distance < decelerationZone) {
+      // Much more aggressive deceleration - exponential curve
+      const distanceRatio = distance / decelerationZone;
+      targetSpeed = this.maxSpeed * Math.pow(distanceRatio, 2.5); // Very steep deceleration curve
       
-      // Arrival threshold - balanced to prevent oscillation but allow small movements  
-      const arrivalRadius = 8; // Reduced to allow movement for targets 9.9 pixels away
-      
-      if (distance < arrivalRadius) {
-        // Near target - apply smooth deceleration
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        
-        // Calculate desired final approach speed based on distance
-        const maxApproachSpeed = Math.max(4, distance * 0.6); // Slower as we get closer
-        
-        if (currentSpeed > maxApproachSpeed) {
-          // Decelerate more aggressively
-          const decelerationFactor = Math.max(0.3, maxApproachSpeed / currentSpeed);
-          this.velocity.x *= decelerationFactor;
-          this.velocity.y *= decelerationFactor;
-        }
-        
-        // Stop when very close and moving slowly - aggressive stopping for tests
-        if (distance < 6 && currentSpeed < 4) {
-          // Don't snap to exact position - just stop near target
-          this.velocity = { x: 0, y: 0 };
-          this.targetPosition = null;
-          this.ship.location.isInTransit = false;
-          
-          // Call movement completion callback if set
-          if (this.movementCompleteCallback) {
-            const callback = this.movementCompleteCallback;
-            this.movementCompleteCallback = undefined; // Clear callback after use
-            callback();
-          }
-        } else {
-          // Continue gentle movement toward target
-          const directionX = dx / distance;
-          const directionY = dy / distance;
-          
-          // Apply gentle thrust toward target, but still meaningful for small distances
-          const gentleThrust = Math.min(40, this.acceleration * 0.4);
-          this.velocity.x += directionX * gentleThrust * deltaTime;
-          this.velocity.y += directionY * gentleThrust * deltaTime;
-        }
-      } else {
-        // Calculate desired direction
-        const directionX = dx / distance;
-        const directionY = dy / distance;
-        
-        // Calculate target rotation
-        const targetRotation = Math.atan2(dy, dx);
-        
-        // Smooth rotation towards target
-        let rotationDiff = targetRotation - this.rotation;
-        
-        // Normalize rotation difference to [-π, π]
-        while (rotationDiff > Math.PI) rotationDiff -= 2 * Math.PI;
-        while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
-        
-        // Apply rotation
-        const maxRotationChange = this.rotationSpeed * deltaTime;
-        if (Math.abs(rotationDiff) <= maxRotationChange) {
-          this.rotation = targetRotation;
-        } else {
-          this.rotation += Math.sign(rotationDiff) * maxRotationChange;
-        }
-        
-        // Improved predictive deceleration - start slowing down well before reaching target
-        const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-        
-        // Calculate stopping distance much more conservatively to prevent overshoot
-        const stoppingDistance = Math.max(120, (currentSpeed * currentSpeed) / (this.acceleration * 1.2));
-        
-        let targetAcceleration;
-        if (distance < stoppingDistance) {
-          // Deceleration phase - reduce thrust significantly as we approach target
-          const decelerationFactor = Math.max(0.02, Math.pow(distance / stoppingDistance, 4)); // Very aggressive curve
-          targetAcceleration = this.acceleration * decelerationFactor * 0.1; // Very strong deceleration
-        } else {
-          // Normal acceleration phase
-          targetAcceleration = this.acceleration * 0.7; // Reduced for better control
-          
-          // Only apply full thrust if we're reasonably aligned with target
-          const alignmentFactor = Math.max(0.4, Math.cos(Math.abs(rotationDiff)));
-          targetAcceleration *= alignmentFactor;
-        }
-        
-        // Apply acceleration towards target
-        const accelerationForce = targetAcceleration * deltaTime;
-        this.velocity.x += directionX * accelerationForce;
-        this.velocity.y += directionY * accelerationForce;
-        
-        // Progressive speed limiting based on distance to target to prevent overshoot
-        let effectiveMaxSpeed = this.maxSpeed;
-        if (distance < 120) { // Start limiting speed earlier
-          // More conservative speed reduction when approaching target
-          const speedFactor = Math.max(0.15, Math.pow(distance / 120, 1.5)); // More aggressive curve
-          effectiveMaxSpeed = Math.max(15, this.maxSpeed * speedFactor);
-        }
-        
-        // Limit maximum speed
-        if (currentSpeed > effectiveMaxSpeed) {
-          const speedReduction = effectiveMaxSpeed / currentSpeed;
-          this.velocity.x *= speedReduction;
-          this.velocity.y *= speedReduction;
-        }
-        
-        // Active brake system - if velocity is pointing away from target and we're close, brake hard
-        if (distance < 40) {
-          const velocityDotTarget = (this.velocity.x * directionX + this.velocity.y * directionY);
-          if (velocityDotTarget < 0) { // Moving away from target
-            // Apply emergency braking
-            const brakeForce = 0.3; // Strong braking
-            this.velocity.x *= (1 - brakeForce);
-            this.velocity.y *= (1 - brakeForce);
-          }
-        }
+      // Emergency braking when very close
+      if (distance < 30) {
+        targetSpeed = Math.min(targetSpeed, distance * 1.5); // Speed limited by distance
       }
+      
+      // Final approach - extremely slow when very close
+      if (distance < 15) {
+        targetSpeed = Math.min(targetSpeed, distance * 0.8);
+      }
+      
+      // Minimum speed to ensure progress
+      targetSpeed = Math.max(targetSpeed, 2); // Minimum 2 units/sec to ensure movement
+    }
+    
+    // Apply speed changes with more aggressive deceleration
+    if (currentSpeed < targetSpeed) {
+      // Accelerate (reach max speed in exactly 1 second)
+      const accelerationStep = this.acceleration * deltaTime;
+      const newSpeed = Math.min(currentSpeed + accelerationStep, targetSpeed);
+      
+      // Apply velocity in target direction
+      this.velocity.x = directionX * newSpeed;
+      this.velocity.y = directionY * newSpeed;
+    } else if (currentSpeed > targetSpeed) {
+      // Decelerate much more aggressively 
+      const decelerationStep = this.acceleration * 5 * deltaTime; // Decelerate 5x faster
+      const newSpeed = Math.max(currentSpeed - decelerationStep, targetSpeed);
+      
+      // Apply velocity in target direction
+      this.velocity.x = directionX * newSpeed;
+      this.velocity.y = directionY * newSpeed;
+    } else {
+      // Already at target speed, maintain direction
+      this.velocity.x = directionX * currentSpeed;
+      this.velocity.y = directionY * currentSpeed;
     }
     
     // Apply velocity to position
@@ -239,15 +204,6 @@ export class ShipActor extends Actor {
     
     // Update ship's location in the ship object
     this.ship.location.coordinates = { ...this.position };
-    
-    // Final velocity check - ensure ship stops when it should 
-    const finalSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    if (finalSpeed < 0.5) {
-      this.velocity = { x: 0, y: 0 };
-      if (!this.targetPosition) {
-        this.ship.location.isInTransit = false;
-      }
-    }
     
     // Update thrust particles
     this.updateThrustParticles(deltaTime);
