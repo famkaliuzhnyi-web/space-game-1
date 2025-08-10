@@ -1,19 +1,28 @@
-import { Vector2D } from '../types';
+import { Vector2D, Vector3D } from '../types';
+import { to3D, to2D, getLayerForObjectType } from '../utils/coordinates';
 
 /**
  * Base Actor class following game engine pattern.
  * Actors are entities that can be updated and rendered in the game world.
+ * Now uses unified 3D coordinate system with proper layering.
  */
 export abstract class Actor {
   public id: string;
-  public position: Vector2D;
-  public velocity: Vector2D;
+  public position: Vector3D;
+  public velocity: Vector2D; // Velocity remains 2D (XY plane movement)
   public rotation: number; // Rotation in radians
   public isActive: boolean;
 
-  constructor(id: string, position: Vector2D) {
+  constructor(id: string, position: Vector2D | Vector3D, objectType?: string) {
     this.id = id;
-    this.position = { ...position };
+    // Convert position to 3D if needed, using object type for layer assignment
+    if ('z' in position) {
+      this.position = { ...position };
+    } else {
+      // Convert 2D to 3D using object type or default layer
+      const layer = objectType ? getLayerForObjectType(objectType) : 30; // Default to station layer
+      this.position = to3D(position, layer);
+    }
     this.velocity = { x: 0, y: 0 };
     this.rotation = 0;
     this.isActive = true;
@@ -30,17 +39,29 @@ export abstract class Actor {
   abstract render(context: CanvasRenderingContext2D): void;
 
   /**
-   * Get the actor's world position
+   * Get the actor's world position (3D)
    */
-  getPosition(): Vector2D {
+  getPosition(): Vector3D {
     return { ...this.position };
+  }
+
+  /**
+   * Get the actor's 2D position (XY plane only)
+   */
+  getPosition2D(): Vector2D {
+    return to2D(this.position);
   }
 
   /**
    * Set the actor's world position
    */
-  setPosition(position: Vector2D): void {
-    this.position = { ...position };
+  setPosition(position: Vector2D | Vector3D): void {
+    if ('z' in position) {
+      this.position = { ...position };
+    } else {
+      // Preserve current Z layer when setting 2D position
+      this.position = { ...position, z: this.position.z };
+    }
   }
 
   /**
@@ -58,20 +79,24 @@ export abstract class Actor {
   }
 
   /**
-   * Calculate distance to another actor or position
+   * Calculate distance to another actor or position (2D distance - ignores Z layer)
    */
-  getDistanceTo(target: Vector2D): number {
-    const dx = target.x - this.position.x;
-    const dy = target.y - this.position.y;
+  getDistanceTo(target: Vector2D | Vector3D): number {
+    const targetPos = 'z' in target ? to2D(target) : target;
+    const currentPos = to2D(this.position);
+    const dx = targetPos.x - currentPos.x;
+    const dy = targetPos.y - currentPos.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
   /**
    * Calculate angle to another position
    */
-  getAngleTo(target: Vector2D): number {
-    const dx = target.x - this.position.x;
-    const dy = target.y - this.position.y;
+  getAngleTo(target: Vector2D | Vector3D): number {
+    const targetPos = 'z' in target ? to2D(target) : target;
+    const currentPos = to2D(this.position);
+    const dx = targetPos.x - currentPos.x;
+    const dy = targetPos.y - currentPos.y;
     return Math.atan2(dy, dx);
   }
 

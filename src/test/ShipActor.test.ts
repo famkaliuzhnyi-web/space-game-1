@@ -61,7 +61,10 @@ describe('ShipActor', () => {
 
   describe('Initialization', () => {
     it('should initialize with ship position', () => {
-      expect(shipActor.getPosition()).toEqual({ x: 100, y: 100 });
+      // Actor now uses 3D coordinates with ship layer (z: 50)
+      expect(shipActor.getPosition()).toEqual({ x: 100, y: 100, z: 50 });
+      // Also provide 2D access for backwards compatibility
+      expect(shipActor.getPosition2D()).toEqual({ x: 100, y: 100 });
     });
 
     it('should start with zero velocity', () => {
@@ -86,9 +89,9 @@ describe('ShipActor', () => {
     it('should move towards target over time', () => {
       shipActor.setTarget({ x: 200, y: 200 });
       
-      // Initial position
+      // Initial position (3D coordinates)
       const initialPos = shipActor.getPosition();
-      expect(initialPos).toEqual({ x: 100, y: 100 });
+      expect(initialPos).toEqual({ x: 100, y: 100, z: 50 });
       
       // Update movement
       shipActor.update(0.1); // 100ms

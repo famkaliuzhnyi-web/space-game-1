@@ -22,8 +22,8 @@ export interface Vector3D {
 
 export interface GameEntity {
   id: string;
-  position: Vector2D;
-  velocity: Vector2D;
+  position: Vector3D; // Updated to use unified 3D coordinate system
+  velocity: Vector2D; // Velocity remains 2D (XY plane movement)
   update(deltaTime: number): void;
   render(context: CanvasRenderingContext2D): void;
 }
