@@ -1,7 +1,9 @@
-export interface Coordinates {
-  x: number;
-  y: number;
-  z?: number; // For 3D expansion later
+import { Vector3D } from './index';
+
+export interface Coordinates extends Vector3D {
+  // Unified coordinate system - all coordinates now have x, y, z
+  // z represents the layer (Ships: 50, Stations: 30, Planets/Stars: 0)
+  // This interface provides semantic meaning for coordinate usage throughout the game
 }
 
 export interface Station {

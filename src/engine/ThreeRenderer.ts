@@ -344,8 +344,8 @@ export class ThreeRenderer {
       }
 
       if (mesh) {
-        // Update position
-        mesh.position.set(obj.position.x, -obj.position.y, 0); // Flip Y for 3D space
+        // Update position using the object's Z coordinate from unified system
+        mesh.position.set(obj.position.x, -obj.position.y, obj.position.z); // Use actual Z from coordinate system
         
         // Update rotation for ships
         this.updateShipRotation(mesh, obj, sceneManager);

@@ -1,3 +1,5 @@
+import { Coordinates } from './world';
+
 export interface Player {
   id: string;
   name: string;
@@ -93,7 +95,7 @@ export interface ShipCondition {
 export interface ShipLocation {
   systemId: string;
   stationId?: string; // If docked
-  coordinates?: { x: number; y: number }; // If in space
+  coordinates?: Coordinates; // If in space, using unified coordinate system
   isInTransit: boolean;
   destination?: string; // Station ID if traveling
   arrivalTime?: number; // Timestamp when travel completes

@@ -14,6 +14,12 @@ export interface Vector2D {
   y: number;
 }
 
+export interface Vector3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
 export interface GameEntity {
   id: string;
   position: Vector2D;

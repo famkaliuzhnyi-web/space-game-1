@@ -2,6 +2,7 @@ import { ShipActor } from './ShipActor';
 import { Ship, CargoItem } from '../types/player';
 import { NPCShip } from '../types/npc';
 import { Vector2D } from '../types';
+import { createLayeredPosition } from '../utils/coordinates';
 
 /**
  * NPC Actor that extends ShipActor to provide NPC-specific behavior
@@ -141,7 +142,7 @@ export class NPCActor extends ShipActor {
    */
   private syncPositionToNPCData(): void {
     const position = this.getPosition();
-    this.npcData.position.coordinates = { ...position };
+    this.npcData.position.coordinates = createLayeredPosition(position.x, position.y, 'ship');
     
     // Update velocity for AI use
     const velocity = this.getVelocity();
@@ -152,7 +153,7 @@ export class NPCActor extends ShipActor {
     
     // Update the ship's location data
     const ship = this.getShip();
-    this.npcData.position.coordinates = { ...position }; // Use actor position instead of ship location
+    this.npcData.position.coordinates = createLayeredPosition(position.x, position.y, 'ship'); // Use actor position instead of ship location
     this.npcData.position.stationId = ship.location.stationId;
   }
 

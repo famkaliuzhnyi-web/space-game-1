@@ -18,6 +18,7 @@ import { Character } from '../types/character';
 import { Contact } from '../types/contacts';
 import { NavigationManager, TravelPlan, TravelProgress } from './NavigationManager';
 import { NavigationTarget } from '../types/world';
+import { createLayeredPosition } from '../utils/coordinates';
 
 // Forward declaration to avoid circular dependency
 interface ICharacterProgressionSystem {
@@ -107,7 +108,7 @@ export class PlayerManager implements InventoryManager {
       location: {
         systemId: 'sol-system',  // Updated to match actual system ID
         stationId: undefined, // Start in space, not docked
-        coordinates: { x: 150, y: 100 }, // Start away from Earth Station Alpha for visibility
+        coordinates: createLayeredPosition(150, 100, 'ship'), // Start away from Earth Station Alpha for visibility
         isInTransit: false
       }
     };
@@ -1084,7 +1085,7 @@ export class PlayerManager implements InventoryManager {
         type: 'station',
         id: location.stationId,
         name: location.stationId.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        position: location.coordinates || { x: 0, y: 0 },
+        position: location.coordinates || createLayeredPosition(0, 0, 'ship'),
         distance: 0,
         estimatedTravelTime: 0
       };
