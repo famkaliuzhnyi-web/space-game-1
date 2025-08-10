@@ -10,7 +10,8 @@ import {
   CombatPanel, 
   InvestmentPanel, 
   QuestPanel,
-  CharacterCreationPanel
+  CharacterCreationPanel,
+  ScenarioSelectionPanel
 } from '../ui/lazy';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
@@ -24,6 +25,7 @@ import { GameEvent } from '../../types/events';
 import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
 import { Contact, InteractionType } from '../../types/contacts';
+import { StartingScenario } from '../../types/startingScenarios';
 
 // Extend Window interface for our custom properties
 interface WindowWithCustomProperties extends Window {
@@ -47,6 +49,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'tutorial' | 'quests' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
+  const [showScenarioSelection, setShowScenarioSelection] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<StartingScenario | null>(null);
   const [showNPCs, setShowNPCs] = useState(false);
   const [stationContacts, setStationContacts] = useState<Contact[]>([]);
   
@@ -168,11 +172,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // Store interval ID for cleanup
         (window as WindowWithCustomProperties).eventSyncInterval = eventSyncInterval;
 
-        // Check if character exists, prompt for creation if needed
+        // Check if character exists, prompt for scenario selection or character creation
         const characterManager = engineRef.current.getCharacterManager();
         const existingCharacter = characterManager.getCharacter();
         if (!existingCharacter) {
-          setShowCharacterCreation(true);
+          // Check if we need to show scenario selection first
+          if (!selectedScenario) {
+            setShowScenarioSelection(true);
+          } else {
+            setShowCharacterCreation(true);
+          }
         }
       } catch (error) {
         console.error('Failed to initialize game engine:', error);
@@ -267,6 +276,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     setIsLoading(true);
     // Force re-mount by changing a key or reloading
     window.location.reload();
+  };
+
+  // Handler for applying selected starting scenario
+  const handleScenarioApplication = (scenario: StartingScenario) => {
+    if (engineRef.current) {
+      try {
+        const characterManager = engineRef.current.getCharacterManager();
+        const character = characterManager.getCharacter();
+        
+        if (character) {
+          // Apply scenario settings to existing character
+          // Note: In a real implementation, this would need to integrate with the player manager
+          // For now, we'll just log the scenario application
+          console.log(`Applied starting scenario: ${scenario.name}`, scenario);
+          
+          // The scenario application would involve:
+          // 1. Setting player credits
+          // 2. Configuring starting ship
+          // 3. Setting faction relationships
+          // 4. Placing cargo in ship
+          // 5. Setting starting location
+          
+          // Future: Use StartingScenarioManager to fully apply scenario
+          // const scenarioManager = new StartingScenarioManager(characterManager);
+          // const result = scenarioManager.applyScenario(scenario, character.name, character.appearance);
+        }
+      } catch (error) {
+        console.error('Failed to apply starting scenario:', error);
+      }
+    }
   };
 
   const handleOpenMarket = () => {
@@ -1050,12 +1089,36 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         />
       )}
 
+      {/* Starting Scenario Selection Panel */}
+      {showScenarioSelection && (
+        <ScenarioSelectionPanel
+          onScenarioSelected={(scenario) => {
+            setSelectedScenario(scenario);
+            setShowScenarioSelection(false);
+            setShowCharacterCreation(true);
+          }}
+          onCustomStart={() => {
+            setSelectedScenario(null);
+            setShowScenarioSelection(false);
+            setShowCharacterCreation(true);
+          }}
+          onCancel={() => {
+            setShowScenarioSelection(false);
+            // Could add logic to return to main menu here
+          }}
+        />
+      )}
+
       {/* Character Creation Panel */}
       {engineRef.current && showCharacterCreation && (
         <CharacterCreationPanel
           characterManager={engineRef.current.getCharacterManager()}
           onComplete={(success) => {
             setShowCharacterCreation(false);
+            if (success && selectedScenario) {
+              // Apply selected scenario after character creation
+              handleScenarioApplication(selectedScenario);
+            }
             if (success) {
               setActivePanel('character');
             }

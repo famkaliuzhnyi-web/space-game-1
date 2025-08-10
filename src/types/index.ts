@@ -57,5 +57,6 @@ export * from './quests';
 export * from './security';
 export * from './shipHubs';
 export * from './skillTrees';
+export * from './startingScenarios';
 export * from './tutorial';
 export * from './world';
