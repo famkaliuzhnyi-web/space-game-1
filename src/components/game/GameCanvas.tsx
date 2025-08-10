@@ -86,7 +86,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   // 3D mode is now the only mode - no need to track state
 
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || engineRef.current) return; // Prevent double initialization
 
     const initializeEngine = async () => {
       try {
@@ -98,6 +98,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
         if (!canvasRef.current) {
           throw new Error('Canvas element not available');
+        }
+
+        // Check if we already have an engine (StrictMode double init prevention)
+        if (engineRef.current) {
+          console.log('Engine already initialized, skipping double initialization');
+          setIsLoading(false);
+          return;
         }
 
         // Check if canvas context is available
@@ -243,6 +250,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
       
       if (engineRef.current) {
         engineRef.current.dispose();
+        engineRef.current = null; // Clear the reference
         setIsEngineRunning(false);
       }
     };

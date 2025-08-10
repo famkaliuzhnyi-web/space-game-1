@@ -9,7 +9,9 @@ export class InputManager {
     isDragging: false,
     button: -1,
     startPosition: { x: 0, y: 0 },
-    currentPosition: { x: 0, y: 0 }
+    currentPosition: { x: 0, y: 0 },
+    dragStarted: false, // Track if we've started actual dragging
+    dragThreshold: 5    // Minimum pixels to move before starting drag
   };
 
   constructor(canvas: HTMLCanvasElement) {
@@ -57,12 +59,20 @@ export class InputManager {
   }
 
   private handleMouseDown(event: MouseEvent): void {
+    // Update mouse position first
+    const rect = this.canvas.getBoundingClientRect();
+    this.inputState.mouse.position = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    
     this.inputState.mouse.buttons[event.button] = true;
     
     // Start drag tracking for both middle-click (button 1) and left-click (button 0) for map dragging
-    // Left-click drag will be cancelled if it turns out to be clicking on an object
+    // But don't actually start dragging until mouse moves beyond threshold
     if (event.button === 1 || event.button === 0) {
-      this.dragState.isDragging = true;
+      this.dragState.isDragging = true; // This tracks potential for dragging
+      this.dragState.dragStarted = false; // This tracks actual dragging
       this.dragState.button = event.button;
       this.dragState.startPosition = { ...this.inputState.mouse.position };
       this.dragState.currentPosition = { ...this.inputState.mouse.position };
@@ -72,8 +82,8 @@ export class InputManager {
   private handleMouseUp(event: MouseEvent): void {
     // Detect click: mouse was down and is now up
     if (this.inputState.mouse.buttons[event.button]) {
-      // Only register clicks if not dragging (to prevent click after drag)
-      if (!this.dragState.isDragging || event.button !== 1) {
+      // Only register clicks if not actually dragging (threshold not exceeded)
+      if (!this.dragState.dragStarted || event.button !== this.dragState.button) {
         this.clickEvents.push({
           button: event.button,
           position: { ...this.inputState.mouse.position }
@@ -84,6 +94,7 @@ export class InputManager {
     // End drag tracking
     if (this.dragState.isDragging && event.button === this.dragState.button) {
       this.dragState.isDragging = false;
+      this.dragState.dragStarted = false;
       this.dragState.button = -1;
     }
     
@@ -97,9 +108,20 @@ export class InputManager {
       y: event.clientY - rect.top,
     };
     
-    // Update drag position if dragging
+    // Always update current position when potential dragging is active
     if (this.dragState.isDragging) {
       this.dragState.currentPosition = { ...this.inputState.mouse.position };
+      
+      // Check if we should start actual dragging
+      if (!this.dragState.dragStarted) {
+        const deltaX = this.dragState.currentPosition.x - this.dragState.startPosition.x;
+        const deltaY = this.dragState.currentPosition.y - this.dragState.startPosition.y;
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        
+        if (distance >= this.dragState.dragThreshold) {
+          this.dragState.dragStarted = true;
+        }
+      }
     }
   }
 
@@ -173,23 +195,18 @@ export class InputManager {
    * Get current drag state with drag threshold check
    */
   getDragState() {
-    // Calculate drag distance to determine if this is actually a drag operation
-    const dragDistance = Math.sqrt(
-      Math.pow(this.dragState.currentPosition.x - this.dragState.startPosition.x, 2) +
-      Math.pow(this.dragState.currentPosition.y - this.dragState.startPosition.y, 2)
-    );
-    
-    // Only consider it a drag if moved more than 5 pixels
-    const isDragOperation = this.dragState.isDragging && dragDistance > 5;
+    const deltaX = this.dragState.currentPosition.x - this.dragState.startPosition.x;
+    const deltaY = this.dragState.currentPosition.y - this.dragState.startPosition.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
     return {
-      isDragging: isDragOperation,
+      isDragging: this.dragState.isDragging && this.dragState.dragStarted,
       button: this.dragState.button,
       startPosition: { ...this.dragState.startPosition },
       currentPosition: { ...this.dragState.currentPosition },
-      deltaX: this.dragState.currentPosition.x - this.dragState.startPosition.x,
-      deltaY: this.dragState.currentPosition.y - this.dragState.startPosition.y,
-      dragDistance: dragDistance
+      deltaX: deltaX,
+      deltaY: deltaY,
+      dragDistance: distance
     };
   }
 
@@ -197,7 +214,7 @@ export class InputManager {
    * Reset drag start position for continuous dragging
    */
   resetDragStartPosition(): void {
-    if (this.dragState.isDragging) {
+    if (this.dragState.isDragging && this.dragState.dragStarted) {
       this.dragState.startPosition = { ...this.dragState.currentPosition };
     }
   }
@@ -207,6 +224,7 @@ export class InputManager {
    */
   cancelDrag(): void {
     this.dragState.isDragging = false;
+    this.dragState.dragStarted = false;
     this.dragState.button = -1;
   }
 
