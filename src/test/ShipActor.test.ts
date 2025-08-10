@@ -151,7 +151,8 @@ describe('ShipActor', () => {
       // Create a heavy freight ship for comparison
       const heavyShipClass: ShipClass = {
         ...ship.class,
-        category: 'heavy-freight'
+        category: 'heavy-freight',
+        baseSpeed: 80  // Heavy freight ships are slower
       };
       const heavyShip: Ship = { ...ship, class: heavyShipClass };
       const heavyShipActor = new ShipActor(heavyShip);
