@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide, InfoPanel } from '../ui';
 // Import heavy panels lazily
 import { 
   FleetManagementPanel, 
@@ -49,6 +49,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showNPCs, setShowNPCs] = useState(false);
   const [stationContacts, setStationContacts] = useState<Contact[]>([]);
+  
+  // Info panel state for object selection
+  const [selectedObject, setSelectedObject] = useState<any>(null);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
@@ -120,6 +124,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         
         // Initial resize to fit the container
         handleResize();
+        
+        // Set up object selection callback for info panel
+        const renderer3D = engineRef.current.getThreeRenderer();
+        if (renderer3D) {
+          renderer3D.setObjectSelectionCallback((objectData) => {
+            setSelectedObject(objectData);
+            setShowInfoPanel(objectData !== null);
+          });
+        }
         
         // Sync player credits from PlayerManager
         const playerManager = engineRef.current.getPlayerManager();
@@ -1193,6 +1206,21 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           onToggle={() => setShowNPCs(!showNPCs)}
         />
       )}
+      
+      {/* Info Panel - shows information about selected objects */}
+      <InfoPanel
+        selectedObject={selectedObject}
+        isVisible={showInfoPanel}
+        onClose={() => {
+          setShowInfoPanel(false);
+          setSelectedObject(null);
+          // Clear selection in the renderer
+          const renderer3D = engineRef.current?.getThreeRenderer();
+          if (renderer3D) {
+            renderer3D.clearSelection();
+          }
+        }}
+      />
       
       {/* New Player Guide - automatically appears for new players */}
       {engineRef.current && (

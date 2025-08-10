@@ -488,6 +488,15 @@ export class Engine implements GameEngine {
   }
 
   /**
+   * Get the ThreeRenderer instance for advanced 3D operations
+   * 
+   * @returns ThreeRenderer instance if available, null otherwise
+   */
+  getThreeRenderer(): ThreeRenderer | null {
+    return this.renderer3D;
+  }
+
+  /**
    * Clean up all resources and stop the engine.
    * 
    * Should be called when the engine is no longer needed to prevent

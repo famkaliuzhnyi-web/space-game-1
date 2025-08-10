@@ -7,6 +7,7 @@ export { default as NavigationPanel } from './NavigationPanel';
 export { default as InventoryPanel } from './InventoryPanel';
 export { default as MarketPanel } from './MarketPanel';
 export { default as ContractPanel } from './ContractPanel';
+export { default as InfoPanel } from './InfoPanel';
 export { TradeRoutePanel } from './TradeRoutePanel';
 export { default as ShipManagementPanel } from './ShipManagementPanel';
 export { default as EquipmentMarketPanel } from './EquipmentMarketPanel';
