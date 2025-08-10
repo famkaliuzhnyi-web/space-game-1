@@ -274,7 +274,8 @@ export class Engine implements GameEngine {
         this.renderer3D.render(
           this.camera,
           this.systemManager.getWorldManager(),
-          this.systemManager.getTimeManager()
+          this.systemManager.getTimeManager(),
+          this.sceneManager
         );
       } else {
         console.error('3D renderer not available - this should not happen in 3D-only mode');

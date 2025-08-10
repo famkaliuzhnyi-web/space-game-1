@@ -4,6 +4,7 @@ import { TimeManager } from '../systems/TimeManager';
 import { Station, Planet } from '../types/world';
 import { Camera } from './Renderer';
 import { StarGenerator } from './StarGenerator';
+import { SceneManager } from './SceneManager';
 
 /**
  * Three.js-based 3D renderer for the space game engine.
@@ -260,12 +261,12 @@ export class ThreeRenderer {
   /**
    * Main render method - orchestrates the entire 3D rendering pipeline
    */
-  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager): void {
+  render(camera: Camera, worldManager: WorldManager, timeManager: TimeManager, sceneManager?: SceneManager): void {
     // Update camera position based on 2D camera for consistency
     this.updateCameraFromGameCamera(camera);
 
     // Update world objects (with pause state for animations)
-    this.updateWorldObjects(worldManager, timeManager);
+    this.updateWorldObjects(worldManager, timeManager, sceneManager);
 
     // Update planet orbits
     this.createPlanetOrbits(worldManager);
@@ -300,7 +301,7 @@ export class ThreeRenderer {
   /**
    * Update all world objects in the 3D scene
    */
-  private updateWorldObjects(worldManager: WorldManager, timeManager?: TimeManager): void {
+  private updateWorldObjects(worldManager: WorldManager, timeManager?: TimeManager, sceneManager?: SceneManager): void {
     const objects = worldManager.getAllVisibleObjects();
     const currentStation = worldManager.getCurrentStation() || null;
     const currentObjectIds = new Set<string>();
@@ -326,6 +327,9 @@ export class ThreeRenderer {
         // Update position
         mesh.position.set(obj.position.x, -obj.position.y, 0); // Flip Y for 3D space
         
+        // Update rotation for ships
+        this.updateShipRotation(mesh, obj, sceneManager);
+        
         // Add subtle animations only if time is running (not paused)
         if (isTimeRunning) {
           this.animate3DObject(mesh, obj.type);
@@ -349,6 +353,38 @@ export class ThreeRenderer {
           }
         }
       }
+    }
+  }
+
+  /**
+   * Update ship rotation based on ShipActor data
+   */
+  private updateShipRotation(mesh: THREE.Object3D, obj: any, sceneManager?: SceneManager): void {
+    if ((obj.type === 'ship' || obj.type === 'npc-ship') && sceneManager) {
+      let rotation = 0;
+      
+      if (obj.type === 'ship') {
+        // Player ship - get rotation from SceneManager
+        const playerShipActor = sceneManager.getPlayerShipActor();
+        if (playerShipActor) {
+          rotation = playerShipActor.rotation;
+        }
+      } else if (obj.type === 'npc-ship') {
+        // NPC ship - get rotation from NPC actor if available
+        // Note: NPCs are added to scene with type 'npc', not 'npc-ship'
+        const npcActors = sceneManager.getCurrentScene().getActorsByType('npc');
+        const npcActor = npcActors.find((actor: any) => 
+          actor.getNPCData && actor.getNPCData().id === obj.object.id
+        );
+        if (npcActor) {
+          rotation = npcActor.rotation;
+        }
+      }
+      
+      // Apply rotation to the mesh
+      // Convert 2D rotation (around Z-axis) to 3D rotation
+      // Note: 3D ships are initially pointing right (positive X), same as 2D
+      mesh.rotation.z = rotation;
     }
   }
 
