@@ -34,6 +34,10 @@ export class ThreeRenderer {
   private selectedObject: THREE.Object3D | null = null;
   private raycaster: THREE.Raycaster = new THREE.Raycaster();
   private mouse: THREE.Vector2 = new THREE.Vector2();
+  
+  // Object selection callback and data storage
+  private onObjectSelected?: (objectData: any) => void;
+  private objectDataMap: Map<string, any> = new Map();
 
   // Orbital visualization
   private planetOrbits: THREE.Group = new THREE.Group();
@@ -278,6 +282,20 @@ export class ThreeRenderer {
   }
 
   /**
+   * Set callback for object selection events
+   */
+  setObjectSelectionCallback(callback: (objectData: any) => void): void {
+    this.onObjectSelected = callback;
+  }
+
+  /**
+   * Clear current object selection
+   */
+  clearSelection(): void {
+    this.deselectObject();
+  }
+
+  /**
    * Update 3D camera position based on game's 2D camera
    */
   private updateCameraFromGameCamera(gameCamera: Camera): void {
@@ -319,6 +337,8 @@ export class ThreeRenderer {
         if (newMesh) {
           mesh = newMesh;
           this.spaceObjects.set(objectId, mesh);
+          // Store original object data for selection callback
+          this.objectDataMap.set(objectId, obj);
           this.scene.add(mesh);
         }
       }
@@ -342,6 +362,7 @@ export class ThreeRenderer {
       if (!currentObjectIds.has(objectId)) {
         this.scene.remove(mesh);
         this.spaceObjects.delete(objectId);
+        this.objectDataMap.delete(objectId); // Clean up object data
         
         // Clean up geometry and materials
         if (mesh instanceof THREE.Mesh) {
@@ -925,8 +946,21 @@ export class ThreeRenderer {
     // Add visual selection indicator (outline or glow effect)
     this.addSelectionIndicator(topLevelObject);
     
-    // TODO: Dispatch event or call callback to show object information panel
-    console.log('Selected object:', topLevelObject.name || 'Unknown object');
+    // Find the object data associated with this mesh
+    let objectData = null;
+    for (const [objectId, mesh] of this.spaceObjects.entries()) {
+      if (mesh === topLevelObject) {
+        objectData = this.objectDataMap.get(objectId);
+        break;
+      }
+    }
+    
+    // Call the selection callback with object data
+    if (this.onObjectSelected && objectData) {
+      this.onObjectSelected(objectData);
+    }
+    
+    console.log('Selected object:', topLevelObject.name || 'Unknown object', objectData);
   }
 
   /**
@@ -936,6 +970,11 @@ export class ThreeRenderer {
     if (this.selectedObject) {
       this.removeSelectionIndicator(this.selectedObject);
       this.selectedObject = null;
+      
+      // Notify callback that object was deselected
+      if (this.onObjectSelected) {
+        this.onObjectSelected(null);
+      }
     }
   }
 
