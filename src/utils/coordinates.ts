@@ -168,3 +168,413 @@ export function calculateBoundingBox2D(positions: Vector3D[]): {
     center: { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
   };
 }
+
+/**
+ * Coordinate interpolation utilities for smooth movement and animations
+ */
+export function lerp2D(from: Vector3D, to: Vector3D, t: number): Vector3D {
+  const clampedT = Math.max(0, Math.min(1, t));
+  return {
+    x: from.x + (to.x - from.x) * clampedT,
+    y: from.y + (to.y - from.y) * clampedT,
+    z: from.z // Preserve layer during interpolation
+  };
+}
+
+/**
+ * Smooth interpolation with easing for more natural movement
+ */
+export function smoothStep2D(from: Vector3D, to: Vector3D, t: number): Vector3D {
+  const clampedT = Math.max(0, Math.min(1, t));
+  // Smooth step function: 3t² - 2t³
+  const smoothT = clampedT * clampedT * (3 - 2 * clampedT);
+  return lerp2D(from, to, smoothT);
+}
+
+/**
+ * Calculate movement vector with maximum distance constraint
+ */
+export function moveTowards2D(from: Vector3D, to: Vector3D, maxDistance: number): Vector3D {
+  const distance = distance2D(from, to);
+  if (distance <= maxDistance) {
+    return { ...to, z: from.z }; // Preserve original layer
+  }
+  
+  const direction = {
+    x: (to.x - from.x) / distance,
+    y: (to.y - from.y) / distance
+  };
+  
+  return {
+    x: from.x + direction.x * maxDistance,
+    y: from.y + direction.y * maxDistance,
+    z: from.z
+  };
+}
+
+/**
+ * Spatial partitioning system for efficient collision detection and queries
+ */
+export class SpatialGrid {
+  private cellSize: number;
+  private cells: Map<string, Vector3D[]> = new Map();
+  
+  constructor(cellSize: number = 100) {
+    this.cellSize = cellSize;
+  }
+  
+  private getCellKey(x: number, y: number): string {
+    const cellX = Math.floor(x / this.cellSize);
+    const cellY = Math.floor(y / this.cellSize);
+    return `${cellX},${cellY}`;
+  }
+  
+  /**
+   * Add a position to the spatial grid
+   */
+  insert(position: Vector3D): void {
+    const key = this.getCellKey(position.x, position.y);
+    if (!this.cells.has(key)) {
+      this.cells.set(key, []);
+    }
+    this.cells.get(key)!.push(position);
+  }
+  
+  /**
+   * Remove a position from the spatial grid
+   */
+  remove(position: Vector3D): void {
+    const key = this.getCellKey(position.x, position.y);
+    const cell = this.cells.get(key);
+    if (cell) {
+      const index = cell.findIndex(pos => 
+        positionsEqual2D(pos, position, 0.01)
+      );
+      if (index !== -1) {
+        cell.splice(index, 1);
+        if (cell.length === 0) {
+          this.cells.delete(key);
+        }
+      }
+    }
+  }
+  
+  /**
+   * Find all positions within a radius (much faster than brute force)
+   */
+  findInRadius(center: Vector3D, radius: number): Vector3D[] {
+    const results: Vector3D[] = [];
+    
+    // Calculate which cells to check
+    const cellRadius = Math.ceil(radius / this.cellSize);
+    const centerCellX = Math.floor(center.x / this.cellSize);
+    const centerCellY = Math.floor(center.y / this.cellSize);
+    
+    for (let x = centerCellX - cellRadius; x <= centerCellX + cellRadius; x++) {
+      for (let y = centerCellY - cellRadius; y <= centerCellY + cellRadius; y++) {
+        const key = `${x},${y}`;
+        const cell = this.cells.get(key);
+        if (cell) {
+          for (const pos of cell) {
+            if (distance2D(center, pos) <= radius) {
+              results.push(pos);
+            }
+          }
+        }
+      }
+    }
+    
+    return results;
+  }
+  
+  /**
+   * Clear all positions from the grid
+   */
+  clear(): void {
+    this.cells.clear();
+  }
+  
+  /**
+   * Get total number of positions in the grid
+   */
+  size(): number {
+    return Array.from(this.cells.values()).reduce((sum, cell) => sum + cell.length, 0);
+  }
+}
+
+/**
+ * Coordinate region system for organizing game areas
+ */
+export interface CoordinateRegion {
+  id: string;
+  name: string;
+  bounds: {
+    min: Vector2D;
+    max: Vector2D;
+  };
+  layer?: number; // Optional layer constraint
+  metadata?: Record<string, unknown>;
+}
+
+export class RegionManager {
+  private regions: Map<string, CoordinateRegion> = new Map();
+  
+  /**
+   * Add a region to the manager
+   */
+  addRegion(region: CoordinateRegion): void {
+    this.regions.set(region.id, region);
+  }
+  
+  /**
+   * Check if a coordinate is within a region
+   */
+  isInRegion(position: Vector3D, regionId: string): boolean {
+    const region = this.regions.get(regionId);
+    if (!region) return false;
+    
+    const inBounds = position.x >= region.bounds.min.x &&
+                     position.x <= region.bounds.max.x &&
+                     position.y >= region.bounds.min.y &&
+                     position.y <= region.bounds.max.y;
+    
+    if (region.layer !== undefined) {
+      return inBounds && position.z === region.layer;
+    }
+    
+    return inBounds;
+  }
+  
+  /**
+   * Find all regions containing a coordinate
+   */
+  getRegionsAt(position: Vector3D): CoordinateRegion[] {
+    return Array.from(this.regions.values()).filter(region => 
+      this.isInRegion(position, region.id)
+    );
+  }
+  
+  /**
+   * Get region by ID
+   */
+  getRegion(regionId: string): CoordinateRegion | undefined {
+    return this.regions.get(regionId);
+  }
+}
+
+/**
+ * Coordinate caching system for frequently accessed positions
+ */
+export class CoordinateCache {
+  private cache: Map<string, { coord: Vector3D; timestamp: number }> = new Map();
+  private maxAge: number;
+  
+  constructor(maxAgeMs: number = 5000) {
+    this.maxAge = maxAgeMs;
+  }
+  
+  private generateKey(id: string, type: string): string {
+    return `${type}:${id}`;
+  }
+  
+  /**
+   * Store a coordinate in the cache
+   */
+  set(id: string, type: string, coordinate: Vector3D): void {
+    const key = this.generateKey(id, type);
+    this.cache.set(key, {
+      coord: { ...coordinate },
+      timestamp: Date.now()
+    });
+  }
+  
+  /**
+   * Retrieve a coordinate from the cache
+   */
+  get(id: string, type: string): Vector3D | null {
+    const key = this.generateKey(id, type);
+    const entry = this.cache.get(key);
+    
+    if (!entry) return null;
+    
+    // Check if entry is too old
+    if (Date.now() - entry.timestamp > this.maxAge) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return { ...entry.coord };
+  }
+  
+  /**
+   * Clear expired entries
+   */
+  cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now - entry.timestamp > this.maxAge) {
+        this.cache.delete(key);
+      }
+    }
+  }
+  
+  /**
+   * Clear all cached coordinates
+   */
+  clear(): void {
+    this.cache.clear();
+  }
+}
+
+/**
+ * Enhanced coordinate validation with detailed error reporting
+ */
+export function validateCoordinateDetailed(coords: Vector3D, context: string = ''): {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+} {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // Check for NaN values
+  if (isNaN(coords.x)) errors.push(`X coordinate is NaN${context ? ` (${context})` : ''}`);
+  if (isNaN(coords.y)) errors.push(`Y coordinate is NaN${context ? ` (${context})` : ''}`);
+  if (isNaN(coords.z)) errors.push(`Z coordinate is NaN${context ? ` (${context})` : ''}`);
+  
+  // Check for infinity
+  if (!isFinite(coords.x)) errors.push(`X coordinate is infinite${context ? ` (${context})` : ''}`);
+  if (!isFinite(coords.y)) errors.push(`Y coordinate is infinite${context ? ` (${context})` : ''}`);
+  if (!isFinite(coords.z)) errors.push(`Z coordinate is infinite${context ? ` (${context})` : ''}`);
+  
+  // Check bounds
+  if (!isValidCoordinate(coords)) {
+    warnings.push(`Coordinate is outside valid bounds${context ? ` (${context})` : ''}`);
+  }
+  
+  // Check layer validity
+  const validLayers = Object.values(COORDINATE_LAYERS) as number[];
+  if (!validLayers.includes(coords.z) && coords.z !== 0) {
+    warnings.push(`Z coordinate (${coords.z}) is not a standard layer${context ? ` (${context})` : ''}`);
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
+/**
+ * Grid snapping utilities for alignment
+ */
+export function snapToGrid(coordinate: Vector3D, gridSize: number): Vector3D {
+  return {
+    x: Math.round(coordinate.x / gridSize) * gridSize,
+    y: Math.round(coordinate.y / gridSize) * gridSize,
+    z: coordinate.z // Don't snap Z coordinate
+  };
+}
+
+/**
+ * Coordinate debugging utilities
+ */
+export class CoordinateDebugger {
+  private static isEnabled: boolean = process.env.NODE_ENV === 'development';
+  private static history: Map<string, Vector3D[]> = new Map();
+  
+  /**
+   * Enable or disable debugging (useful for testing)
+   */
+  static setEnabled(enabled: boolean): void {
+    this.isEnabled = enabled;
+  }
+  
+  /**
+   * Log coordinate changes for debugging
+   */
+  static trackPosition(id: string, coordinate: Vector3D, maxHistory: number = 10): void {
+    if (!this.isEnabled) return;
+    
+    if (!this.history.has(id)) {
+      this.history.set(id, []);
+    }
+    
+    const history = this.history.get(id)!;
+    history.push({ ...coordinate });
+    
+    // Keep only recent history
+    if (history.length > maxHistory) {
+      history.splice(0, history.length - maxHistory);
+    }
+  }
+  
+  /**
+   * Get position history for an object
+   */
+  static getHistory(id: string): Vector3D[] {
+    return this.history.get(id) || [];
+  }
+  
+  /**
+   * Log coordinate validation issues
+   */
+  static validateAndLog(coords: Vector3D, context: string): boolean {
+    const validation = validateCoordinateDetailed(coords, context);
+    
+    if (validation.errors.length > 0) {
+      console.error('Coordinate validation errors:', validation.errors);
+    }
+    
+    if (validation.warnings.length > 0) {
+      console.warn('Coordinate validation warnings:', validation.warnings);
+    }
+    
+    return validation.isValid;
+  }
+  
+  /**
+   * Calculate and log movement statistics
+   */
+  static analyzeMovement(id: string): {
+    totalDistance: number;
+    averageSpeed: number;
+    maxDistance: number;
+    bounds: { min: Vector2D; max: Vector2D };
+  } | null {
+    const history = this.getHistory(id);
+    if (history.length < 2) return null;
+    
+    let totalDistance = 0;
+    let maxDistance = 0;
+    
+    for (let i = 1; i < history.length; i++) {
+      const dist = distance2D(history[i - 1], history[i]);
+      totalDistance += dist;
+      maxDistance = Math.max(maxDistance, dist);
+    }
+    
+    const bounds = calculateBoundingBox2D(history);
+    const averageSpeed = totalDistance / (history.length - 1);
+    
+    const stats = {
+      totalDistance,
+      averageSpeed,
+      maxDistance,
+      bounds
+    };
+    
+    if (this.isEnabled) {
+      console.log(`Movement analysis for ${id}:`, stats);
+    }
+    
+    return stats;
+  }
+  
+  /**
+   * Clear all debugging data
+   */
+  static clear(): void {
+    this.history.clear();
+  }
+}

@@ -159,6 +159,114 @@ Systems can still work with XY coordinates:
 - Movement systems work in XY plane
 - Rendering systems use Z for layering only
 
+## Advanced Features
+
+### Interpolation and Movement
+
+#### lerp2D(from, to, t)
+Linear interpolation between two coordinates:
+```typescript
+const from = { x: 0, y: 0, z: 50 };
+const to = { x: 100, y: 200, z: 30 };
+const midpoint = lerp2D(from, to, 0.5); // { x: 50, y: 100, z: 50 }
+```
+
+#### smoothStep2D(from, to, t)
+Smooth interpolation with easing for natural movement:
+```typescript
+const position = smoothStep2D(startPos, endPos, progress);
+// Uses smooth step function (3t² - 2t³) for easing
+```
+
+#### moveTowards2D(from, to, maxDistance)
+Move towards target with maximum distance constraint:
+```typescript
+const newPos = moveTowards2D(shipPos, targetPos, maxSpeed * deltaTime);
+```
+
+### Performance Optimization
+
+#### SpatialGrid
+Efficient spatial partitioning for collision detection and proximity queries:
+```typescript
+const grid = new SpatialGrid(100); // 100 unit cell size
+
+// Insert objects
+grid.insert(shipPosition);
+grid.insert(stationPosition);
+
+// Find objects within radius (much faster than brute force)
+const nearbyObjects = grid.findInRadius(playerPos, 200);
+```
+
+#### CoordinateCache
+Cache frequently accessed coordinates with automatic expiration:
+```typescript
+const cache = new CoordinateCache(5000); // 5 second TTL
+
+// Cache coordinates
+cache.set('ship-1', 'ship', shipPosition);
+
+// Retrieve (returns null if expired)
+const cachedPos = cache.get('ship-1', 'ship');
+```
+
+### Region Management
+
+#### RegionManager
+Organize game areas into named regions with bounds checking:
+```typescript
+const regionManager = new RegionManager();
+
+regionManager.addRegion({
+  id: 'safe-zone',
+  name: 'Safe Trading Zone',
+  bounds: { min: { x: 0, y: 0 }, max: { x: 500, y: 500 } },
+  layer: COORDINATE_LAYERS.SHIPS, // Optional layer constraint
+  metadata: { securityLevel: 10 }
+});
+
+// Check if position is in region
+const isInSafeZone = regionManager.isInRegion(shipPos, 'safe-zone');
+
+// Find all regions at position
+const regions = regionManager.getRegionsAt(shipPos);
+```
+
+### Development and Debugging Tools
+
+#### Enhanced Validation
+Detailed coordinate validation with specific error reporting:
+```typescript
+const validation = validateCoordinateDetailed(coordinate, 'player-ship');
+if (!validation.isValid) {
+  console.error('Coordinate errors:', validation.errors);
+}
+if (validation.warnings.length > 0) {
+  console.warn('Coordinate warnings:', validation.warnings);
+}
+```
+
+#### Grid Snapping
+Align coordinates to a grid for consistent positioning:
+```typescript
+const snappedPos = snapToGrid(mousePosition, 10); // Snap to 10-unit grid
+```
+
+#### CoordinateDebugger
+Development-time debugging utilities:
+```typescript
+// Track position changes (development mode only)
+CoordinateDebugger.trackPosition('player', playerPosition);
+
+// Analyze movement patterns
+const stats = CoordinateDebugger.analyzeMovement('player');
+console.log('Total distance traveled:', stats.totalDistance);
+
+// Validate and log issues
+CoordinateDebugger.validateAndLog(suspiciousCoordinate, 'NPC-AI');
+```
+
 ## Best Practices
 
 1. **Use distance2D() for gameplay**: All collision detection, interaction ranges, and AI decisions
@@ -166,6 +274,43 @@ Systems can still work with XY coordinates:
 3. **Assign correct layers**: Use `createLayeredPosition()` or `getLayerForObjectType()`
 4. **Movement in XY only**: Never modify Z coordinates during gameplay movement
 5. **Layer consistency**: Objects of same type should use same Z layer
+6. **Use SpatialGrid for performance**: When dealing with many objects and proximity queries
+7. **Cache frequently accessed coordinates**: Use CoordinateCache for positions accessed multiple times per frame
+8. **Validate coordinates in development**: Use CoordinateDebugger and validateCoordinateDetailed during development
+
+## Performance Considerations
+
+### Spatial Partitioning
+For games with many objects, use SpatialGrid for O(1) proximity queries instead of O(n) brute force:
+```typescript
+// Slow: Check all objects
+objects.forEach(obj => {
+  if (distance2D(player.position, obj.position) < radius) {
+    // Handle collision
+  }
+});
+
+// Fast: Use spatial grid
+const nearbyObjects = spatialGrid.findInRadius(player.position, radius);
+nearbyObjects.forEach(obj => {
+  // Handle collision - much fewer objects to check
+});
+```
+
+### Coordinate Caching
+Cache coordinates that don't change frequently:
+```typescript
+const cache = new CoordinateCache(1000); // 1 second cache
+
+function getStationPosition(stationId: string): Vector3D {
+  let pos = cache.get(stationId, 'station');
+  if (!pos) {
+    pos = calculateStationPosition(stationId); // Expensive calculation
+    cache.set(stationId, 'station', pos);
+  }
+  return pos;
+}
+```
 
 ## Examples
 
