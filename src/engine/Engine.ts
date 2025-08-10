@@ -1,5 +1,5 @@
 import { GameEngine } from '../types';
-import { Renderer, Camera } from './Renderer';
+import { Camera } from './Renderer';
 import { ThreeRenderer } from './ThreeRenderer';
 import { GameLoop } from './GameLoop';
 import { InputHandler } from './InputHandler';
@@ -52,13 +52,10 @@ import { audioEngine } from './AudioEngine';
  */
 export class Engine implements GameEngine {
   canvas: HTMLCanvasElement;
-  context: CanvasRenderingContext2D;
   private camera: Camera = { x: 0, y: 0, zoom: 1 };
   
-  // Rendering modes - 3D only
-  private renderer2D: Renderer;
+  // 3D rendering only
   private renderer3D: ThreeRenderer | null = null;
-  private canvas3D: HTMLCanvasElement | null = null; // Separate canvas for 3D
   
   // Modular components
   private gameLoop: GameLoop;
@@ -87,14 +84,9 @@ export class Engine implements GameEngine {
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error('Failed to get 2D context from canvas. This may occur on older devices or browsers that don\'t support HTML5 Canvas.');
-    }
-    this.context = context;
+    // For 3D-only mode, ThreeRenderer will handle canvas context creation
     
     // Initialize modular components
-    this.renderer2D = new Renderer(canvas);
     this.gameLoop = new GameLoop();
     this.inputHandler = new InputHandler(canvas);
     this.systemManager = new SystemManager(canvas);
@@ -122,20 +114,13 @@ export class Engine implements GameEngine {
     // Connect NPC AI manager to world manager for NPC rendering
     this.systemManager.getWorldManager().setNPCAIManager(this.systemManager.getNPCAIManager());
     
-    // Create a separate canvas for 3D rendering (overlay)
-    this.create3DCanvas();
-    
-    // Initialize 3D renderer (required for 3D-only mode)
-    if (this.canvas3D) {
-      try {
-        this.renderer3D = new ThreeRenderer(this.canvas3D);
-        console.log('3D renderer initialized successfully');
-      } catch (error) {
-        console.error('3D renderer initialization failed - this is required for 3D-only mode:', error);
-        throw new Error(`Failed to initialize required 3D renderer: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    } else {
-      throw new Error('Failed to create 3D canvas - required for 3D-only mode');
+    // Initialize 3D renderer using the provided canvas directly (no dual canvas)
+    try {
+      this.renderer3D = new ThreeRenderer(canvas);
+      console.log('3D renderer initialized successfully');
+    } catch (error) {
+      console.error('3D renderer initialization failed - this is required for 3D-only mode:', error);
+      throw new Error(`Failed to initialize required 3D renderer: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
     
     // Set up game loop callbacks
@@ -146,38 +131,6 @@ export class Engine implements GameEngine {
     this.inputHandler.setClickHandler((worldX, worldY, action) => {
       InputHandler.handleWorldClick(worldX, worldY, this.systemManager.getWorldManager(), action);
     });
-    
-    // Ensure canvas has a dark background
-    this.context.fillStyle = '#0a0a0a';
-    this.context.fillRect(0, 0, canvas.width, canvas.height);
-  }
-
-  /**
-   * Create a separate canvas for 3D rendering
-   */
-  private create3DCanvas(): void {
-    if (!this.canvas.parentElement) return;
-
-    // Create a new canvas element for 3D rendering
-    this.canvas3D = document.createElement('canvas');
-    this.canvas3D.style.position = 'absolute';
-    this.canvas3D.style.top = '0';
-    this.canvas3D.style.left = '0';
-    this.canvas3D.style.width = '100%';
-    this.canvas3D.style.height = '100%';
-    this.canvas3D.style.pointerEvents = 'auto'; // Enable events for 3D navigation
-    this.canvas3D.style.zIndex = '1'; // Above 2D canvas
-    this.canvas3D.style.display = 'block'; // Visible by default
-    
-    // Set initial dimensions - use container dimensions if available, fallback to 2D canvas
-    const containerWidth = this.canvas.parentElement.clientWidth || this.canvas.clientWidth || this.canvas.width;
-    const containerHeight = this.canvas.parentElement.clientHeight || this.canvas.clientHeight || this.canvas.height;
-    
-    this.canvas3D.width = containerWidth;
-    this.canvas3D.height = containerHeight;
-    
-    // Insert after the main canvas
-    this.canvas.parentElement.insertBefore(this.canvas3D, this.canvas.nextSibling);
   }
 
   /**
@@ -316,11 +269,8 @@ export class Engine implements GameEngine {
    */
   render = (): void => {
     performanceMonitor.profileSystem('Renderer', () => {
-      if (this.renderer3D && this.canvas3D) {
-        // Use 3D renderer (primary mode)
-        this.canvas.style.display = 'none'; // Hide 2D canvas
-        this.canvas3D.style.display = 'block';
-        
+      if (this.renderer3D) {
+        // Use single 3D canvas for rendering
         this.renderer3D.render(
           this.camera,
           this.systemManager.getWorldManager(),
@@ -328,19 +278,6 @@ export class Engine implements GameEngine {
         );
       } else {
         console.error('3D renderer not available - this should not happen in 3D-only mode');
-        
-        // Emergency fallback to 2D renderer
-        this.canvas.style.display = 'block';
-        if (this.canvas3D) {
-          this.canvas3D.style.display = 'none';
-        }
-        
-        this.renderer2D.render(
-          this.camera,
-          this.systemManager.getWorldManager(),
-          this.systemManager.getTimeManager(),
-          this.sceneManager
-        );
       }
     });
     
@@ -515,8 +452,8 @@ export class Engine implements GameEngine {
       return false;
     }
     
-    // If switching to 3D mode and canvas has invalid dimensions, trigger a resize
-    if (this.canvas3D && (this.canvas3D.width <= 0 || this.canvas3D.height <= 0)) {
+    // If canvas has invalid dimensions, trigger a resize
+    if (this.canvas.width <= 0 || this.canvas.height <= 0) {
       const containerWidth = this.canvas.parentElement?.clientWidth || this.canvas.clientWidth || this.canvas.width;
       const containerHeight = this.canvas.parentElement?.clientHeight || this.canvas.clientHeight || this.canvas.height;
       
@@ -576,12 +513,6 @@ export class Engine implements GameEngine {
     if (this.renderer3D) {
       this.renderer3D.dispose();
     }
-    
-    // Remove 3D canvas
-    if (this.canvas3D) {
-      this.canvas3D.remove();
-      this.canvas3D = null;
-    }
   }
 
   /**
@@ -608,14 +539,11 @@ export class Engine implements GameEngine {
       return;
     }
     
-    this.renderer2D.resizeCanvas(width, height);
+    // Resize the main canvas
+    this.canvas.width = width;
+    this.canvas.height = height;
     
-    // Also resize 3D canvas and renderer if available
-    if (this.canvas3D) {
-      this.canvas3D.width = width;
-      this.canvas3D.height = height;
-    }
-    
+    // Resize 3D renderer if available
     if (this.renderer3D) {
       this.renderer3D.resizeRenderer(width, height);
     }

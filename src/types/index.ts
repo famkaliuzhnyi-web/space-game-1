@@ -1,6 +1,5 @@
 export interface GameEngine {
   canvas: HTMLCanvasElement;
-  context: CanvasRenderingContext2D;
   isRunning: boolean;
   lastFrameTime: number;
   
