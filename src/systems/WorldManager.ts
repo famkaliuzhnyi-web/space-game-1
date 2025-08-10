@@ -204,7 +204,7 @@ export class WorldManager {
             id: 'earth-station',
             name: 'Earth Station Alpha',
             type: 'trade',
-            position: convertLegacyCoords({ x: position.x, y: position.y - 30 }, "station"),
+            position: convertLegacyCoords({ x: position.x, y: position.y - 150 }, "station"), // 5x further from star (was -30)
             faction: 'Earth Federation',
             dockingCapacity: 50,
             services: ['refuel', 'repair', 'trading', 'missions'],
@@ -214,7 +214,7 @@ export class WorldManager {
             id: 'sol-military-base',
             name: 'Sol Defense Platform',
             type: 'military',
-            position: convertLegacyCoords({ x: position.x - 40, y: position.y + 20 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 200, y: position.y + 100 }, "station"), // 5x further from star (was -40, +20)
             faction: 'Earth Federation',
             dockingCapacity: 30,
             services: ['refuel', 'repair', 'military_contracts', 'weapons'],
@@ -224,7 +224,7 @@ export class WorldManager {
             id: 'sol-luxury-resort',
             name: 'Orbital Paradise Resort',
             type: 'luxury',
-            position: convertLegacyCoords({ x: position.x + 60, y: position.y - 10 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 300, y: position.y - 50 }, "station"), // 5x further from star (was +60, -10)
             faction: 'Neutral',
             dockingCapacity: 25,
             services: ['refuel', 'luxury_trading', 'entertainment', 'high_end_missions'],
@@ -236,7 +236,7 @@ export class WorldManager {
             id: 'earth',
             name: 'Earth',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x, y: position.y - 120 }, "station"),
+            position: convertLegacyCoords({ x: position.x, y: position.y - 600 }, "station"), // 5x further from star (was -120)
             radius: 20,
             habitable: true,
             population: 8000000000,
@@ -246,7 +246,7 @@ export class WorldManager {
             id: 'mars',
             name: 'Mars',
             type: 'desert',
-            position: convertLegacyCoords({ x: position.x + 80, y: position.y - 180 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 400, y: position.y - 900 }, "station"), // 5x further from star (was +80, -180)
             radius: 15,
             habitable: false,
             population: 50000000,
@@ -256,7 +256,7 @@ export class WorldManager {
             id: 'jupiter',
             name: 'Jupiter',
             type: 'gas-giant',
-            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 200 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 750, y: position.y + 1000 }, "station"), // 5x further from star (was -150, +200)
             radius: 35,
             habitable: false,
             description: 'Massive gas giant with numerous mining stations in its orbit.'
