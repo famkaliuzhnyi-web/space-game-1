@@ -1,3 +1,5 @@
+import { NPCScheduleContext } from './npc-schedule';
+
 export interface NPCShip {
   id: string;
   name: string;
@@ -44,6 +46,8 @@ export interface NPCShip {
   reputation: number; // -100 to 100, affects behavior toward player
   credits: number;
   lastActionTime: number;
+  // Schedule context for structured NPC behavior
+  scheduleContext?: NPCScheduleContext;
 }
 
 export interface NPCAIData {
