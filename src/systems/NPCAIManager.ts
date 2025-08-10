@@ -367,7 +367,7 @@ export class NPCAIManager {
   }
 
   /**
-   * Create ship data for NPC
+   * Create ship data for NPC with supply chain appropriate initial cargo
    */
   private createShipData(npcType: string) {
     const baseData = {
@@ -379,11 +379,27 @@ export class NPCAIManager {
     };
 
     const data = baseData[npcType as keyof typeof baseData] || baseData.civilian;
+    const currentCargo = new Map<string, number>();
+    
+    // Give traders some initial cargo to encourage supply chain trading
+    if (npcType === 'trader') {
+      const possibleCargo = [
+        'iron-ore', 'copper-ore', 'steel-alloys', 'electronics', 
+        'consumer-goods', 'fusion-cells', 'protein-rations'
+      ];
+      
+      const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 different items
+      for (let i = 0; i < numItems; i++) {
+        const commodity = possibleCargo[Math.floor(Math.random() * possibleCargo.length)];
+        const quantity = Math.floor(Math.random() * 20) + 5; // 5-24 units
+        currentCargo.set(commodity, quantity);
+      }
+    }
     
     return {
       class: data.class,
       cargoCapacity: data.cargo,
-      currentCargo: new Map<string, number>(),
+      currentCargo,
       condition: data.condition,
       fuel: data.fuel,
       fuelCapacity: data.fuel
@@ -1652,15 +1668,30 @@ export class NPCAIManager {
   }
 
   /**
-   * Find the best commodity to buy for an NPC
+   * Find the best commodity to buy for an NPC with supply chain awareness
    */
-  private findBestCommodityToBuy(npc: NPCShip, _system: any): { commodity: string; targetPrice: number; confidence: number } | null {
-    // Simplified logic - would use actual market data in full implementation
-    const availableCommodities = ['electronics', 'medical_supplies', 'luxury_goods', 'machinery', 'raw_materials'];
+  private findBestCommodityToBuy(npc: NPCShip, system: any): { commodity: string; targetPrice: number; confidence: number } | null {
     const tradingSkill = npc.ai.tradingSkill / 100;
     const marketKnowledge = npc.ai.marketKnowledge / 100;
     
-    // Higher skill means better commodity selection
+    // Get current station type to understand what this station likely produces cheaply
+    const currentStationType = this.getCurrentStationType(npc, system);
+    
+    // Supply chain logic: buy what the current station produces, sell what other stations need
+    const supplyChainCommodities = this.getSupplyChainCommodities(currentStationType);
+    
+    if (supplyChainCommodities.produces.length > 0) {
+      // Buy what this station produces (should be cheaper here)
+      const commodity = supplyChainCommodities.produces[Math.floor(Math.random() * supplyChainCommodities.produces.length)];
+      return {
+        commodity,
+        targetPrice: this.estimateCommodityValue(commodity) * (0.7 + 0.2 * marketKnowledge), // Buy cheaper
+        confidence: Math.min(85, 40 + tradingSkill * 45)
+      };
+    }
+    
+    // Fallback to original logic if no supply chain match
+    const availableCommodities = ['electronics', 'medical_supplies', 'machinery', 'steel-alloys', 'consumer-goods'];
     const commodityIndex = Math.floor(Math.random() * availableCommodities.length * (0.5 + 0.5 * tradingSkill));
     const selectedCommodity = availableCommodities[Math.min(commodityIndex, availableCommodities.length - 1)];
     
@@ -1672,7 +1703,59 @@ export class NPCAIManager {
   }
 
   /**
-   * Find a profitable trade route for an NPC
+   * Get current station type for supply chain logic
+   */
+  private getCurrentStationType(npc: NPCShip, system: any): string | null {
+    if (!npc.position.stationId) return null;
+    
+    const station = this.findStationById(system, npc.position.stationId);
+    return station ? station.type : null;
+  }
+
+  /**
+   * Get supply chain commodities for a station type
+   */
+  private getSupplyChainCommodities(stationType: string | null): { produces: string[]; consumes: string[] } {
+    const supplyChains: Record<string, { produces: string[]; consumes: string[] }> = {
+      'mining': {
+        produces: ['iron-ore', 'copper-ore', 'aluminum-ore', 'titanium-ore', 'silicon-ore', 'carbon-crystals', 'rare-earth-elements'],
+        consumes: ['machinery', 'electronics', 'fusion-cells']
+      },
+      'refinery': {
+        produces: ['steel-alloys', 'copper-ingots', 'aluminum-sheets', 'titanium-plates', 'silicon-wafers'],
+        consumes: ['iron-ore', 'copper-ore', 'aluminum-ore', 'titanium-ore', 'silicon-ore', 'carbon-crystals']
+      },
+      'manufacturing_hub': {
+        produces: ['advanced-electronics', 'consumer-goods', 'ship-components', 'synthetic-fabrics'],
+        consumes: ['steel-alloys', 'copper-ingots', 'aluminum-sheets', 'silicon-wafers']
+      },
+      'industrial': {
+        produces: ['electronics', 'machinery', 'ship-hulls', 'fusion-drives'],
+        consumes: ['iron-ore', 'steel-alloys', 'carbon-crystals', 'copper-ingots']
+      },
+      'energy': {
+        produces: ['fusion-cells', 'antimatter-pods'],
+        consumes: ['rare-earth-elements', 'machinery']
+      },
+      'agricultural': {
+        produces: ['protein-rations', 'hydroponic-produce'],
+        consumes: ['machinery', 'fusion-cells']
+      },
+      'trade': {
+        produces: [],
+        consumes: ['consumer-goods', 'electronics', 'synthetic-fabrics']
+      },
+      'shipyard': {
+        produces: ['complete-ships'],
+        consumes: ['steel-alloys', 'titanium-plates', 'ship-components', 'advanced-electronics', 'fusion-drives']
+      }
+    };
+    
+    return supplyChains[stationType || ''] || { produces: [], consumes: [] };
+  }
+
+  /**
+   * Find a profitable trade route with supply chain awareness
    */
   private findProfitableRoute(npc: NPCShip, currentSystem: any): { targetStation: string; confidence: number } | null {
     const knownRoutes = npc.ai.routeOptimization.knownProfitableRoutes;
@@ -1691,8 +1774,34 @@ export class NPCAIManager {
       }
     }
     
-    // If no known routes, explore a random station
+    // Use supply chain logic to find profitable routes
+    const currentStationType = this.getCurrentStationType(npc, currentSystem);
+    const currentSupplyChain = this.getSupplyChainCommodities(currentStationType);
+    
+    // Look for stations that need what we can carry or produce what we need
     const availableStations = currentSystem.stations.filter((s: any) => s.id !== npc.position.stationId);
+    
+    for (const station of availableStations) {
+      const targetSupplyChain = this.getSupplyChainCommodities(station.type);
+      
+      // Check if we have what they consume or they have what we consume
+      const hasUsefulCargo = Array.from(npc.ship.currentCargo.keys()).some(commodity =>
+        targetSupplyChain.consumes.includes(commodity)
+      );
+      
+      const theyProduceWhatWeNeed = targetSupplyChain.produces.some(commodity =>
+        currentSupplyChain.consumes.includes(commodity)
+      );
+      
+      if (hasUsefulCargo || theyProduceWhatWeNeed) {
+        return {
+          targetStation: station.id,
+          confidence: 65
+        };
+      }
+    }
+    
+    // Fallback to random station
     if (availableStations.length > 0) {
       const randomStation = availableStations[Math.floor(Math.random() * availableStations.length)];
       return {
@@ -1705,14 +1814,60 @@ export class NPCAIManager {
   }
 
   /**
-   * Estimate commodity value (simplified)
+   * Estimate commodity value (enhanced with supply chain commodities)
    */
   private estimateCommodityValue(commodity: string): number {
     const baseValues: Record<string, number> = {
-      'electronics': 150,
-      'medical_supplies': 200,
+      // Raw materials (cheapest at mining stations)
+      'iron-ore': 45,
+      'copper-ore': 65,
+      'aluminum-ore': 55,
+      'titanium-ore': 180,
+      'silicon-ore': 75,
+      'carbon-crystals': 120,
+      'rare-earth-elements': 850,
+      
+      // Refined materials (moderate prices at refineries)
+      'steel-alloys': 150,
+      'copper-ingots': 180,
+      'aluminum-sheets': 160,
+      'titanium-plates': 420,
+      'silicon-wafers': 220,
+      
+      // Manufactured goods (expensive at manufacturing hubs)
+      'electronics': 280,
+      'advanced-electronics': 850,
+      'consumer-goods': 180,
+      'ship-components': 680,
+      'synthetic-fabrics': 95,
+      'machinery': 520,
+      'ship-hulls': 4200,
+      'fusion-drives': 2800,
+      'complete-ships': 15000,
+      
+      // Energy
+      'fusion-cells': 450,
+      'antimatter-pods': 2500,
+      
+      // Technology
+      'quantum-processors': 1800,
+      'neural-interfaces': 3200,
+      
+      // Food
+      'protein-rations': 25,
+      'hydroponic-produce': 85,
+      'medical-supplies': 380,
+      
+      // Luxury
+      'exotic-spices': 180,
+      'art-objects': 650,
+      
+      // Illegal
+      'combat-stims': 480,
+      'black-market-data': 1200,
+      
+      // Legacy fallbacks
       'luxury_goods': 300,
-      'machinery': 180,
       'raw_materials': 80,
       'food': 50,
       'fuel': 40

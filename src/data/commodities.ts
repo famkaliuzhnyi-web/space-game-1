@@ -66,6 +66,32 @@ export const COMMODITIES: Record<string, Commodity> = {
     legalStatus: 'legal',
     perishable: false
   },
+
+  'aluminum-ore': {
+    id: 'aluminum-ore',
+    name: 'Aluminum Ore',
+    category: 'raw-materials',
+    description: 'Lightweight metal ore used in ship construction and electronics',
+    basePrice: 55,
+    unitSize: 1,
+    unitMass: 2.0,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'silicon-ore': {
+    id: 'silicon-ore',
+    name: 'Silicon Ore',
+    category: 'raw-materials',
+    description: 'Essential semiconductor material for electronics manufacturing',
+    basePrice: 75,
+    unitSize: 1,
+    unitMass: 2.3,
+    volatility: 0.25,
+    legalStatus: 'legal',
+    perishable: false
+  },
   
   // Manufactured Goods
   'steel-alloys': {
@@ -77,6 +103,58 @@ export const COMMODITIES: Record<string, Commodity> = {
     unitSize: 1,
     unitMass: 4.0,
     volatility: 0.15,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'copper-ingots': {
+    id: 'copper-ingots',
+    name: 'Copper Ingots',
+    category: 'manufactured',
+    description: 'Refined copper bars ready for electronics manufacturing',
+    basePrice: 180,
+    unitSize: 1,
+    unitMass: 3.5,
+    volatility: 0.18,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'aluminum-sheets': {
+    id: 'aluminum-sheets',
+    name: 'Aluminum Sheets',
+    category: 'manufactured',
+    description: 'Processed aluminum plating for lightweight construction',
+    basePrice: 160,
+    unitSize: 2,
+    unitMass: 2.8,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'silicon-wafers': {
+    id: 'silicon-wafers',
+    name: 'Silicon Wafers',
+    category: 'manufactured',
+    description: 'Precisely cut silicon discs for semiconductor production',
+    basePrice: 220,
+    unitSize: 1,
+    unitMass: 0.5,
+    volatility: 0.3,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'synthetic-fabrics': {
+    id: 'synthetic-fabrics',
+    name: 'Synthetic Fabrics',
+    category: 'manufactured',
+    description: 'Advanced textile materials for clothing and equipment',
+    basePrice: 95,
+    unitSize: 1,
+    unitMass: 0.8,
+    volatility: 0.25,
     legalStatus: 'legal',
     perishable: false
   },
@@ -103,6 +181,32 @@ export const COMMODITIES: Record<string, Commodity> = {
     unitSize: 2,
     unitMass: 3.5,
     volatility: 0.25,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'consumer-goods': {
+    id: 'consumer-goods',
+    name: 'Consumer Goods',
+    category: 'manufactured',
+    description: 'Everyday items made from synthetic fabrics and basic materials',
+    basePrice: 180,
+    unitSize: 2,
+    unitMass: 1.2,
+    volatility: 0.2,
+    legalStatus: 'legal',
+    perishable: false
+  },
+
+  'advanced-electronics': {
+    id: 'advanced-electronics',
+    name: 'Advanced Electronics',
+    category: 'manufactured',
+    description: 'Complex electronic systems made from refined silicon and copper',
+    basePrice: 850,
+    unitSize: 1,
+    unitMass: 0.8,
+    volatility: 0.35,
     legalStatus: 'legal',
     perishable: false
   },

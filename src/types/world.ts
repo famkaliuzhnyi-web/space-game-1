@@ -9,7 +9,8 @@ export interface Station {
   name: string;
   type: 'trade' | 'industrial' | 'military' | 'research' | 'mining' | 'luxury' | 'diplomatic' | 
         'entertainment' | 'pirate' | 'agricultural' | 'medical' | 'exploration' | 'colonial' | 
-        'salvage' | 'observatory' | 'foundry' | 'habitat' | 'security' | 'prison' | 'energy' | 'shipyard';
+        'salvage' | 'observatory' | 'foundry' | 'habitat' | 'security' | 'prison' | 'energy' | 
+        'shipyard' | 'refinery' | 'manufacturing_hub';
   position: Coordinates;
   faction: string;
   dockingCapacity: number;
