@@ -170,6 +170,48 @@ export function calculateBoundingBox2D(positions: Vector3D[]): {
 }
 
 /**
+ * Normalize angle to [-π, π] range for consistent rotation calculations
+ */
+export function normalizeAngle(angle: number): number {
+  // Use modulo and adjust to ensure result is in [-π, π]
+  let normalized = ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+  if (normalized > Math.PI) {
+    normalized -= 2 * Math.PI;
+  }
+  return normalized;
+}
+
+/**
+ * Calculate the shortest angular distance between two angles
+ * Returns a value in [-π, π] representing the shortest rotation direction
+ */
+export function angleDifference(targetAngle: number, currentAngle: number): number {
+  let diff = targetAngle - currentAngle;
+  // Normalize the difference to [-π, π]
+  while (diff > Math.PI) diff -= 2 * Math.PI;
+  while (diff < -Math.PI) diff += 2 * Math.PI;
+  return diff;
+}
+
+/**
+ * Calculate angle from one position to another (for rotation towards target)
+ */
+export function angleToTarget(from: Vector3D, to: Vector3D): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  return Math.atan2(dy, dx);
+}
+
+/**
+ * Rotate angle towards target by maximum amount, returns normalized angle
+ */
+export function rotateTowards(currentAngle: number, targetAngle: number, maxChange: number): number {
+  const diff = angleDifference(targetAngle, currentAngle);
+  const change = Math.sign(diff) * Math.min(Math.abs(diff), maxChange);
+  return normalizeAngle(currentAngle + change);
+}
+
+/**
  * Coordinate interpolation utilities for smooth movement and animations
  */
 export function lerp2D(from: Vector3D, to: Vector3D, t: number): Vector3D {
