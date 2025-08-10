@@ -111,9 +111,8 @@ export class ShipActor extends Actor {
     const dy = this.targetPosition.y - this.position.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Dynamic arrival threshold - larger when moving fast, smaller when slow
-    const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    const arrivalRadius = Math.max(5, Math.min(15, currentSpeed * 0.1 + 5)); 
+    // Simple arrival threshold 
+    const arrivalRadius = 5; 
     
     if (distance <= arrivalRadius) {
       // Arrived at target
@@ -152,48 +151,37 @@ export class ShipActor extends Actor {
       this.rotation += Math.sign(rotationDiff) * maxRotationChange;
     }
     
-    // Very aggressive deceleration system to prevent overshoot
-    const decelerationZone = Math.max(60, this.maxSpeed * 1.0); // Start decelerating earlier
-    let targetSpeed = this.maxSpeed;
+    // Simple speed control based on distance
+    const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     
-    if (distance < decelerationZone) {
-      // Much more aggressive deceleration - exponential curve
-      const distanceRatio = distance / decelerationZone;
-      targetSpeed = this.maxSpeed * Math.pow(distanceRatio, 2.5); // Very steep deceleration curve
-      
-      // Emergency braking when very close
-      if (distance < 30) {
-        targetSpeed = Math.min(targetSpeed, distance * 1.5); // Speed limited by distance
-      }
-      
-      // Final approach - extremely slow when very close
-      if (distance < 15) {
-        targetSpeed = Math.min(targetSpeed, distance * 0.8);
-      }
-      
-      // Minimum speed to ensure progress
-      targetSpeed = Math.max(targetSpeed, 2); // Minimum 2 units/sec to ensure movement
+    // Target speed based on distance - start slowing down early enough to stop
+    let targetSpeed = this.maxSpeed;
+    const brakingDistance = (this.maxSpeed * this.maxSpeed) / (2 * this.acceleration); // Physics: v²/(2a)
+    
+    if (distance < brakingDistance) {
+      // Calculate the speed needed to stop exactly at the target
+      // Using: v = √(2*a*d) where v=speed, a=deceleration, d=distance
+      targetSpeed = Math.sqrt(2 * this.acceleration * Math.max(0, distance - arrivalRadius));
+      targetSpeed = Math.max(targetSpeed, this.maxSpeed * 0.1); // Minimum 10% of max speed
     }
     
-    // Apply speed changes with more aggressive deceleration
+    // Apply acceleration or deceleration to reach target speed
     if (currentSpeed < targetSpeed) {
-      // Accelerate (reach max speed in exactly 1 second)
-      const accelerationStep = this.acceleration * deltaTime;
-      const newSpeed = Math.min(currentSpeed + accelerationStep, targetSpeed);
+      // Accelerate at exactly the rate to reach max speed in 1 second
+      const newSpeed = currentSpeed + this.acceleration * deltaTime;
+      const finalSpeed = Math.min(newSpeed, targetSpeed);
       
-      // Apply velocity in target direction
-      this.velocity.x = directionX * newSpeed;
-      this.velocity.y = directionY * newSpeed;
+      this.velocity.x = directionX * finalSpeed;
+      this.velocity.y = directionY * finalSpeed;
     } else if (currentSpeed > targetSpeed) {
-      // Decelerate much more aggressively 
-      const decelerationStep = this.acceleration * 5 * deltaTime; // Decelerate 5x faster
-      const newSpeed = Math.max(currentSpeed - decelerationStep, targetSpeed);
+      // Decelerate at the same rate as acceleration 
+      const newSpeed = currentSpeed - this.acceleration * deltaTime;
+      const finalSpeed = Math.max(newSpeed, targetSpeed);
       
-      // Apply velocity in target direction
-      this.velocity.x = directionX * newSpeed;
-      this.velocity.y = directionY * newSpeed;
+      this.velocity.x = directionX * finalSpeed;
+      this.velocity.y = directionY * finalSpeed;
     } else {
-      // Already at target speed, maintain direction
+      // Maintain current speed in target direction
       this.velocity.x = directionX * currentSpeed;
       this.velocity.y = directionY * currentSpeed;
     }
