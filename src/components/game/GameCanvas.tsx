@@ -107,12 +107,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           return;
         }
 
-        // Check if canvas context is available
-        const testContext = canvasRef.current.getContext('2d');
-        if (!testContext) {
-          throw new Error('Failed to get 2D context - your device may not support canvas rendering');
-        }
-
         // Initialize the game engine
         engineRef.current = new Engine(canvasRef.current);
         
