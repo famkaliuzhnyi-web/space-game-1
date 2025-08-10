@@ -317,8 +317,8 @@ describe('Control Fixes (#103)', () => {
           Math.pow(mars.position.y - systemCenter.y, 2)
         );
         
-        // Planets should be reasonably spaced from star
-        expect(earthDistance).toBeGreaterThan(50);  // Reasonable orbital distance
+        // Planets should be reasonably spaced from star (5x further than before)
+        expect(earthDistance).toBeGreaterThan(250);  // 5x the previous orbital distance (50 * 5)
         expect(marsDistance).toBeGreaterThan(earthDistance); // Mars further than Earth
       }
     });
