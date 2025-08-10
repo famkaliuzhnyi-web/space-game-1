@@ -137,14 +137,20 @@ export class Renderer {
     // Render each star
     this.context.fillStyle = '#ffffff';
     
+    // Calculate distance-based opacity factor
+    // When zoom is high (close up), stars should be more visible
+    // When zoom is low (zoomed out), stars should be less visible
+    const zoomOpacityFactor = Math.min(1.0, Math.max(0.1, camera.zoom * 0.5));
+    
     stars.forEach(star => {
       // Apply parallax offset for the rendering position
       const parallaxFactor = 0.1;
       const renderX = star.x - camera.x * parallaxFactor;
       const renderY = star.y - camera.y * parallaxFactor;
       
-      // Set opacity based on star brightness
-      this.context.globalAlpha = star.brightness;
+      // Set opacity based on star brightness and distance (zoom level)
+      const finalOpacity = star.brightness * zoomOpacityFactor;
+      this.context.globalAlpha = finalOpacity;
       
       // Render star as a small rectangle
       this.context.fillRect(

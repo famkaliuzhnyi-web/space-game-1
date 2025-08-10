@@ -275,10 +275,28 @@ export class ThreeRenderer {
     // Update planet orbits
     this.createPlanetOrbits(worldManager);
 
-    // Stars should remain fixed in space (no rotation)
+    // Update star opacity based on camera distance (zoom level)
+    this.updateStarOpacity(camera);
 
     // Render the scene
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Update star opacity based on camera distance (zoom level)
+   */
+  private updateStarOpacity(camera: Camera): void {
+    if (!this.stars || !this.stars.material) return;
+
+    // Calculate distance-based opacity factor
+    // When zoom is high (close up), stars should be more visible
+    // When zoom is low (zoomed out), stars should be less visible
+    // Using same formula as 2D renderer for consistency
+    const zoomOpacityFactor = Math.min(1.0, Math.max(0.1, camera.zoom * 0.5));
+    
+    // Update star material opacity
+    const material = this.stars.material as THREE.PointsMaterial;
+    material.opacity = 0.8 * zoomOpacityFactor; // Base opacity 0.8 multiplied by zoom factor
   }
 
   /**
