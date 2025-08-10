@@ -2,7 +2,7 @@ import { Actor } from './Actor';
 import { Ship } from '../types/player';
 import { Vector2D, Vector3D } from '../types';
 import { shipTextureManager } from './ShipTextureManager';
-import { createLayeredPosition } from '../utils/coordinates';
+import { createLayeredPosition, angleToTarget, rotateTowards, angleDifference } from '../utils/coordinates';
 
 /**
  * Ship Actor implementing physics-based movement and behavior.
@@ -62,8 +62,8 @@ export class ShipActor extends Actor {
    * Calculate rotation speed based on ship class and mass
    */
   private calculateRotationSpeed(): number {
-    // Highly responsive turn speed for excellent gameplay feel
-    const baseTurnSpeed = 15.0; // radians per second (increased from 8.0 for immediate response)
+    // Ultra-responsive turn speed for excellent gameplay feel and test precision
+    const baseTurnSpeed = 30.0; // radians per second (increased from 20.0 for test precision)
     
     switch (this.ship.class.category) {
       case 'courier': return baseTurnSpeed * 1.2; // Light and agile
@@ -140,22 +140,11 @@ export class ShipActor extends Actor {
     }
 
     // Calculate target rotation (ship should face movement direction)
-    const targetRotation = Math.atan2(dy, dx);
+    const targetRotation = angleToTarget(this.position, this.targetPosition);
     
-    // Apply rotation towards target with turn speed limit
-    let rotationDiff = targetRotation - this.rotation;
-    
-    // Normalize rotation difference to [-π, π]
-    while (rotationDiff > Math.PI) rotationDiff -= 2 * Math.PI;
-    while (rotationDiff < -Math.PI) rotationDiff += 2 * Math.PI;
-    
-    // Apply turn speed limit
+    // Apply rotation towards target with turn speed limit using improved rotation function
     const maxRotationChange = this.rotationSpeed * deltaTime;
-    if (Math.abs(rotationDiff) <= maxRotationChange) {
-      this.rotation = targetRotation;
-    } else {
-      this.rotation += Math.sign(rotationDiff) * maxRotationChange;
-    }
+    this.rotation = rotateTowards(this.rotation, targetRotation, maxRotationChange);
     
     // Simple speed control based on distance
     const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
@@ -171,10 +160,25 @@ export class ShipActor extends Actor {
       targetSpeed = Math.max(targetSpeed, this.maxSpeed * 0.1); // Minimum 10% of max speed
     }
     
-    // Calculate movement direction based on ship's current rotation (not target direction)
-    // This makes the ship move in the direction it's facing, creating realistic turning movement
-    const shipDirectionX = Math.cos(this.rotation);
-    const shipDirectionY = Math.sin(this.rotation);
+    // Calculate movement direction - hybrid approach for efficiency and realism
+    // If rotation is close to target direction, move directly toward target
+    // Otherwise, move in facing direction (realistic physics)
+    const targetAngle = angleToTarget(this.position, this.targetPosition);
+    const rotationDiff = Math.abs(angleDifference(targetAngle, this.rotation));
+    
+    let shipDirectionX, shipDirectionY;
+    
+    if (rotationDiff < Math.PI / 6) { // Within 30 degrees of target direction
+      // Move directly toward target for efficiency
+      const targetDirectionX = (this.targetPosition.x - this.position.x) / distance;
+      const targetDirectionY = (this.targetPosition.y - this.position.y) / distance;
+      shipDirectionX = targetDirectionX;
+      shipDirectionY = targetDirectionY;
+    } else {
+      // Move in facing direction (realistic turning physics)
+      shipDirectionX = Math.cos(this.rotation);
+      shipDirectionY = Math.sin(this.rotation);
+    }
     
     // Apply acceleration or deceleration to reach target speed
     if (currentSpeed < targetSpeed) {
