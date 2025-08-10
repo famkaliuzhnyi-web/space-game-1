@@ -20,7 +20,7 @@ import { NPCPanel } from './NPCPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
 import { GameEvent } from '../../types/events';
-import { ShipConstructionConfig, ShipConstructionSystem } from '../../systems/ShipConstructionSystem';
+// import { ShipConstructionConfig, ShipConstructionSystem } from '../../systems/ShipConstructionSystem'; // DEPRECATED: Replaced with 3D system
 import { ShipHubDesign } from '../../types/shipHubs';
 import { HubShipConstructionSystem } from '../../systems/HubShipConstructionSystem';
 import { Contact, InteractionType } from '../../types/contacts';
@@ -509,44 +509,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
-  const handleConstructShip = (config: ShipConstructionConfig) => {
-    if (engineRef.current) {
-      const playerManager = engineRef.current.getPlayerManager();
-      const constructionSystem = new ShipConstructionSystem();
-      
-      try {
-        const cost = constructionSystem.calculateConstructionCost(config);
-        
-        if (playerManager.getCredits() >= cost.totalCredits) {
-          const station = engineRef.current.getWorldManager().getCurrentStation();
-          if (station) {
-            const newShip = constructionSystem.constructShip(config, station.id);
-            
-            // Add ship to player's fleet
-            playerManager.getOwnedShipsMap().set(newShip.id, newShip);
-            
-            // Deduct credits
-            playerManager.spendCredits(cost.totalCredits);
-            
-            // Update UI
-            setPlayerCredits(playerManager.getCredits());
-            setOwnedShips(playerManager.getOwnedShips());
-            
-            console.log(`Constructed ship: ${config.shipName}`);
-            alert(`Successfully constructed ${config.shipName}!`);
-          } else {
-            alert('No station available for construction');
-          }
-        } else {
-          alert('Insufficient credits for construction');
-        }
-      } catch (error) {
-        console.error('Construction failed:', error);
-        alert(`Construction failed: ${error}`);
-      }
-    }
-  };
-
   const handleConstructHubShip = (design: ShipHubDesign, shipName: string) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
@@ -1029,7 +991,6 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           techLevel={1}
           onSwitchShip={handleSwitchShip}
         onPurchaseShip={handlePurchaseShip}
-        onConstructShip={handleConstructShip}
         onConstructHubShip={handleConstructHubShip}
         onStoreShip={handleStoreShip}
         onRetrieveShip={handleRetrieveShip}
