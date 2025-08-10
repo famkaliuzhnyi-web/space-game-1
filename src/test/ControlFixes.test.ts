@@ -124,7 +124,7 @@ describe('Control Fixes (#103)', () => {
   });
 
   describe('3. Ship Command Distinction (Left vs Right Click)', () => {
-    it('should distinguish between left-click (move) and right-click (command)', () => {
+    it('should only process right-clicks for ship movement, ignoring left-clicks', () => {
       const commandsReceived: Array<{ action: string; coordinates: [number, number] }> = [];
       
       inputHandler.setClickHandler((worldX: number, worldY: number, action?: 'move' | 'command') => {
@@ -137,7 +137,7 @@ describe('Control Fixes (#103)', () => {
       // Process different click types
       const camera = { x: 0, y: 0, zoom: 1 };
       
-      // Mock left click event
+      // Mock left click event - should be ignored for ship movement
       (inputManager as any).inputState.mouse.buttons[0] = true;
       const leftClickEvent = new MouseEvent('mouseup', { 
         button: 0, 
@@ -146,7 +146,7 @@ describe('Control Fixes (#103)', () => {
       });
       canvas.dispatchEvent(leftClickEvent);
       
-      // Mock right click event
+      // Mock right click event - should trigger ship movement
       (inputManager as any).inputState.mouse.buttons[2] = true;
       const rightClickEvent = new MouseEvent('mouseup', { 
         button: 2, 
@@ -158,10 +158,9 @@ describe('Control Fixes (#103)', () => {
       // Process through input handler
       inputHandler.updateCamera(camera, 0.016, inputManager);
       
-      // Verify commands received with correct action types
-      expect(commandsReceived).toHaveLength(2);
-      expect(commandsReceived[0].action).toBe('move');
-      expect(commandsReceived[1].action).toBe('command');
+      // Verify only right-click was processed (left-clicks should be ignored by design)
+      expect(commandsReceived).toHaveLength(1);
+      expect(commandsReceived[0].action).toBe('command'); // Right-click uses 'command' action
     });
 
     it('should skip left-click processing during drag operations', () => {
@@ -334,25 +333,25 @@ describe('Control Fixes (#103)', () => {
       
       const camera = { x: 0, y: 0, zoom: 1 };
       
-      // Test sequence: attempted drag followed by click
-      const mouseDownEvent = new MouseEvent('mousedown', { button: 0, clientX: 100, clientY: 100 });
+      // Test sequence: attempted drag followed by right-click (left-clicks should not move ships)
+      const mouseDownEvent = new MouseEvent('mousedown', { button: 2, clientX: 100, clientY: 100 });
       canvas.dispatchEvent(mouseDownEvent);
       
       // Small movement (below drag threshold)
       const mouseMoveEvent = new MouseEvent('mousemove', { clientX: 102, clientY: 102 });
       canvas.dispatchEvent(mouseMoveEvent);
       
-      // Mouse up - should register as click since drag threshold not met
-      (inputManager as any).inputState.mouse.buttons[0] = true;
-      const mouseUpEvent = new MouseEvent('mouseup', { button: 0, clientX: 102, clientY: 102 });
+      // Mouse up with right-click - should register as click since drag threshold not met
+      (inputManager as any).inputState.mouse.buttons[2] = true;
+      const mouseUpEvent = new MouseEvent('mouseup', { button: 2, clientX: 102, clientY: 102 });
       canvas.dispatchEvent(mouseUpEvent);
       
       // Process through input handler
       inputHandler.updateCamera(camera, 0.016, inputManager);
       
-      // Should register as move command (not dragging)
+      // Should register as command (right-click, not dragging)
       expect(interactions).toHaveLength(1);
-      expect(interactions[0]).toContain('move');
+      expect(interactions[0]).toContain('command');
     });
 
     it('should differentiate between drag and click based on movement threshold', () => {
