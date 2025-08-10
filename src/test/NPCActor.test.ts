@@ -91,7 +91,10 @@ describe('NPCActor', () => {
 
   describe('Initialization', () => {
     it('should initialize with NPC position', () => {
-      expect(npcActor.getPosition()).toEqual({ x: 100, y: 100 });
+      // Actor now uses 3D coordinates with ship layer (z: 50)  
+      expect(npcActor.getPosition()).toEqual({ x: 100, y: 100, z: 50 });
+      // Also provide 2D access for backwards compatibility
+      expect(npcActor.getPosition2D()).toEqual({ x: 100, y: 100 });
     });
 
     it('should start with zero velocity', () => {

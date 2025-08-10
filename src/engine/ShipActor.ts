@@ -1,6 +1,6 @@
 import { Actor } from './Actor';
 import { Ship } from '../types/player';
-import { Vector2D } from '../types';
+import { Vector2D, Vector3D } from '../types';
 import { shipTextureManager } from './ShipTextureManager';
 import { createLayeredPosition } from '../utils/coordinates';
 
@@ -10,7 +10,7 @@ import { createLayeredPosition } from '../utils/coordinates';
  */
 export class ShipActor extends Actor {
   private ship: Ship;
-  private targetPosition: Vector2D | null = null;
+  private targetPosition: Vector3D | null = null;
   private maxSpeed: number;
   private acceleration: number;
   private rotationSpeed: number;
@@ -19,7 +19,12 @@ export class ShipActor extends Actor {
   private useTextures: boolean = true;
 
   constructor(ship: Ship) {
-    super(ship.id, ship.location.coordinates || { x: 0, y: 0 });
+    // Convert ship coordinates to 3D and pass 'ship' as object type
+    const shipPosition = ship.location.coordinates ? 
+      createLayeredPosition(ship.location.coordinates.x, ship.location.coordinates.y, 'ship') :
+      createLayeredPosition(0, 0, 'ship');
+    
+    super(ship.id, shipPosition, 'ship');
     this.ship = ship;
     
     // Movement parameters based on ship class
@@ -73,8 +78,12 @@ export class ShipActor extends Actor {
   /**
    * Set target position for the ship to move towards
    */
-  setTarget(target: Vector2D): void {
-    this.targetPosition = { ...target };
+  setTarget(target: Vector2D | Vector3D): void {
+    if ('z' in target) {
+      this.targetPosition = { ...target, z: this.position.z }; // Keep ship layer
+    } else {
+      this.targetPosition = { ...target, z: this.position.z };
+    }
     this.ship.location.isInTransit = true;
   }
 

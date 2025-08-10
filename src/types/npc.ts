@@ -220,7 +220,7 @@ export interface FleetFormation {
 
 export interface FleetRole {
   type: 'leader' | 'escort' | 'scout' | 'transport' | 'support';
-  position: Vector2D; // Relative to leader (2D offset)
+  position: Vector2D; // Relative to leader (2D offset) - this remains 2D as it's a relative position
   behavior: 'aggressive' | 'defensive' | 'support';
 }
 
@@ -238,7 +238,7 @@ export interface PathfindingNode {
 
 export interface AvoidanceTarget {
   id: string;
-  position: Vector2D; // 2D position for avoidance calculations
+  position: Vector3D; // Updated to use unified 3D coordinate system
   radius: number;
   strength: number; // How strongly to avoid (0-100)
   type: 'ship' | 'station' | 'hazard' | 'debris';
@@ -249,7 +249,7 @@ export interface AIDecisionContext {
   nearbyNPCs: NPCShip[];
   nearbyStations: any[]; // Station interfaces
   playerInRange: boolean;
-  playerPosition?: Vector2D; // Player position for AI decisions (2D)
+  playerPosition?: Vector3D; // Updated to use unified 3D coordinate system
   marketData?: any; // Market price data
   threatLevel: number;
   timestamp: number;
