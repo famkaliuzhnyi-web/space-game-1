@@ -135,6 +135,29 @@ const ThreeDShipDesigner: React.FC<ThreeDShipDesignerProps> = ({
     }
   }, [design]);
 
+  // Handle wheel events with non-passive listener to allow preventDefault
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheelEvent = (event: WheelEvent) => {
+      event.preventDefault();
+      const delta = event.deltaY * 0.01;
+      
+      setCameraControls(prev => ({
+        ...prev,
+        distance: Math.max(10, Math.min(100, prev.distance + delta))
+      }));
+    };
+
+    // Add wheel event listener with passive: false to allow preventDefault
+    canvas.addEventListener('wheel', handleWheelEvent, { passive: false });
+
+    return () => {
+      canvas.removeEventListener('wheel', handleWheelEvent);
+    };
+  }, []);
+
   const createGrid = () => {
     if (!sceneRef.current) return;
 
@@ -373,15 +396,7 @@ const ThreeDShipDesigner: React.FC<ThreeDShipDesignerProps> = ({
     }
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLCanvasElement>) => {
-    event.preventDefault();
-    const delta = event.deltaY * 0.01;
-    
-    setCameraControls(prev => ({
-      ...prev,
-      distance: Math.max(10, Math.min(100, prev.distance + delta))
-    }));
-  };
+  // Note: handleWheel function removed - now handled by useEffect with non-passive listener
 
   const handleCreateNewDesign = () => {
     const newDesign = constructionSystem.createNewDesign(
@@ -543,7 +558,6 @@ const ThreeDShipDesigner: React.FC<ThreeDShipDesignerProps> = ({
           }}
           onClick={handleCanvasClick}
           onMouseMove={handleMouseMove}
-          onWheel={handleWheel}
           onContextMenu={(e) => e.preventDefault()}
         />
         <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '5px' }}>
