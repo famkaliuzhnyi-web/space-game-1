@@ -541,10 +541,12 @@ export class EconomicSystem {
   private calculateStationPopulation(station: Station): number {
     const basePopulation = {
       'trade': 50000,
+      'mining': 25000,
+      'refinery': 60000,
+      'manufacturing_hub': 80000,
       'industrial': 80000,
       'military': 30000,
       'research': 15000,
-      'mining': 25000,
       'luxury': 20000,
       'diplomatic': 10000,
       'entertainment': 35000,
@@ -578,25 +580,62 @@ export class EconomicSystem {
   }
 
   private generateProduction(station: Station): Production[] {
-    // This would be expanded with more sophisticated production chains
+    // Enhanced production chains for supply chain
     const productions: Production[] = [];
     
     switch (station.type) {
       case 'mining':
         productions.push(
-          { commodityId: 'iron-ore', baseRate: 100, efficiency: 1.0, capacity: 200 },
-          { commodityId: 'carbon-crystals', baseRate: 30, efficiency: 1.0, capacity: 60 }
+          { commodityId: 'iron-ore', baseRate: 120, efficiency: 1.0, capacity: 250 },
+          { commodityId: 'copper-ore', baseRate: 90, efficiency: 1.0, capacity: 180 },
+          { commodityId: 'aluminum-ore', baseRate: 80, efficiency: 1.0, capacity: 160 },
+          { commodityId: 'titanium-ore', baseRate: 40, efficiency: 1.0, capacity: 80 },
+          { commodityId: 'silicon-ore', baseRate: 60, efficiency: 1.0, capacity: 120 },
+          { commodityId: 'carbon-crystals', baseRate: 25, efficiency: 1.0, capacity: 50 },
+          { commodityId: 'rare-earth-elements', baseRate: 15, efficiency: 1.0, capacity: 30 }
+        );
+        break;
+      case 'refinery':
+        productions.push(
+          { commodityId: 'steel-alloys', baseRate: 80, efficiency: 1.0, capacity: 160 },
+          { commodityId: 'copper-ingots', baseRate: 70, efficiency: 1.0, capacity: 140 },
+          { commodityId: 'aluminum-sheets', baseRate: 60, efficiency: 1.0, capacity: 120 },
+          { commodityId: 'titanium-plates', baseRate: 30, efficiency: 1.0, capacity: 60 },
+          { commodityId: 'silicon-wafers', baseRate: 45, efficiency: 1.0, capacity: 90 }
+        );
+        break;
+      case 'manufacturing_hub':
+        productions.push(
+          { commodityId: 'advanced-electronics', baseRate: 50, efficiency: 1.0, capacity: 100 },
+          { commodityId: 'consumer-goods', baseRate: 70, efficiency: 1.0, capacity: 140 },
+          { commodityId: 'ship-components', baseRate: 35, efficiency: 1.0, capacity: 70 },
+          { commodityId: 'synthetic-fabrics', baseRate: 60, efficiency: 1.0, capacity: 120 }
         );
         break;
       case 'industrial':
         productions.push(
           { commodityId: 'electronics', baseRate: 40, efficiency: 1.0, capacity: 80 },
-          { commodityId: 'machinery', baseRate: 20, efficiency: 1.0, capacity: 40 }
+          { commodityId: 'machinery', baseRate: 20, efficiency: 1.0, capacity: 40 },
+          { commodityId: 'ship-hulls', baseRate: 8, efficiency: 1.0, capacity: 16 },
+          { commodityId: 'fusion-drives', baseRate: 12, efficiency: 1.0, capacity: 24 }
         );
         break;
       case 'research':
         productions.push(
-          { commodityId: 'quantum-processors', baseRate: 5, efficiency: 1.0, capacity: 10 }
+          { commodityId: 'quantum-processors', baseRate: 5, efficiency: 1.0, capacity: 10 },
+          { commodityId: 'neural-interfaces', baseRate: 3, efficiency: 1.0, capacity: 6 }
+        );
+        break;
+      case 'energy':
+        productions.push(
+          { commodityId: 'fusion-cells', baseRate: 100, efficiency: 1.0, capacity: 200 },
+          { commodityId: 'antimatter-pods', baseRate: 8, efficiency: 1.0, capacity: 16 }
+        );
+        break;
+      case 'agricultural':
+        productions.push(
+          { commodityId: 'protein-rations', baseRate: 150, efficiency: 1.0, capacity: 300 },
+          { commodityId: 'hydroponic-produce', baseRate: 80, efficiency: 1.0, capacity: 160 }
         );
         break;
     }
@@ -605,23 +644,75 @@ export class EconomicSystem {
   }
 
   private generateConsumption(station: Station): Consumption[] {
-    // Basic consumption patterns for all stations
+    // Enhanced consumption patterns for supply chain
     const consumptions: Consumption[] = [
       { commodityId: 'protein-rations', baseRate: 20, necessity: 'essential' },
       { commodityId: 'fusion-cells', baseRate: 10, necessity: 'critical' }
     ];
     
-    // Add station-specific consumption
+    // Add station-specific consumption based on production chains
     switch (station.type) {
-      case 'industrial':
+      case 'refinery':
+        // Refineries consume raw materials to produce refined materials
         consumptions.push(
-          { commodityId: 'iron-ore', baseRate: 80, necessity: 'essential' },
-          { commodityId: 'carbon-crystals', baseRate: 25, necessity: 'normal' }
+          { commodityId: 'iron-ore', baseRate: 100, necessity: 'essential' },
+          { commodityId: 'copper-ore', baseRate: 80, necessity: 'essential' },
+          { commodityId: 'aluminum-ore', baseRate: 70, necessity: 'essential' },
+          { commodityId: 'titanium-ore', baseRate: 35, necessity: 'essential' },
+          { commodityId: 'silicon-ore', baseRate: 50, necessity: 'essential' },
+          { commodityId: 'carbon-crystals', baseRate: 30, necessity: 'normal' }
+        );
+        break;
+      case 'manufacturing_hub':
+        // Manufacturing hubs consume refined materials to produce finished goods
+        consumptions.push(
+          { commodityId: 'steel-alloys', baseRate: 60, necessity: 'essential' },
+          { commodityId: 'copper-ingots', baseRate: 50, necessity: 'essential' },
+          { commodityId: 'aluminum-sheets', baseRate: 45, necessity: 'essential' },
+          { commodityId: 'silicon-wafers', baseRate: 40, necessity: 'essential' },
+          { commodityId: 'synthetic-fabrics', baseRate: 35, necessity: 'normal' }
+        );
+        break;
+      case 'industrial':
+        // Industrial stations consume both raw and refined materials
+        consumptions.push(
+          { commodityId: 'iron-ore', baseRate: 60, necessity: 'essential' },
+          { commodityId: 'steel-alloys', baseRate: 40, necessity: 'essential' },
+          { commodityId: 'carbon-crystals', baseRate: 25, necessity: 'normal' },
+          { commodityId: 'copper-ingots', baseRate: 30, necessity: 'normal' }
         );
         break;
       case 'research':
+        // Research stations consume high-tech materials
         consumptions.push(
           { commodityId: 'rare-earth-elements', baseRate: 15, necessity: 'essential' },
+          { commodityId: 'electronics', baseRate: 10, necessity: 'normal' },
+          { commodityId: 'silicon-wafers', baseRate: 8, necessity: 'normal' },
+          { commodityId: 'advanced-electronics', baseRate: 5, necessity: 'normal' }
+        );
+        break;
+      case 'trade':
+        // Trade stations consume consumer goods
+        consumptions.push(
+          { commodityId: 'consumer-goods', baseRate: 40, necessity: 'normal' },
+          { commodityId: 'electronics', baseRate: 25, necessity: 'normal' },
+          { commodityId: 'synthetic-fabrics', baseRate: 20, necessity: 'normal' }
+        );
+        break;
+      case 'shipyard':
+        // Shipyards consume all kinds of ship-building materials
+        consumptions.push(
+          { commodityId: 'steel-alloys', baseRate: 80, necessity: 'essential' },
+          { commodityId: 'titanium-plates', baseRate: 40, necessity: 'essential' },
+          { commodityId: 'ship-components', baseRate: 30, necessity: 'essential' },
+          { commodityId: 'advanced-electronics', baseRate: 25, necessity: 'essential' },
+          { commodityId: 'fusion-drives', baseRate: 15, necessity: 'normal' }
+        );
+        break;
+      case 'mining':
+        // Mining stations consume equipment and energy
+        consumptions.push(
+          { commodityId: 'machinery', baseRate: 15, necessity: 'essential' },
           { commodityId: 'electronics', baseRate: 10, necessity: 'normal' }
         );
         break;
@@ -633,10 +724,16 @@ export class EconomicSystem {
   private getStationTypeModifier(type: string): number {
     const modifiers = {
       'trade': 1.0,
+      'mining': 0.7,        // Cheap raw materials
+      'refinery': 0.85,     // Moderate prices for processing
+      'manufacturing_hub': 1.1, // Expensive finished goods
       'industrial': 0.9,
       'military': 1.1,
       'research': 1.2,
-      'mining': 0.8
+      'shipyard': 1.15,
+      'luxury': 1.5,
+      'energy': 1.0,
+      'agricultural': 0.8
     };
     return modifiers[type as keyof typeof modifiers] || 1.0;
   }
@@ -644,10 +741,12 @@ export class EconomicSystem {
   private calculateStationCredits(station: Station): number {
     const baseCredits = {
       'trade': 1000000,
+      'mining': 400000,
+      'refinery': 800000,
+      'manufacturing_hub': 1200000,
       'industrial': 800000,
       'military': 1200000,
       'research': 600000,
-      'mining': 400000,
       'luxury': 2000000,
       'diplomatic': 800000,
       'entertainment': 1500000,

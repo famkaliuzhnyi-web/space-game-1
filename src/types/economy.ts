@@ -46,7 +46,8 @@ export interface StationEconomics {
   stationId: string;
   stationType: 'trade' | 'industrial' | 'military' | 'research' | 'mining' | 'luxury' | 'diplomatic' | 
                'entertainment' | 'pirate' | 'agricultural' | 'medical' | 'exploration' | 'colonial' | 
-               'salvage' | 'observatory' | 'foundry' | 'habitat' | 'security' | 'prison' | 'energy' | 'shipyard';
+               'salvage' | 'observatory' | 'foundry' | 'habitat' | 'security' | 'prison' | 'energy' | 
+               'shipyard' | 'refinery' | 'manufacturing_hub';
   population: number;
   wealthLevel: 'poor' | 'average' | 'wealthy' | 'elite';
   

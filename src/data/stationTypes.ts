@@ -224,6 +224,168 @@ export const CORE_WORLDS_STATIONS: EnhancedStationInfo[] = [
 ];
 
 /**
+ * INDUSTRIAL STATIONS
+ * Stations focused on processing raw materials and manufacturing
+ */
+export const INDUSTRIAL_STATIONS: EnhancedStationInfo[] = [
+  {
+    id: 'titan-ore-refinery',
+    name: 'Titan Ore Refinery',
+    type: 'refinery',
+    description: 'A massive industrial station specializing in processing raw ores into refined materials for the Core Worlds manufacturing industry.',
+    faction: 'Industrial Consortium',
+    services: ['refuel', 'repair', 'raw_materials_trading', 'refined_materials_trading', 'industrial_equipment'],
+    specialties: ['ore_processing', 'metal_refining', 'bulk_materials', 'industrial_contracts'],
+    atmosphere: 'The constant rumble of massive processing machinery fills the air, while streams of molten metal flow through transparent tubes overhead.',
+    visualStyle: {
+      architecture: 'Heavy industrial with massive processing towers and conveyor systems',
+      lighting: 'Intense orange glow from smelters with harsh industrial lighting',
+      colors: ['industrial gray', 'molten orange', 'steel blue', 'warning yellow'],
+      atmosphere: 'Industrial and powerful'
+    },
+    economy: {
+      wealthLevel: 'comfortable',
+      primaryIndustries: ['ore_refining', 'metal_processing', 'bulk_materials', 'industrial_logistics'],
+      majorExports: ['steel_alloys', 'copper_ingots', 'aluminum_sheets', 'titanium_plates'],
+      majorImports: ['iron_ore', 'copper_ore', 'aluminum_ore', 'titanium_ore', 'carbon_crystals']
+    },
+    population: {
+      size: 'large',
+      demographics: ['industrial_workers', 'process_engineers', 'logistics_coordinators', 'maintenance_crews', 'safety_inspectors'],
+      culture: 'Hardworking, safety-focused, proud of their industrial output'
+    },
+    security: {
+      level: 'standard',
+      enforcementAgency: 'Industrial Safety Authority',
+      restrictions: ['safety_equipment_required', 'hazardous_materials_control', 'industrial_access_permits']
+    },
+    uniqueFeatures: [
+      'Zero-gravity smelting chambers',
+      'Automated ore sorting facilities',
+      'Molten metal rivers',
+      'Quality testing laboratories',
+      'Bulk material storage bays'
+    ],
+    questOpportunities: [
+      'industrial_equipment_delivery',
+      'quality_control_missions',
+      'supply_chain_optimization',
+      'safety_inspection_contracts',
+      'bulk_transport_coordination'
+    ],
+    secrets: [
+      'Illegal dumping of industrial waste',
+      'Worker safety violations coverups',
+      'Black market rare metal trading'
+    ]
+  },
+
+  {
+    id: 'nexus-manufacturing-hub',
+    name: 'Nexus Manufacturing Hub',
+    type: 'manufacturing_hub',
+    description: 'An advanced manufacturing complex that transforms refined materials into high-tech consumer goods and ship components.',
+    faction: 'Galactic Manufacturers Union',
+    services: ['refuel', 'repair', 'equipment_trading', 'consumer_goods_trading', 'manufacturing_contracts', 'tech_upgrades'],
+    specialties: ['advanced_manufacturing', 'consumer_electronics', 'ship_components', 'synthetic_materials'],
+    atmosphere: 'Clean automated assembly lines hum efficiently while robotic arms precision-craft everything from personal devices to starship parts.',
+    visualStyle: {
+      architecture: 'Modern automated factory with glass-walled production lines',
+      lighting: 'Bright white LED with blue accent lighting from machinery',
+      colors: ['clean white', 'tech blue', 'silver', 'status green'],
+      atmosphere: 'High-tech and efficient'
+    },
+    economy: {
+      wealthLevel: 'wealthy',
+      primaryIndustries: ['advanced_manufacturing', 'consumer_electronics', 'automation_systems', 'quality_assurance'],
+      majorExports: ['advanced_electronics', 'consumer_goods', 'ship_components', 'synthetic_fabrics'],
+      majorImports: ['steel_alloys', 'copper_ingots', 'silicon_wafers', 'aluminum_sheets', 'rare_earth_elements']
+    },
+    population: {
+      size: 'large',
+      demographics: ['automation_engineers', 'quality_specialists', 'product_designers', 'logistics_managers', 'tech_researchers'],
+      culture: 'Innovation-focused, quality-obsessed, efficiency-minded'
+    },
+    security: {
+      level: 'heavy',
+      enforcementAgency: 'Corporate Security Division',
+      restrictions: ['intellectual_property_protection', 'industrial_espionage_prevention', 'quality_control_access']
+    },
+    uniqueFeatures: [
+      'Automated assembly megafactories',
+      'Quality control testing chambers',
+      'Product design laboratories',
+      'Finished goods warehouses',
+      'Consumer showcase galleries'
+    ],
+    questOpportunities: [
+      'prototype_testing',
+      'supply_chain_management',
+      'quality_assurance_missions',
+      'industrial_espionage_prevention',
+      'new_product_launches'
+    ],
+    secrets: [
+      'Planned obsolescence conspiracies',
+      'Corporate espionage operations',
+      'Illegal worker automation programs'
+    ]
+  },
+
+  {
+    id: 'asteroid-mining-station',
+    name: 'Ceres Mining Complex',
+    type: 'mining',
+    description: 'A sprawling mining operation built into a large asteroid, extracting valuable ores and rare minerals from the asteroid belt.',
+    faction: 'Asteroid Miners Guild',
+    services: ['refuel', 'repair', 'raw_materials_trading', 'mining_equipment', 'prospector_supplies'],
+    specialties: ['asteroid_mining', 'rare_mineral_extraction', 'prospecting_services', 'mining_equipment'],
+    atmosphere: 'The deep thrrum of mining equipment echoes through tunnels carved from solid rock, while dust motes dance in the harsh lighting.',
+    visualStyle: {
+      architecture: 'Carved asteroid chambers with reinforced tunnel networks',
+      lighting: 'Harsh floodlights with dust-filtered beams',
+      colors: ['asteroid gray', 'dust brown', 'mineral veins', 'safety orange'],
+      atmosphere: 'Raw and excavated'
+    },
+    economy: {
+      wealthLevel: 'modest',
+      primaryIndustries: ['asteroid_mining', 'rare_mineral_extraction', 'prospecting', 'mining_support_services'],
+      majorExports: ['iron_ore', 'copper_ore', 'aluminum_ore', 'titanium_ore', 'rare_earth_elements', 'carbon_crystals'],
+      majorImports: ['mining_equipment', 'food', 'water', 'medical_supplies', 'safety_equipment']
+    },
+    population: {
+      size: 'medium',
+      demographics: ['miners', 'prospectors', 'equipment_operators', 'geological_surveyors', 'safety_coordinators'],
+      culture: 'Tough, risk-taking, community-minded'
+    },
+    security: {
+      level: 'light',
+      enforcementAgency: 'Mining Guild Security',
+      restrictions: ['mining_claim_registration', 'safety_compliance', 'environmental_monitoring']
+    },
+    uniqueFeatures: [
+      'Deep core mining shafts',
+      'Zero-gravity ore processing',
+      'Mineral analysis laboratories',
+      'Mining equipment yards',
+      'Emergency shelter networks'
+    ],
+    questOpportunities: [
+      'new_mining_claims',
+      'equipment_maintenance',
+      'geological_surveys',
+      'emergency_rescues',
+      'rare_mineral_discoveries'
+    ],
+    secrets: [
+      'Hidden valuable ore veins',
+      'Illegal claim jumping operations',
+      'Dangerous unstable mining areas'
+    ]
+  }
+];
+
+/**
  * FRONTIER STATIONS
  * Rough, practical stations on the edge of civilized space
  */
@@ -485,6 +647,7 @@ export const SPECIALIZED_STATIONS: EnhancedStationInfo[] = [
  */
 export const ALL_ENHANCED_STATIONS = [
   ...CORE_WORLDS_STATIONS,
+  ...INDUSTRIAL_STATIONS,
   ...FRONTIER_STATIONS,
   ...SPECIALIZED_STATIONS
 ];
