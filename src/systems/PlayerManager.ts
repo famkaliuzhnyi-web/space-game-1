@@ -1113,11 +1113,12 @@ export class PlayerManager implements InventoryManager {
       return [];
     }
 
-    // Get nearby stations and systems
+    // Get nearby stations, systems, and gates
     const stations = this.worldManager.getAllReachableStations();
     const systems = this.worldManager.getAllReachableSystems();
+    const gates = this.worldManager.getAllReachableGates();
     
-    return [...stations, ...systems];
+    return [...stations, ...systems, ...gates];
   }
 
   /**

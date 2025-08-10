@@ -44,6 +44,7 @@ export interface StarSystem {
   };
   stations: Station[];
   planets: Planet[];
+  gates: Gate[]; // Gates within this system
   securityLevel: number; // 0-10, 0 being lawless, 10 being maximum security
 }
 
@@ -65,8 +66,19 @@ export interface Galaxy {
   };
 }
 
+export interface Gate {
+  id: string;
+  name: string;
+  position: Coordinates;
+  destinationSectorId: string;
+  destinationSystemId?: string; // Optional - gate can lead to specific system or sector center
+  energyCost: number; // Fuel cost to use gate
+  isActive: boolean;
+  description: string;
+}
+
 export interface NavigationTarget {
-  type: 'sector' | 'system' | 'station' | 'planet';
+  type: 'sector' | 'system' | 'station' | 'planet' | 'gate';
   id: string;
   name: string;
   position: Coordinates;

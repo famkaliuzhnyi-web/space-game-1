@@ -37,6 +37,7 @@ const NavigationPanel: React.FC<NavigationPanelProps> = ({
       case 'system': return '⭐';
       case 'station': return '🏗️';
       case 'planet': return '🪐';
+      case 'gate': return '🌀';
       default: return '📍';
     }
   };
