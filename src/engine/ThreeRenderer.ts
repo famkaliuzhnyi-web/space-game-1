@@ -758,14 +758,16 @@ export class ThreeRenderer {
             glowMesh.material.opacity = 0.1 + Math.sin(time * 2) * 0.05;
           }
         }
+        // Star rotation - rotate around Z-axis for proper spinning
+        mesh.rotation.z += 0.001;
         break;
       case 'station':
         // Slow rotation - only if not paused
         mesh.rotation.z += 0.001;
         break;
       case 'planet':
-        // Planet rotation
-        mesh.rotation.y += 0.002;
+        // Planet rotation - rotate around Z-axis for proper spinning (not tumbling)
+        mesh.rotation.z += 0.002;
         break;
       case 'ship':
         // Engine glow pulse - use opacity changes for MeshBasicMaterial
