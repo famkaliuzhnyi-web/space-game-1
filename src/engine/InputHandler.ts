@@ -82,11 +82,11 @@ export class InputHandler {
         continue; // Left-click drag was used for map panning, don't process as ship command
       }
       
-      if (clickEvent.button === 0) { // Left click for ship movement
-        this.handleClick(clickEvent.position.x, clickEvent.position.y, camera, inputManager, 'move');
-      } else if (clickEvent.button === 2) { // Right click for ship commands/navigation  
+      // Only right-click should trigger ship movement, not left-click
+      if (clickEvent.button === 2) { // Right click for ship commands/navigation  
         this.handleClick(clickEvent.position.x, clickEvent.position.y, camera, inputManager, 'command');
       }
+      // Left-click (button === 0) is reserved for UI interactions and should not move the ship
     }
 
     // Handle touch events for navigation
