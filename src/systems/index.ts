@@ -19,6 +19,6 @@ export { NPCAIManager } from './NPCAIManager';
 export { SecurityManager } from './SecurityManager';
 export { HackingManager } from './HackingManager';
 export { InvestmentManager } from './InvestmentManager';
-export { TutorialManager } from './TutorialManager';
+
 export { QuestManager } from './QuestManager';
 export { NavigationManager } from './NavigationManager';

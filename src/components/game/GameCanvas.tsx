@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, TutorialPanel, NewPlayerGuide, InfoPanel } from '../ui';
+import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, InfoPanel } from '../ui';
 // Import heavy panels lazily
 import { 
   FleetManagementPanel, 
@@ -46,7 +46,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'tutorial' | 'quests' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showScenarioSelection, setShowScenarioSelection] = useState(false);
@@ -75,7 +75,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showHacking = activePanel === 'hacking';
   const showCombat = activePanel === 'combat';
   const showInvestment = activePanel === 'investment';
-  const showTutorial = activePanel === 'tutorial';
+
   const showQuests = activePanel === 'quests';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
@@ -1203,14 +1203,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         </Suspense>
       )}
 
-      {/* Tutorial Panel */}
-      {engineRef.current && showTutorial && (
-        <TutorialPanel
-          isVisible={showTutorial}
-          tutorialManager={engineRef.current.getTutorialManager()}
-          onClose={() => setActivePanel(null)}
-        />
-      )}
+
 
       {/* Quest Panel */}
       {engineRef.current && showQuests && (
@@ -1245,18 +1238,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           }
         }}
       />
-      
-      {/* New Player Guide - automatically appears for new players */}
-      {engineRef.current && (
-        <NewPlayerGuide
-          tutorialManager={engineRef.current.getTutorialManager()}
-          gameEngine={engineRef.current}
-          onComplete={() => {
-            // Optionally open tutorial panel after guide completion
-            setActivePanel('tutorial');
-          }}
-        />
-      )}
+
     </div>
   );
 };
