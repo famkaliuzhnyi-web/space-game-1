@@ -8,13 +8,15 @@ interface NPCPanelProps {
   currentSystemId: string;
   isVisible: boolean;
   onToggle: () => void;
+  onNPCLocate?: (npc: NPCShip) => void;
 }
 
 export const NPCPanel: React.FC<NPCPanelProps> = ({ 
   npcAIManager, 
   currentSystemId, 
   isVisible, 
-  onToggle 
+  onToggle,
+  onNPCLocate
 }) => {
   const [npcs, setNpcs] = useState<NPCShip[]>([]);
   const [activeConversation, setActiveConversation] = useState<NPCConversation | null>(null);
@@ -227,6 +229,13 @@ export const NPCPanel: React.FC<NPCPanelProps> = ({
                     disabled={activeConversation !== null}
                   >
                     💬 Talk
+                  </button>
+                  <button 
+                    className="locate-button"
+                    onClick={() => onNPCLocate?.(npc)}
+                    title="Move camera to this NPC's location"
+                  >
+                    📍 Locate
                   </button>
                   {npc.type === 'trader' && (
                     <button 
