@@ -501,6 +501,42 @@ export class Engine implements GameEngine {
   }
 
   /**
+   * Get the current camera state
+   * 
+   * @returns Current camera object with x, y, and zoom properties
+   */
+  getCamera(): Camera {
+    return { ...this.camera };
+  }
+
+  /**
+   * Set the camera position and zoom
+   * 
+   * @param x - Camera X coordinate
+   * @param y - Camera Y coordinate  
+   * @param zoom - Camera zoom level (optional, defaults to current zoom)
+   */
+  setCameraPosition(x: number, y: number, zoom?: number): void {
+    this.camera.x = x;
+    this.camera.y = y;
+    if (zoom !== undefined) {
+      this.camera.zoom = Math.max(0.1, Math.min(3, zoom));
+    }
+  }
+
+  /**
+   * Move camera to specific coordinates with smooth transition
+   * 
+   * @param targetX - Target X coordinate
+   * @param targetY - Target Y coordinate
+   * @param targetZoom - Target zoom level (optional)
+   */
+  moveCameraTo(targetX: number, targetY: number, targetZoom?: number): void {
+    // For now, implement instant movement. Could be enhanced with smooth interpolation later
+    this.setCameraPosition(targetX, targetY, targetZoom);
+  }
+
+  /**
    * Clean up all resources and stop the engine.
    * 
    * Should be called when the engine is no longer needed to prevent

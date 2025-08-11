@@ -20,6 +20,7 @@ import LoadingPanel from '../ui/LoadingPanel';
 import { NPCPanel } from './NPCPanel';
 import { Market, TradeContract, RouteAnalysis } from '../../types/economy';
 import { CargoItem, Ship, EquipmentItem, FactionReputation } from '../../types/player';
+import { NPCShip } from '../../types/npc';
 import { GameEvent } from '../../types/events';
 // import { ShipConstructionConfig, ShipConstructionSystem } from '../../systems/ShipConstructionSystem'; // DEPRECATED: Replaced with 3D system
 import { ShipHubDesign } from '../../types/shipHubs';
@@ -827,6 +828,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     return [];
   };
 
+  const handleNPCLocate = (npc: NPCShip) => {
+    if (engineRef.current) {
+      // Move camera to NPC's position
+      const npcPosition = npc.position.coordinates;
+      engineRef.current.moveCameraTo(npcPosition.x, npcPosition.y);
+      console.log(`Camera moved to NPC ${npc.name} at position (${npcPosition.x}, ${npcPosition.y})`);
+    }
+  };
+
   const handleInteractWithContact = (contactId: string, interactionType: string) => {
     if (engineRef.current) {
       const playerManager = engineRef.current.getPlayerManager();
@@ -1381,6 +1391,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           currentSystemId={engineRef.current.getWorldManager().getGalaxy().currentPlayerLocation.systemId}
           isVisible={showNPCs}
           onToggle={() => setShowNPCs(!showNPCs)}
+          onNPCLocate={handleNPCLocate}
         />
       )}
       
