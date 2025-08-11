@@ -4,6 +4,7 @@
 // export { default as Input } from './Input';
 
 export { default as NavigationPanel } from './NavigationPanel';
+export { default as SectorsMapPanel } from './SectorsMapPanel';
 export { default as InventoryPanel } from './InventoryPanel';
 export { default as MarketPanel } from './MarketPanel';
 export { default as ContractPanel } from './ContractPanel';
