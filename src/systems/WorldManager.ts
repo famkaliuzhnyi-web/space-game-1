@@ -1317,6 +1317,11 @@ export class WorldManager {
       this.playerManager.setCurrentStation(null);
     }
 
+    // Update scene manager with new ship position
+    if (this.sceneManager && this.playerShip) {
+      this.sceneManager.setPlayerShip(this.playerShip);
+    }
+
     console.log(`Successfully used gate ${gate.name} to travel to ${destinationSector.name} - ${destinationSystemId}`);
     return true;
   }
