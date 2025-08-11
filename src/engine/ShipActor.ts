@@ -2,7 +2,7 @@ import { Actor } from './Actor';
 import { Ship } from '../types/player';
 import { Vector2D, Vector3D } from '../types';
 import { shipTextureManager } from './ShipTextureManager';
-import { createLayeredPosition, angleToTarget, rotateTowards, angleDifference } from '../utils/coordinates';
+import { createLayeredPosition, angleToTarget, rotateTowards } from '../utils/coordinates';
 
 /**
  * Ship Actor implementing physics-based movement and behavior.
@@ -160,25 +160,12 @@ export class ShipActor extends Actor {
       targetSpeed = Math.max(targetSpeed, this.maxSpeed * 0.1); // Minimum 10% of max speed
     }
     
-    // Calculate movement direction - hybrid approach for efficiency and realism
-    // If rotation is close to target direction, move directly toward target
-    // Otherwise, move in facing direction (realistic physics)
-    const targetAngle = angleToTarget(this.position, this.targetPosition);
-    const rotationDiff = Math.abs(angleDifference(targetAngle, this.rotation));
-    
-    let shipDirectionX, shipDirectionY;
-    
-    if (rotationDiff < Math.PI / 6) { // Within 30 degrees of target direction
-      // Move directly toward target for efficiency
-      const targetDirectionX = (this.targetPosition.x - this.position.x) / distance;
-      const targetDirectionY = (this.targetPosition.y - this.position.y) / distance;
-      shipDirectionX = targetDirectionX;
-      shipDirectionY = targetDirectionY;
-    } else {
-      // Move in facing direction (realistic turning physics)
-      shipDirectionX = Math.cos(this.rotation);
-      shipDirectionY = Math.sin(this.rotation);
-    }
+    // Calculate movement direction - always move toward target for arcade-style gameplay
+    // This provides intuitive controls where ships move where you click, not where they face
+    const targetDirectionX = (this.targetPosition.x - this.position.x) / distance;
+    const targetDirectionY = (this.targetPosition.y - this.position.y) / distance;
+    const shipDirectionX = targetDirectionX;
+    const shipDirectionY = targetDirectionY;
     
     // Apply acceleration or deceleration to reach target speed
     if (currentSpeed < targetSpeed) {
