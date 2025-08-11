@@ -978,7 +978,16 @@ export class PlayerManager implements InventoryManager {
     }
 
     const currentShip = this.getCurrentShip();
-    return this.navigationManager.cancelTravel(currentShip.id);
+    const result = this.navigationManager.cancelTravel(currentShip.id);
+    
+    if (result.success) {
+      // Update ship state when travel is successfully cancelled
+      currentShip.location.isInTransit = false;
+      currentShip.location.destination = undefined;
+      currentShip.location.arrivalTime = undefined;
+    }
+    
+    return result;
   }
 
   /**
