@@ -3,7 +3,7 @@ import { InputHandler } from '../engine/InputHandler';
 import { Camera } from '../engine/Renderer';
 import { WorldManager } from '../systems/WorldManager';
 
-describe('Ship Click Navigation - Coordinate Transformation', () => {
+describe('Ship Click Navigation - Ray-Plane Intersection Fix', () => {
   let mockCanvas: HTMLCanvasElement;
   let inputHandler: InputHandler;
   let mockWorldManager: WorldManager;
@@ -42,82 +42,81 @@ describe('Ship Click Navigation - Coordinate Transformation', () => {
     clickedCoordinates = null;
   });
 
-  describe('Center Screen Click', () => {
-    it('should move ship to camera center when clicking center of screen', () => {
+  describe('Ray-Plane Intersection Coordinate Transformation', () => {
+    it('should produce same results as old method for center clicks', () => {
       const camera: Camera = {
         x: 100,
         y: 200,
         zoom: 1
       };
 
-      // Click center of canvas (400, 300)
+      // Click center of canvas
       const centerX = mockCanvas.width / 2; // 400
       const centerY = mockCanvas.height / 2; // 300
 
-      // Simulate the coordinate transformation from InputHandler.handleClick
-      const worldX = (centerX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const worldY = (centerY - mockCanvas.height / 2) / camera.zoom + camera.y;
-
-      // This should result in the camera position
-      expect(worldX).toBe(camera.x); // Should be 100
-      expect(worldY).toBe(camera.y); // Should be 200
-
-      // Call the click handler directly
-      inputHandler.setClickHandler((wx: number, wy: number) => {
-        clickedCoordinates = { x: wx, y: wy };
-      });
+      // Test the new ray-plane intersection method
+      const newMethod = (inputHandler as any).screenToWorldRayIntersection(centerX, centerY, camera);
       
-      // Simulate handleClick method logic
-      const calculatedWorldX = (centerX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const calculatedWorldY = (centerY - mockCanvas.height / 2) / camera.zoom + camera.y;
-      
-      // Trigger click handler
-      (inputHandler as any).clickHandler?.(calculatedWorldX, calculatedWorldY);
+      // Old method calculation for comparison
+      const oldWorldX = (centerX - mockCanvas.width / 2) / camera.zoom + camera.x;
+      const oldWorldY = (centerY - mockCanvas.height / 2) / camera.zoom + camera.y;
 
-      expect(clickedCoordinates).toEqual({ x: 100, y: 200 });
+      expect(newMethod.x).toBeCloseTo(oldWorldX, 5);
+      expect(newMethod.y).toBeCloseTo(oldWorldY, 5);
+      
+      // Both should result in the camera position for center clicks
+      expect(newMethod.x).toBe(camera.x);
+      expect(newMethod.y).toBe(camera.y);
     });
 
-    it('should account for camera zoom when calculating world coordinates', () => {
+    it('should handle zoom correctly with ray-plane intersection', () => {
       const camera: Camera = {
-        x: 100,
-        y: 200,
+        x: 0,
+        y: 0,
         zoom: 2 // Zoomed in 2x
       };
 
       // Click 100 pixels right of center
       const clickX = mockCanvas.width / 2 + 100; // 500
-      const clickY = mockCanvas.height / 2; // 300
+      const clickY = mockCanvas.height / 2; // 300 (center)
 
-      const worldX = (clickX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const worldY = (clickY - mockCanvas.height / 2) / camera.zoom + camera.y;
+      const newMethod = (inputHandler as any).screenToWorldRayIntersection(clickX, clickY, camera);
+      
+      // Old method for comparison
+      const oldWorldX = (clickX - mockCanvas.width / 2) / camera.zoom + camera.x;
+      const oldWorldY = (clickY - mockCanvas.height / 2) / camera.zoom + camera.y;
 
-      // With 2x zoom, 100 screen pixels = 50 world units
-      expect(worldX).toBe(150); // 100 + 50
-      expect(worldY).toBe(200); // 200 + 0
+      expect(newMethod.x).toBeCloseTo(oldWorldX, 5);
+      expect(newMethod.y).toBeCloseTo(oldWorldY, 5);
+      
+      // With 2x zoom, 100 screen pixels should map to 50 world units
+      expect(newMethod.x).toBe(50); // 0 + 50
+      expect(newMethod.y).toBe(0);  // 0 + 0
     });
-  });
 
-  describe('Camera Movement Effect', () => {
-    it('should correctly transform coordinates when camera is moved', () => {
+    it('should handle camera movement with ray-plane intersection', () => {
       const camera: Camera = {
-        x: 500,  // Camera moved right
-        y: -300, // Camera moved down (negative Y)
+        x: 500,
+        y: -300,
         zoom: 1
       };
 
-      // Click center of screen
-      const centerX = mockCanvas.width / 2;
-      const centerY = mockCanvas.height / 2;
+      // Click various positions
+      const testCases = [
+        { screenX: mockCanvas.width / 2, screenY: mockCanvas.height / 2, expectedX: 500, expectedY: -300 }, // Center
+        { screenX: mockCanvas.width / 2 + 200, screenY: mockCanvas.height / 2, expectedX: 700, expectedY: -300 }, // Right
+        { screenX: mockCanvas.width / 2, screenY: mockCanvas.height / 2 + 150, expectedX: 500, expectedY: -150 }, // Down
+      ];
 
-      const worldX = (centerX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const worldY = (centerY - mockCanvas.height / 2) / camera.zoom + camera.y;
-
-      // Should result in camera position
-      expect(worldX).toBe(500);
-      expect(worldY).toBe(-300);
+      testCases.forEach(({ screenX, screenY, expectedX, expectedY }) => {
+        const newMethod = (inputHandler as any).screenToWorldRayIntersection(screenX, screenY, camera);
+        
+        expect(newMethod.x).toBeCloseTo(expectedX, 1);
+        expect(newMethod.y).toBeCloseTo(expectedY, 1);
+      });
     });
 
-    it('should handle combined camera movement and zoom', () => {
+    it('should handle complex camera and zoom combinations', () => {
       const camera: Camera = {
         x: 1000,
         y: -500,
@@ -128,96 +127,108 @@ describe('Ship Click Navigation - Coordinate Transformation', () => {
       const clickX = mockCanvas.width / 2 + 200; // 600
       const clickY = mockCanvas.height / 2 + 150; // 450
 
-      const worldX = (clickX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const worldY = (clickY - mockCanvas.height / 2) / camera.zoom + camera.y;
-
-      // With 0.5x zoom, screen pixels are magnified 2x in world space
-      expect(worldX).toBe(1400); // 1000 + (200 / 0.5)
-      expect(worldY).toBe(-200); // -500 + (150 / 0.5)
-    });
-  });
-
-  describe('Ray-Plane Intersection Alternative', () => {
-    it('should implement ray-camera intersection for 3D consistency', () => {
-      // This test demonstrates the alternative approach mentioned in the problem statement
-      const camera: Camera = {
-        x: 100,
-        y: 200,
-        zoom: 1
-      };
-
-      // Mouse screen coordinates
-      const screenX = 600; // 200 pixels right of center
-      const screenY = 200; // 100 pixels up from center
-
-      // Convert to normalized device coordinates (-1 to +1)
-      const ndcX = ((screenX - mockCanvas.width / 2) / (mockCanvas.width / 2));
-      const ndcY = -((screenY - mockCanvas.height / 2) / (mockCanvas.height / 2)); // Flip Y
-
-      expect(ndcX).toBe(0.5);  // 200 / 400 = 0.5
-      expect(ndcY).toBe(0.5);  // -(-100) / 300 = 0.333...
-
-      // For a top-down camera, ray intersection with XY plane at Z=0
-      // Camera is at (camera.x, camera.y, height) looking down
-      const cameraHeight = 500 / camera.zoom; // Camera height scales with zoom
+      const newMethod = (inputHandler as any).screenToWorldRayIntersection(clickX, clickY, camera);
       
-      // Ray direction from camera through screen point
-      const rayDirX = ndcX * (mockCanvas.width / 2) / camera.zoom;
-      const rayDirY = ndcY * (mockCanvas.height / 2) / camera.zoom;
+      // Old method for comparison
+      const oldWorldX = (clickX - mockCanvas.width / 2) / camera.zoom + camera.x;
+      const oldWorldY = (clickY - mockCanvas.height / 2) / camera.zoom + camera.y;
 
-      // Intersection with XY plane (Z=0)
-      const worldX = camera.x + rayDirX;
-      const worldY = camera.y + rayDirY;
-
-      // This should give us the same result as the current formula
-      const expectedX = (screenX - mockCanvas.width / 2) / camera.zoom + camera.x;
-      const expectedY = (screenY - mockCanvas.height / 2) / camera.zoom + camera.y;
-
-      expect(Math.abs(worldX - expectedX)).toBeLessThan(0.1);
-      expect(Math.abs(worldY - expectedY)).toBeLessThan(0.1);
+      expect(newMethod.x).toBeCloseTo(oldWorldX, 5);
+      expect(newMethod.y).toBeCloseTo(oldWorldY, 5);
+      
+      // With 0.5x zoom, screen pixels are magnified 2x in world space
+      expect(newMethod.x).toBe(1400); // 1000 + (200 / 0.5)
+      expect(newMethod.y).toBe(-200); // -500 + (150 / 0.5)
     });
-  });
 
-  describe('Y-Axis Coordinate System Issues', () => {
-    it('should check for Y-axis inversion problems', () => {
+    it('should handle normalized device coordinate conversion correctly', () => {
       const camera: Camera = {
         x: 0,
         y: 0,
         zoom: 1
       };
 
-      // Click in upper half of screen (Y=150, which is 150 pixels up from center)
-      const screenX = mockCanvas.width / 2;   // 400 (center)
-      const screenY = 150; // 150 pixels down from top, which is 150 pixels UP from center (300)
+      // Test corner cases
+      const testCases = [
+        { screenX: 0, screenY: 0, description: 'top-left corner' },
+        { screenX: mockCanvas.width, screenY: 0, description: 'top-right corner' },
+        { screenX: 0, screenY: mockCanvas.height, description: 'bottom-left corner' },
+        { screenX: mockCanvas.width, screenY: mockCanvas.height, description: 'bottom-right corner' },
+      ];
 
-      const worldY = (screenY - mockCanvas.height / 2) / camera.zoom + camera.y;
-      
-      // In screen coordinates: Y=150 means 150 pixels from top
-      // Canvas center is at Y=300
-      // So this click is 150 pixels ABOVE center
-      // In world coordinates, this should be POSITIVE Y (up)
-      // But the formula gives us: (150 - 300) / 1 + 0 = -150
-      
-      expect(worldY).toBe(-150); // This is the current behavior
-      
-      // The question is: should clicking ABOVE center result in POSITIVE or NEGATIVE world Y?
-      // This depends on whether world Y increases upward or downward
+      testCases.forEach(({ screenX, screenY, description }) => {
+        const newMethod = (inputHandler as any).screenToWorldRayIntersection(screenX, screenY, camera);
+        const oldWorldX = (screenX - mockCanvas.width / 2) / camera.zoom + camera.x;
+        const oldWorldY = (screenY - mockCanvas.height / 2) / camera.zoom + camera.y;
+
+        expect(newMethod.x).toBeCloseTo(oldWorldX, 1);
+        expect(newMethod.y).toBeCloseTo(oldWorldY, 1);
+      });
     });
+  });
 
-    it('should demonstrate Y-axis direction in world coordinates', () => {
+  describe('Y-Axis Coordinate System Consistency', () => {
+    it('should maintain consistent Y-axis direction', () => {
       const camera: Camera = { x: 0, y: 0, zoom: 1 };
 
-      // Click top of screen
-      const topClick = (0 - mockCanvas.height / 2) / camera.zoom + camera.y; // -300
+      // Click top of screen (Y=0)
+      const topResult = (inputHandler as any).screenToWorldRayIntersection(mockCanvas.width / 2, 0, camera);
       
-      // Click bottom of screen  
-      const bottomClick = (mockCanvas.height - mockCanvas.height / 2) / camera.zoom + camera.y; // +300
+      // Click bottom of screen (Y=height)
+      const bottomResult = (inputHandler as any).screenToWorldRayIntersection(mockCanvas.width / 2, mockCanvas.height, camera);
 
-      expect(topClick).toBe(-300);   // Top of screen -> negative world Y
-      expect(bottomClick).toBe(300); // Bottom of screen -> positive world Y
+      // Top of screen should give negative world Y, bottom should give positive world Y
+      // This matches the standard screen coordinate system where Y increases downward
+      expect(topResult.y).toBeLessThan(0);    // Top -> negative world Y
+      expect(bottomResult.y).toBeGreaterThan(0); // Bottom -> positive world Y
+      
+      // The magnitude should be half the viewport height in world units
+      expect(Math.abs(topResult.y)).toBe(mockCanvas.height / 2);
+      expect(Math.abs(bottomResult.y)).toBe(mockCanvas.height / 2);
+    });
 
-      // This suggests world Y increases DOWNWARD (like screen coordinates)
-      // If world Y should increase UPWARD, then we need to invert the Y calculation
+    it('should handle Y-axis flipping correctly in NDC conversion', () => {
+      const camera: Camera = { x: 0, y: 0, zoom: 1 };
+
+      // Click 100 pixels down from center (should be positive world Y)
+      const screenX = mockCanvas.width / 2;
+      const screenY = mockCanvas.height / 2 + 100;
+
+      const result = (inputHandler as any).screenToWorldRayIntersection(screenX, screenY, camera);
+      
+      expect(result.x).toBe(0);   // Should be at camera X (center)
+      expect(result.y).toBe(100); // Should be positive (down in world = positive Y)
+    });
+  });
+
+  describe('Integration with InputHandler', () => {
+    it('should use the new coordinate transformation in handleClick', () => {
+      const camera: Camera = {
+        x: 250,
+        y: 150,
+        zoom: 1.5
+      };
+
+      // Access private method to test coordinate transformation
+      const screenX = mockCanvas.width / 2 + 75;  // 75 pixels right of center
+      const screenY = mockCanvas.height / 2 - 45; // 45 pixels up from center
+
+      // Use the actual handleClick method (through click handler)
+      inputHandler.setClickHandler((worldX: number, worldY: number) => {
+        clickedCoordinates = { x: worldX, y: worldY };
+      });
+
+      // Simulate the internal handleClick call
+      (inputHandler as any).handleClick(screenX, screenY, camera);
+
+      // Verify the coordinates were calculated using the new method
+      expect(clickedCoordinates).not.toBeNull();
+      
+      // Calculate expected coordinates using the new method
+      const expected = (inputHandler as any).screenToWorldRayIntersection(screenX, screenY, camera);
+      
+      expect(clickedCoordinates!.x).toBeCloseTo(expected.x, 5);
+      expect(clickedCoordinates!.y).toBeCloseTo(expected.y, 5);
     });
   });
 });

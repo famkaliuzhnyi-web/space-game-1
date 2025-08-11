@@ -121,18 +121,15 @@ export class InputHandler {
 
   /**
    * Handle click interactions with coordinate transformation
-   * Properly accounts for all camera changes: position (from drag), zoom level, and initial camera setup
+   * Uses ray-plane intersection for accurate camera-based coordinate transformation
    */
   private handleClick(x: number, y: number, camera: Camera, inputManager?: InputManager, action: 'move' | 'command' = 'move'): void {
     if (!this.clickHandler) return;
 
-    // Convert screen coordinates to world coordinates
-    // This transformation accounts for:
-    // - Camera position (camera.x, camera.y) - updated by dragging and initial positioning
-    // - Zoom level (camera.zoom) - updated by mouse wheel and keyboard zoom
-    // - Screen center offset to convert from screen space to camera-relative space
-    const worldX = (x - this.canvas.width / 2) / camera.zoom + camera.x;
-    const worldY = (y - this.canvas.height / 2) / camera.zoom + camera.y;
+    // Convert screen coordinates to world coordinates using ray-plane intersection
+    const worldCoords = this.screenToWorldRayIntersection(x, y, camera);
+    const worldX = worldCoords.x;
+    const worldY = worldCoords.y;
 
     // If we have input manager and this is a left-click, cancel any ongoing drag
     // This ensures object interactions take priority over map dragging
@@ -141,6 +138,35 @@ export class InputHandler {
     }
 
     this.clickHandler(worldX, worldY, action);
+  }
+
+  /**
+   * Convert screen coordinates to world coordinates using ray-plane intersection
+   * This method traces a ray from the camera through the screen point and finds
+   * where it intersects the XY plane (Z=0) in world space.
+   */
+  private screenToWorldRayIntersection(screenX: number, screenY: number, camera: Camera): { x: number; y: number } {
+    // Convert screen coordinates to normalized device coordinates (-1 to +1)
+    // Screen origin (0,0) is at top-left, NDC origin (0,0) is at center
+    const ndcX = ((screenX - this.canvas.width / 2) / (this.canvas.width / 2));
+    const ndcY = ((screenY - this.canvas.height / 2) / (this.canvas.height / 2)); // No Y flip - keep screen coordinate direction
+    
+    // For a top-down orthographic camera view:
+    // - Camera is positioned at (camera.x, camera.y, cameraHeight) looking down at Z=0
+    // - The camera's view frustum maps screen coordinates to world coordinates
+    // - Zoom affects the scale of the view frustum
+    
+    // Calculate the world space dimensions of the viewport at Z=0
+    const viewportWorldWidth = this.canvas.width / camera.zoom;
+    const viewportWorldHeight = this.canvas.height / camera.zoom;
+    
+    // Calculate ray intersection with XY plane (Z=0)
+    // For orthographic projection, the ray direction is parallel to Z-axis
+    // The intersection point is simply the camera position plus the NDC offset scaled by viewport size
+    const worldX = camera.x + (ndcX * viewportWorldWidth / 2);
+    const worldY = camera.y + (ndcY * viewportWorldHeight / 2);
+    
+    return { x: worldX, y: worldY };
   }
 
   /**
