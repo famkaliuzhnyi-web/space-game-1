@@ -1,4 +1,4 @@
-import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget } from '../types/world';
+import { Galaxy, Sector, StarSystem, Station, Planet, Coordinates, NavigationTarget, Gate } from '../types/world';
 import { Ship } from '../types/player';
 import { SceneManager } from '../engine/SceneManager';
 import { createLayeredPosition, convertLegacyCoords } from '../utils/coordinates';
@@ -884,6 +884,9 @@ export class WorldManager {
         break;
     }
 
+    // Create gates for inter-sector travel
+    const gates = this.createGatesForSystem(id, position);
+
     return {
       id,
       name,
@@ -895,8 +898,58 @@ export class WorldManager {
       },
       stations,
       planets,
+      gates,
       securityLevel: id === 'sol-system' ? 9 : 6
     };
+  }
+
+  /**
+   * Create gates for a system to enable inter-sector travel
+   */
+  private createGatesForSystem(systemId: string, systemPosition: Coordinates): Gate[] {
+    const gates: Gate[] = [];
+    
+    // Only Sol System (the start system) gets gates to other sectors
+    // This matches the problem statement - "no gate in start sector to other sectors"
+    if (systemId === 'sol-system') {
+      // Gate to Frontier Sector
+      gates.push({
+        id: 'gate-to-frontier',
+        name: 'Frontier Gate',
+        position: convertLegacyCoords({ x: systemPosition.x + 450, y: systemPosition.y - 200 }, "station"),
+        destinationSectorId: 'frontier-sector',
+        destinationSystemId: 'kepler-442', // Default arrival system
+        energyCost: 50,
+        isActive: true,
+        description: 'Ancient alien gateway leading to the Frontier Sector. Ships require 50 fuel units to transit.'
+      });
+      
+      // Gate to Industrial Sector
+      gates.push({
+        id: 'gate-to-industrial',
+        name: 'Industrial Gate',
+        position: convertLegacyCoords({ x: systemPosition.x - 300, y: systemPosition.y + 400 }, "station"),
+        destinationSectorId: 'industrial-sector',
+        destinationSystemId: 'bernard-star',
+        energyCost: 50,
+        isActive: true,
+        description: 'Ancient alien gateway leading to the Industrial Sector. Heavy manufacturing awaits beyond.'
+      });
+      
+      // Gate to Mining Sector  
+      gates.push({
+        id: 'gate-to-mining',
+        name: 'Mining Gate',
+        position: convertLegacyCoords({ x: systemPosition.x + 500, y: systemPosition.y + 300 }, "station"),
+        destinationSectorId: 'mining-sector',
+        destinationSystemId: 'mining-belt-alpha',
+        energyCost: 60,
+        isActive: true,
+        description: 'Ancient alien gateway leading to the Mining Sector. Rich asteroid belts beyond.'
+      });
+    }
+    
+    return gates;
   }
 
   getGalaxy(): Galaxy {
@@ -972,6 +1025,19 @@ export class WorldManager {
               estimatedTravelTime: distance / 50 // Faster travel within system
             });
           }
+        });
+        
+        // Add gates in current system
+        system.gates.forEach(gate => {
+          const distance = this.calculateDistance(currentPos, gate.position);
+          targets.push({
+            type: 'gate',
+            id: gate.id,
+            name: gate.name,
+            position: gate.position,
+            distance,
+            estimatedTravelTime: distance / 50 // Similar travel time as stations
+          });
         });
       }
     });
@@ -1293,5 +1359,44 @@ export class WorldManager {
     }
     
     return targets.sort((a, b) => a.distance - b.distance);
+  }
+
+  /**
+   * Get all reachable gates as navigation targets
+   */
+  getAllReachableGates(): NavigationTarget[] {
+    const targets: NavigationTarget[] = [];
+    const currentPos = this.getCurrentPlayerPosition();
+    const currentSystem = this.getCurrentSystem();
+    
+    if (!currentSystem) return targets;
+    
+    // Only show gates in the current system
+    for (const gate of currentSystem.gates) {
+      const distance = this.calculateDistance(currentPos, gate.position);
+      targets.push({
+        type: 'gate',
+        id: gate.id,
+        name: gate.name,
+        position: gate.position,
+        distance,
+        estimatedTravelTime: this.estimateGateTravelTime(gate)
+      });
+    }
+    
+    return targets.sort((a, b) => a.distance - b.distance);
+  }
+
+  /**
+   * Estimate travel time to a gate (in milliseconds)
+   */
+  private estimateGateTravelTime(gate: Gate): number {
+    const currentPos = this.getCurrentPlayerPosition();
+    const distance = this.calculateDistance(currentPos, gate.position);
+    
+    // Gate approach is similar to station docking
+    const baseSpeed = 150;
+    const travelTimeHours = Math.max(0.01, distance / baseSpeed);
+    return travelTimeHours * 60 * 60 * 1000; // Convert to milliseconds
   }
 }
