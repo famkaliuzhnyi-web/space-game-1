@@ -30,17 +30,21 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
-        // Use system chromium browser - proper headless mode
+        // Use system chromium browser - headless mode
+        headless: true,
         channel: undefined,
-        executablePath: '/usr/bin/chromium-browser',
         launchOptions: {
+          executablePath: '/usr/bin/chromium-browser',
           args: [
             '--headless=new',
-            '--no-sandbox',
+            '--no-sandbox', 
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-extensions',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
           ]
         }
       },

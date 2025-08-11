@@ -175,6 +175,13 @@ test.describe('Focused Ship Movement Test', () => {
         const secondDeltaY = secondFinalShip.position.y - preSecondShip.position.y;
         const secondExpectedRotation = Math.atan2(secondDeltaY, secondDeltaX);
         
+        // Angle normalization helper function
+        const normalizeAngle = (angle) => {
+          let normalized = ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+          if (normalized > Math.PI) normalized -= 2 * Math.PI;
+          return normalized;
+        };
+        
         const secondNormalizedExpected = normalizeAngle(secondExpectedRotation);
         const secondNormalizedActual = normalizeAngle(secondFinalShip.rotation);
         let secondAngleDiff = Math.abs(secondNormalizedExpected - secondNormalizedActual);
