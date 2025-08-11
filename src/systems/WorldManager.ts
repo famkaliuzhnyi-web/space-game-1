@@ -1067,8 +1067,88 @@ export class WorldManager {
         this.pendingDockingTarget = targetId;
       }
       return success;
+    } else if (target.type === 'gate') {
+      // Handle gate teleportation
+      return this.useGate(targetId);
     }
 
+    return true;
+  }
+
+  /**
+   * Use a gate to teleport to another sector
+   */
+  private useGate(gateId: string): boolean {
+    const currentSystem = this.getCurrentSystem();
+    if (!currentSystem) return false;
+
+    const gate = currentSystem.gates.find(g => g.id === gateId);
+    if (!gate || !gate.isActive) return false;
+
+    // Check if player has enough fuel
+    if (this.playerShip) {
+      // For now, we'll assume fuel is stored in ship equipment or a separate fuel system
+      // Since the current ship structure doesn't explicitly have fuel, we'll check
+      // if the player has the required credits to "buy" fuel for the gate
+      if (this.playerManager) {
+        const player = this.playerManager.getPlayer();
+        if (player.credits < gate.energyCost) {
+          console.log(`Insufficient fuel credits for gate travel. Required: ${gate.energyCost}, Available: ${player.credits}`);
+          return false;
+        }
+        
+        // Deduct fuel cost
+        this.playerManager.spendCredits(gate.energyCost);
+      }
+    }
+
+    // Find destination sector
+    const destinationSector = this.galaxy.sectors.find(s => s.id === gate.destinationSectorId);
+    if (!destinationSector) {
+      console.log(`Destination sector not found: ${gate.destinationSectorId}`);
+      return false;
+    }
+
+    // Determine destination system
+    let destinationSystemId = gate.destinationSystemId;
+    if (!destinationSystemId) {
+      // If no specific system specified, use the first system in the sector
+      destinationSystemId = destinationSector.systems[0]?.id;
+    }
+
+    if (!destinationSystemId) {
+      console.log(`No destination system available in sector: ${gate.destinationSectorId}`);
+      return false;
+    }
+
+    // Perform the teleportation
+    this.galaxy.currentPlayerLocation.sectorId = gate.destinationSectorId;
+    this.galaxy.currentPlayerLocation.systemId = destinationSystemId;
+    this.galaxy.currentPlayerLocation.stationId = undefined; // Arrive in space
+
+    // Update ship location if available
+    if (this.playerShip) {
+      this.playerShip.location.systemId = destinationSystemId;
+      this.playerShip.location.stationId = undefined;
+      this.playerShip.location.isInTransit = false;
+      
+      // Set ship coordinates to destination system center
+      const destinationSystem = destinationSector.systems.find(s => s.id === destinationSystemId);
+      if (destinationSystem) {
+        this.playerShip.location.coordinates = {
+          x: destinationSystem.position.x,
+          y: destinationSystem.position.y,
+          z: 50 // Ship layer
+        };
+      }
+    }
+
+    // Clear player's current station status
+    if (this.playerManager) {
+      this.playerManager.setCurrentStation(null);
+    }
+
+    console.log(`Successfully used gate ${gate.name} to travel to ${destinationSector.name} - ${destinationSystemId}`);
     return true;
   }
 
