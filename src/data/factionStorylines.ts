@@ -232,7 +232,7 @@ export const INDEPENDENT_SYSTEMS_STORYLINES: StoryQuest[] = [
     objectives: [
       {
         id: 'negotiate_alliance',
-        description: 'Negotiate temporary ceasefire with Crimson Fleet',
+        description: 'Negotiate temporary ceasefire with Void Reapers',
         type: 'diplomacy',
         completed: false
       },
@@ -293,7 +293,7 @@ export const PIRATES_STORYLINES: StoryQuest[] = [
   {
     id: 'pirates_initiation',
     title: 'Blood and Steel Initiation',
-    description: 'Prove your worth to the Crimson Fleet through acts of piracy and loyalty to the code of the void.',
+    description: 'Prove your worth to the Void Reapers through acts of piracy and loyalty to the code of the void.',
     type: 'faction_storyline',
     category: 'piracy',
     status: 'available',
@@ -332,7 +332,7 @@ export const PIRATES_STORYLINES: StoryQuest[] = [
         'raijin-corp': -10,
         'bellator-corp': -15
       },
-      unlocks: ['crimson_fleet_membership', 'black_market_access']
+      unlocks: ['void_reaper_membership', 'black_market_access']
     },
     giver: 'Captain Red Morgan',
     location: 'Hidden Asteroid Base',
@@ -342,8 +342,8 @@ export const PIRATES_STORYLINES: StoryQuest[] = [
     priority: 6,
     repeatable: false,
     dialogue: {
-      intro: "The void is harsh, but the Crimson Fleet takes care of its own. Prove you can take what you need to survive.",
-      success: "You've got steel in your spine and fire in your belly. Welcome to the Fleet, pirate.",
+      intro: "The void is harsh, but the Void Reapers take care of their own. Prove you can take what you need to survive.",
+      success: "You've got steel in your spine and fire in your belly. Welcome to the Reapers, pirate.",
       failure: "The galaxy is full of weaklings who can't do what's necessary. Maybe you're one of them."
     }
   }
@@ -401,7 +401,7 @@ export const ENHANCED_STORY_ARCS: StoryArc[] = [
 
   {
     id: 'pirates_crew_arc',
-    title: 'Crimson Fleet Initiation',
+    title: 'Void Reapers Initiation',
     description: 'Rise through the ranks of the galaxy\'s most notorious pirate organization',
     factionId: 'pirates',
     quests: ['pirates_initiation', 'pirates_territory_war'],
@@ -477,7 +477,7 @@ export const ENHANCED_FACTION_STORYLINES: FactionStoryline[] = [
 
   {
     factionId: 'pirates',
-    title: 'Crimson Fleet Captain',
+    title: 'Void Reapers Captain',
     description: 'Rise through the ranks of the galaxy\'s most notorious pirate organization.',
     arcs: [
       {
@@ -496,7 +496,7 @@ export const ENHANCED_FACTION_STORYLINES: FactionStoryline[] = [
     },
     unlocks: {
       allied: ['black_market_dealer_license', 'pirate_fleet_support'],
-      trusted: ['crimson_fleet_captain', 'underworld_influence']
+      trusted: ['void_reaper_captain', 'underworld_influence']
     }
   }
 ];

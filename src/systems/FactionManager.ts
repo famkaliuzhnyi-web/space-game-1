@@ -207,7 +207,7 @@ export class FactionManager {
       },
       {
         id: 'pirates',
-        name: 'Crimson Fleet Pirates',
+        name: 'Void Reapers',
         description: 'Organized piracy and black market operations',
         homeStation: 'hidden-base',
         colors: { primary: '#be185d', secondary: '#9d174d' },

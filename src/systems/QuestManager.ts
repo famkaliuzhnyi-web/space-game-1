@@ -1318,16 +1318,16 @@ export class QuestManager {
       repeatable: false
     });
 
-    // === THE CRIMSON FLEET (PIRATE) STORYLINE ===
+    // === THE VOID REAPERS (PIRATE) STORYLINE ===
     this.addQuest({
       id: 'cf_prove_yourself',
       title: 'Blood and Credits',
-      description: 'Prove your worth to the Crimson Fleet by completing a daring raid.',
+      description: 'Prove your worth to the Void Reapers by completing a daring raid.',
       type: 'faction_storyline',
       category: 'piracy',
       status: 'available',
       requirements: {
-        reputation: { 'crimson_fleet': 0 },
+        reputation: { 'pirates': 0 },
         skills: { 'Combat': 5 }
       },
       objectives: [
@@ -1342,12 +1342,12 @@ export class QuestManager {
       rewards: {
         credits: 15000,
         experience: 250,
-        reputation: { 'crimson_fleet': 15 },
+        reputation: { 'pirates': 15 },
         reputation_loss: { 'stellar_industries': -15, 'quantum_dynamics': -15, 'traders_guild': -15 },
         unlocks: ['pirate_fence_access']
       },
       giver: 'cf_raid_captain',
-      factionId: 'crimson_fleet',
+      factionId: 'pirates',
       storyArc: 'cf_pirate_ascension',
       priority: 4,
       repeatable: false
@@ -1362,7 +1362,7 @@ export class QuestManager {
       status: 'locked',
       requirements: {
         completedQuests: ['cf_prove_yourself'],
-        reputation: { 'crimson_fleet': 30 },
+        reputation: { 'pirates': 30 },
         skills: { 'Combat': 7, 'Piloting': 6 }
       },
       objectives: [
@@ -1384,12 +1384,12 @@ export class QuestManager {
       rewards: {
         credits: 40000,
         experience: 600,
-        reputation: { 'crimson_fleet': 25 },
+        reputation: { 'pirates': 25 },
         reputation_loss: { 'stellar_industries': -20, 'quantum_dynamics': -20, 'nexus_corp': -15 },
         items: ['pirate_fleet_medal', 'captured_corporate_tech']
       },
       giver: 'cf_fleet_admiral',
-      factionId: 'crimson_fleet',
+      factionId: 'pirates',
       storyArc: 'cf_pirate_ascension',
       priority: 2,
       repeatable: false
@@ -1398,13 +1398,13 @@ export class QuestManager {
     this.addQuest({
       id: 'cf_pirate_king',
       title: 'Rise to Power',
-      description: 'Challenge the current Pirate King and seize control of the Crimson Fleet.',
+      description: 'Challenge the current Pirate King and seize control of the Void Reapers.',
       type: 'faction_storyline',
       category: 'leadership',
       status: 'locked',
       requirements: {
         completedQuests: ['cf_pirate_war'],
-        reputation: { 'crimson_fleet': 50 },
+        reputation: { 'pirates': 50 },
         skills: { 'Combat': 9, 'Leadership': 8, 'Social': 7 }
       },
       objectives: [
@@ -1433,12 +1433,12 @@ export class QuestManager {
       rewards: {
         credits: 150000,
         experience: 1200,
-        reputation: { 'crimson_fleet': 75 },
+        reputation: { 'pirates': 75 },
         reputation_loss: { 'stellar_industries': -50, 'quantum_dynamics': -50, 'nexus_corp': -40, 'traders_guild': -40 },
-        items: ['pirate_king_crown', 'crimson_fleet_command', 'legendary_pirate_ship']
+        items: ['pirate_king_crown', 'void_reaper_command', 'legendary_pirate_ship']
       },
       giver: 'cf_council_of_captains',
-      factionId: 'crimson_fleet',
+      factionId: 'pirates',
       storyArc: 'cf_pirate_ascension',
       priority: 1,
       repeatable: false
@@ -1794,7 +1794,7 @@ export class QuestManager {
     // THE CRIMSON FLEET (PIRATES)
     // ===============================
     const crimsonFleetStoryline: FactionStoryline = {
-      factionId: 'crimson_fleet',
+      factionId: 'pirates',
       title: 'Blood and Plunder',
       description: 'Rise from petty criminal to Pirate King, building a criminal empire among the stars.',
       arcs: [
@@ -1802,7 +1802,7 @@ export class QuestManager {
           id: 'cf_pirate_ascension',
           title: 'Path to the Pirate Throne',
           description: 'Prove yourself in raids, lead fleets in battle, and ultimately challenge for the crown of Pirate King.',
-          factionId: 'crimson_fleet',
+          factionId: 'pirates',
           quests: ['cf_prove_yourself', 'cf_pirate_war', 'cf_pirate_king'],
           status: 'available'
         }
@@ -1820,7 +1820,7 @@ export class QuestManager {
     this.factionStorylines.set('quantum_dynamics', quantumDynamicsStoryline);
     this.factionStorylines.set('nexus_corp', nexusCorpStoryline);
     this.factionStorylines.set('independent_alliance', independentAllianceStoryline);
-    this.factionStorylines.set('crimson_fleet', crimsonFleetStoryline);
+    this.factionStorylines.set('pirates', crimsonFleetStoryline);
   }
 
   /**
