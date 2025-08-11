@@ -28,7 +28,11 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Use system chromium browser
+        executablePath: '/usr/bin/chromium',
+      },
     },
   ],
 
