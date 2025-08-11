@@ -243,13 +243,23 @@ export function calculateBoundingBox2D(positions: Vector3D[]): {
 
 /**
  * Normalize angle to [-π, π] range for consistent rotation calculations
+ * Enhanced to properly handle the ±π edge case
  */
 export function normalizeAngle(angle: number): number {
-  // Use modulo and adjust to ensure result is in [-π, π]
+  // Normalize to [0, 2π) first
   let normalized = ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+  
+  // Convert to [-π, π] range
   if (normalized > Math.PI) {
     normalized -= 2 * Math.PI;
   }
+  
+  // Handle the special case where π and -π are equivalent
+  // Always prefer -π over π for consistency (matching the test expectations)
+  if (Math.abs(normalized - Math.PI) < 1e-10) {
+    normalized = -Math.PI;
+  }
+  
   return normalized;
 }
 
