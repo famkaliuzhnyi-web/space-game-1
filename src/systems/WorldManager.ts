@@ -236,7 +236,7 @@ export class WorldManager {
             id: 'earth',
             name: 'Earth',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x, y: position.y - 600 }, "station"), // 5x further from star (was -120)
+            position: convertLegacyCoords({ x: position.x, y: position.y - 600 }, "planet"), // 5x further from star (was -120)
             radius: 20,
             habitable: true,
             population: 8000000000,
@@ -246,7 +246,7 @@ export class WorldManager {
             id: 'mars',
             name: 'Mars',
             type: 'desert',
-            position: convertLegacyCoords({ x: position.x + 400, y: position.y - 900 }, "station"), // 5x further from star (was +80, -180)
+            position: convertLegacyCoords({ x: position.x + 400, y: position.y - 900 }, "planet"), // 5x further from star (was +80, -180)
             radius: 15,
             habitable: false,
             population: 50000000,
@@ -256,7 +256,7 @@ export class WorldManager {
             id: 'jupiter',
             name: 'Jupiter',
             type: 'gas-giant',
-            position: convertLegacyCoords({ x: position.x - 750, y: position.y + 1000 }, "station"), // 5x further from star (was -150, +200)
+            position: convertLegacyCoords({ x: position.x - 750, y: position.y + 1000 }, "planet"), // 5x further from star (was -150, +200)
             radius: 35,
             habitable: false,
             description: 'Massive gas giant with numerous mining stations in its orbit.'
@@ -293,7 +293,7 @@ export class WorldManager {
             id: 'proxima-b',
             name: 'Proxima Centauri b',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x + 100, y: position.y - 200 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 100, y: position.y - 200 }, "planet"),
             radius: 18,
             habitable: true,
             population: 5000000,
@@ -303,7 +303,7 @@ export class WorldManager {
             id: 'alpha-centauri-mining',
             name: 'Centauri Mining World',
             type: 'desert',
-            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 250 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 250 }, "planet"),
             radius: 12,
             habitable: false,
             description: 'Mineral-rich desert world, heavily strip-mined for rare elements.'
@@ -340,7 +340,7 @@ export class WorldManager {
             id: 'sirius-research-world',
             name: 'Sirius Research World',
             type: 'ice',
-            position: convertLegacyCoords({ x: position.x, y: position.y - 300 }, "station"),
+            position: convertLegacyCoords({ x: position.x, y: position.y - 300 }, "planet"),
             radius: 22,
             habitable: false,
             description: 'Frozen world with advanced underground research facilities.'
@@ -349,7 +349,7 @@ export class WorldManager {
             id: 'sirius-ocean',
             name: 'Sirius Ocean World',
             type: 'ocean',
-            position: convertLegacyCoords({ x: position.x + 200, y: position.y + 150 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 200, y: position.y + 150 }, "planet"),
             radius: 25,
             habitable: true,
             population: 2000000,
@@ -387,7 +387,7 @@ export class WorldManager {
             id: 'vega-prime',
             name: 'Vega Prime',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x + 125, y: position.y + 200 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 125, y: position.y + 200 }, "planet"),
             radius: 19,
             habitable: true,
             population: 100000000,
@@ -397,7 +397,7 @@ export class WorldManager {
             id: 'vega-asteroid-haven',
             name: 'Vega Asteroid Base',
             type: 'desert',
-            position: convertLegacyCoords({ x: position.x - 250, y: position.y - 175 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 250, y: position.y - 175 }, "planet"),
             radius: 8,
             habitable: false,
             description: 'Hollowed-out asteroid serving as a pirate stronghold and black market hub.'
@@ -470,7 +470,7 @@ export class WorldManager {
             id: 'kepler-442b',
             name: 'Kepler-442b',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x, y: position.y + 225 }, "station"),
+            position: convertLegacyCoords({ x: position.x, y: position.y + 225 }, "planet"),
             radius: 21,
             habitable: true,
             population: 1000000,
@@ -480,7 +480,7 @@ export class WorldManager {
             id: 'kepler-mining-world',
             name: 'Kepler Mining World',
             type: 'desert',
-            position: convertLegacyCoords({ x: position.x - 175, y: position.y + 75 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 175, y: position.y + 75 }, "planet"),
             radius: 11,
             habitable: false,
             description: 'Resource-rich world supplying the growing frontier colonies.'
@@ -523,7 +523,7 @@ export class WorldManager {
             id: 'trappist-1b',
             name: 'TRAPPIST-1b',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x - 100, y: position.y - 75 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 100, y: position.y - 75 }, "planet"),
             radius: 14,
             habitable: false,
             description: 'Innermost planet, too hot for habitation but rich in minerals.'
@@ -532,7 +532,7 @@ export class WorldManager {
             id: 'trappist-1e',
             name: 'TRAPPIST-1e',
             type: 'terrestrial',
-            position: convertLegacyCoords({ x: position.x + 75, y: position.y + 100 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 75, y: position.y + 100 }, "planet"),
             radius: 16,
             habitable: true,
             population: 500000,
@@ -542,7 +542,7 @@ export class WorldManager {
             id: 'trappist-1f',
             name: 'TRAPPIST-1f',
             type: 'ocean',
-            position: convertLegacyCoords({ x: position.x + 175, y: position.y - 50 }, "station"),
+            position: convertLegacyCoords({ x: position.x + 175, y: position.y - 50 }, "planet"),
             radius: 17,
             habitable: true,
             population: 200000,
@@ -552,7 +552,7 @@ export class WorldManager {
             id: 'trappist-1h',
             name: 'TRAPPIST-1h',
             type: 'ice',
-            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 125 }, "station"),
+            position: convertLegacyCoords({ x: position.x - 150, y: position.y + 125 }, "planet"),
             radius: 13,
             habitable: false,
             description: 'Frozen outer planet used as a research station and ice mining operation.'

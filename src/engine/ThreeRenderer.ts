@@ -423,8 +423,9 @@ export class ThreeRenderer {
       // Apply rotation to the mesh
       // Convert 2D rotation (around Z-axis) to 3D rotation
       // Note: 3D ships are initially pointing right (positive X), same as 2D
-      // Since Y coordinate is inverted in 3D space (-obj.position.y), we need to invert rotation as well
-      mesh.rotation.z = -rotation;
+      // The rotation should be consistent with the 2D coordinate system
+      // even though Y position is inverted for display purposes
+      mesh.rotation.z = rotation;
     }
   }
 
