@@ -17,21 +17,29 @@ describe('FactionManager', () => {
       expect(factions.length).toBeGreaterThan(0);
       
       const factionIds = factions.map(f => f.id);
-      expect(factionIds).toContain('traders-guild');
-      expect(factionIds).toContain('earth-federation');
-      expect(factionIds).toContain('outer-colonies');
-      expect(factionIds).toContain('industrial-consortium');
-      expect(factionIds).toContain('security-forces');
+      // Check for megacorporations
+      expect(factionIds).toContain('raijin-corp');
+      expect(factionIds).toContain('bellator-corp');
+      expect(factionIds).toContain('sigmatower-corp');
+      expect(factionIds).toContain('botanica-corp');
+      expect(factionIds).toContain('yugen-corp');
+      expect(factionIds).toContain('tekton-corp');
+      expect(factionIds).toContain('shiden-corp');
+      expect(factionIds).toContain('volans-corp');
+      // Check for non-corporate factions
+      expect(factionIds).toContain('independents');
+      expect(factionIds).toContain('pirates');
+      expect(factionIds).toContain('mercenaries');
     });
 
     it('should initialize player reputation with all factions', () => {
-      expect(playerReputation.size).toBe(5);
+      expect(playerReputation.size).toBe(11);
       
-      const tradersGuildRep = playerReputation.get('traders-guild');
-      expect(tradersGuildRep).toBeDefined();
-      expect(tradersGuildRep?.standing).toBe(0);
-      expect(tradersGuildRep?.rank).toBe('Neutral');
-      expect(tradersGuildRep?.missions).toBe(0);
+      const raijinCorpRep = playerReputation.get('raijin-corp');
+      expect(raijinCorpRep).toBeDefined();
+      expect(raijinCorpRep?.standing).toBe(0);
+      expect(raijinCorpRep?.rank).toBe('Neutral');
+      expect(raijinCorpRep?.missions).toBe(0);
     });
   });
 
@@ -39,7 +47,7 @@ describe('FactionManager', () => {
     it('should modify reputation correctly', () => {
       const result = factionManager.modifyReputation(
         playerReputation,
-        'traders-guild',
+        'raijin-corp',
         25,
         'Trade completion'
       );
@@ -51,13 +59,13 @@ describe('FactionManager', () => {
 
     it('should handle reputation bounds', () => {
       // Test upper bound
-      factionManager.modifyReputation(playerReputation, 'traders-guild', 150, 'Test');
-      const rep = playerReputation.get('traders-guild');
+      factionManager.modifyReputation(playerReputation, 'raijin-corp', 150, 'Test');
+      const rep = playerReputation.get('raijin-corp');
       expect(rep?.standing).toBe(100);
 
       // Test lower bound
-      factionManager.modifyReputation(playerReputation, 'traders-guild', -250, 'Test');
-      const rep2 = playerReputation.get('traders-guild');
+      factionManager.modifyReputation(playerReputation, 'raijin-corp', -250, 'Test');
+      const rep2 = playerReputation.get('raijin-corp');
       expect(rep2?.standing).toBe(-100);
     });
 
@@ -113,16 +121,16 @@ describe('FactionManager', () => {
   describe('Reputation Consequences', () => {
     it('should calculate reputation consequences for other factions', () => {
       const consequences = factionManager.checkReputationConsequences(
-        'earth-federation',
+        'raijin-corp',
         20
       );
 
       expect(consequences.length).toBeGreaterThan(0);
       
-      // Earth Federation and Outer Colonies are opposed
-      const outerColoniesConsequence = consequences.find(c => c.factionId === 'outer-colonies');
-      expect(outerColoniesConsequence).toBeDefined();
-      expect(outerColoniesConsequence?.change).toBeLessThan(0);
+      // Raijin Corp has negative relationship with pirates
+      const piratesConsequence = consequences.find(c => c.factionId === 'pirates');
+      expect(piratesConsequence).toBeDefined();
+      expect(piratesConsequence?.change).toBeLessThan(0);
     });
   });
 
@@ -130,12 +138,12 @@ describe('FactionManager', () => {
     it('should handle trade completion reputation', () => {
       const changes = factionManager.handleTradeCompletion(
         playerReputation,
-        'traders-guild',
+        'volans-corp',
         50000 // 50k credit trade
       );
 
       expect(changes.length).toBeGreaterThan(0);
-      const primaryChange = changes.find(c => c.factionId === 'traders-guild');
+      const primaryChange = changes.find(c => c.factionId === 'volans-corp');
       expect(primaryChange?.change).toBeGreaterThan(0);
       expect(primaryChange?.reason).toContain('Trade completion');
     });
@@ -143,7 +151,7 @@ describe('FactionManager', () => {
     it('should not give reputation for small trades', () => {
       const changes = factionManager.handleTradeCompletion(
         playerReputation,
-        'traders-guild',
+        'volans-corp',
         1000 // 1k credit trade
       );
 
@@ -155,36 +163,36 @@ describe('FactionManager', () => {
     it('should handle successful mission completion', () => {
       const changes = factionManager.handleMissionCompletion(
         playerReputation,
-        'traders-guild',
+        'mercenaries',
         'delivery',
         true
       );
 
       expect(changes.length).toBeGreaterThan(0);
-      const primaryChange = changes.find(c => c.factionId === 'traders-guild');
+      const primaryChange = changes.find(c => c.factionId === 'mercenaries');
       expect(primaryChange?.change).toBeGreaterThan(0);
       expect(primaryChange?.reason).toBe('Mission completed');
 
       // Check mission count increased
-      const rep = playerReputation.get('traders-guild');
+      const rep = playerReputation.get('mercenaries');
       expect(rep?.missions).toBe(1);
     });
 
     it('should handle mission failure', () => {
       const changes = factionManager.handleMissionCompletion(
         playerReputation,
-        'traders-guild',
+        'mercenaries',
         'delivery',
         false
       );
 
       expect(changes.length).toBeGreaterThan(0);
-      const primaryChange = changes.find(c => c.factionId === 'traders-guild');
+      const primaryChange = changes.find(c => c.factionId === 'mercenaries');
       expect(primaryChange?.change).toBeLessThan(0);
       expect(primaryChange?.reason).toBe('Mission failed');
 
       // Mission count should not increase on failure
-      const rep = playerReputation.get('traders-guild');
+      const rep = playerReputation.get('mercenaries');
       expect(rep?.missions).toBe(0);
     });
   });
@@ -192,8 +200,8 @@ describe('FactionManager', () => {
   describe('Serialization', () => {
     it('should serialize and deserialize correctly', () => {
       // Make some changes to create history
-      factionManager.modifyReputation(playerReputation, 'traders-guild', 10, 'Test 1');
-      factionManager.modifyReputation(playerReputation, 'earth-federation', -5, 'Test 2');
+      factionManager.modifyReputation(playerReputation, 'raijin-corp', 10, 'Test 1');
+      factionManager.modifyReputation(playerReputation, 'bellator-corp', -5, 'Test 2');
 
       const serialized = factionManager.serialize();
       expect(serialized.reputationHistory).toHaveLength(2);
@@ -208,11 +216,11 @@ describe('FactionManager', () => {
 
   describe('Reputation History', () => {
     it('should track reputation changes', () => {
-      factionManager.modifyReputation(playerReputation, 'traders-guild', 10, 'Test change');
+      factionManager.modifyReputation(playerReputation, 'raijin-corp', 10, 'Test change');
       
       const history = factionManager.getReputationHistory(5);
       expect(history.length).toBe(1);
-      expect(history[0].factionId).toBe('traders-guild');
+      expect(history[0].factionId).toBe('raijin-corp');
       expect(history[0].change).toBe(10);
       expect(history[0].reason).toBe('Test change');
     });
@@ -220,7 +228,7 @@ describe('FactionManager', () => {
     it('should limit history results', () => {
       // Create multiple changes
       for (let i = 0; i < 15; i++) {
-        factionManager.modifyReputation(playerReputation, 'traders-guild', 1, `Change ${i}`);
+        factionManager.modifyReputation(playerReputation, 'raijin-corp', 1, `Change ${i}`);
       }
 
       const history = factionManager.getReputationHistory(10);
