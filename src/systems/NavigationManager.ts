@@ -220,12 +220,24 @@ export class NavigationManager {
    */
   private getCurrentLocationAsTarget(location: ShipLocation): NavigationTarget | null {
     // This would typically require access to WorldManager to get station/system data
-    // For now, return a basic target based on available info
+    // If at a station
     if (location.stationId && location.coordinates) {
       return {
         type: 'station',
         id: location.stationId,
         name: location.stationId, // Would get actual name from WorldManager
+        position: location.coordinates,
+        distance: 0,
+        estimatedTravelTime: 0
+      };
+    }
+    
+    // If in space but with coordinates
+    if (location.coordinates) {
+      return {
+        type: 'station', // Default type for current position
+        id: `current-position`,
+        name: 'Current Position',
         position: location.coordinates,
         distance: 0,
         estimatedTravelTime: 0

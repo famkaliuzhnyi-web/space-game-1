@@ -525,30 +525,51 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const handleNavigate = (targetId: string) => {
     if (engineRef.current) {
+      const playerManager = engineRef.current.getPlayerManager();
       const worldManager = engineRef.current.getWorldManager();
       const progressionSystem = engineRef.current.getCharacterProgressionSystem();
+      
+      // Get the target from available targets
+      const targets = worldManager.getAvailableTargets();
+      const target = targets.find(t => t.id === targetId);
+      
+      if (!target) {
+        console.error('Navigation target not found:', targetId);
+        return;
+      }
+
+      // Check if ship is already in transit
+      if (playerManager.isInTransit()) {
+        console.warn('Ship is already in transit. Cancel current travel first.');
+        return;
+      }
       
       // Track previous location for first-visit detection
       const previousLocation = worldManager.getCurrentSystem();
       
-      // Navigate to target
-      worldManager.navigateToTarget(targetId);
+      // Start travel using the NavigationManager through PlayerManager
+      const travelResult = playerManager.startTravel(target);
       
-      // Award exploration experience for visiting new systems
-      const currentLocation = worldManager.getCurrentSystem();
-      if (currentLocation && currentLocation.id !== previousLocation?.id) {
-        // Award system visit experience
-        progressionSystem.awardExplorationExperience('system_visit', {
-          riskLevel: currentLocation.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1 // Lower security = higher risk = more XP
-        });
+      if (travelResult.success) {
+        console.log(`Started travel to ${target.name}. Estimated arrival: ${travelResult.travelPlan?.estimatedArrivalTime}`);
         
-        // If this is a station, award additional discovery experience
-        const currentStation = worldManager.getCurrentStation();
-        if (currentStation) {
-          progressionSystem.awardExplorationExperience('station_discovery', {
-            riskLevel: currentLocation.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1
+        // Award exploration experience for initiating travel to new systems
+        const currentLocation = worldManager.getCurrentSystem();
+        if (currentLocation && target.type === 'system' && target.id !== previousLocation?.id) {
+          // Award system visit experience
+          progressionSystem.awardExplorationExperience('system_visit', {
+            riskLevel: currentLocation.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1 // Lower security = higher risk = more XP
           });
         }
+        
+        // Award station discovery experience for new stations
+        if (target.type === 'station') {
+          progressionSystem.awardExplorationExperience('station_discovery', {
+            riskLevel: currentLocation?.securityLevel ? (10 - currentLocation.securityLevel) / 2 : 1
+          });
+        }
+      } else {
+        console.error('Failed to start travel:', travelResult.error);
       }
     }
   };
@@ -571,7 +592,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const getNavigationTargets = () => {
     if (engineRef.current) {
-      return engineRef.current.getWorldManager().getAvailableTargets();
+      const worldManager = engineRef.current.getWorldManager();
+      const playerManager = engineRef.current.getPlayerManager();
+      const targets = worldManager.getAvailableTargets();
+      
+      // Update targets with more accurate travel time estimates using NavigationManager
+      return targets.map(target => {
+        const estimatedTime = playerManager.estimateTravelTime(target);
+        return {
+          ...target,
+          estimatedTravelTime: estimatedTime / (60 * 60 * 1000) // Convert from milliseconds to hours for display
+        };
+      });
     }
     return [];
   };
