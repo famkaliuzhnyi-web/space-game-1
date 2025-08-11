@@ -127,9 +127,9 @@ Use actual Z coordinates for proper layering:
 ```typescript
 // ThreeRenderer - uses actual Z from coordinate
 // Note: Y coordinate is inverted for 3D space (-obj.position.y)
-// and rotation is also inverted to maintain correct orientation
+// Rotation is NOT inverted - maintains consistent coordinate system
 mesh.position.set(obj.position.x, -obj.position.y, obj.position.z);
-mesh.rotation.z = -rotation; // Inverted to match Y coordinate flip
+mesh.rotation.z = rotation; // Consistent with 2D coordinate system
 
 // 2D Renderer - can ignore Z or use for sorting
 const sortedObjects = objects.sort((a, b) => b.position.z - a.position.z);
@@ -355,3 +355,47 @@ const cameraPosition = {
 ```
 
 This unified system provides consistent, predictable coordinate handling while maintaining the visual layering required for proper game rendering.
+
+## Recent Fixes (Issue #129)
+
+The following issues were identified and fixed in the unified coordinate system implementation:
+
+### 1. Planet Layer Assignment Bug
+**Issue**: Planets were incorrectly assigned to the station layer (Z=30) instead of the planet layer (Z=0).
+**Root Cause**: `convertLegacyCoords` calls used `"station"` instead of `"planet"` for planet objects.
+**Fix**: Updated all planet definitions in `WorldManager.ts` to use the correct object type:
+```typescript
+// Before (incorrect)
+position: convertLegacyCoords({ x: position.x, y: position.y - 300 }, "station")
+
+// After (correct)  
+position: convertLegacyCoords({ x: position.x, y: position.y - 300 }, "planet")
+```
+
+### 2. Ship Rotation Inversion Bug  
+**Issue**: Ships were rotating incorrectly in 3D space due to unnecessary rotation inversion.
+**Root Cause**: ThreeRenderer was inverting ship rotation (`mesh.rotation.z = -rotation`) under the assumption that Y coordinate inversion required rotation inversion.
+**Fix**: Removed rotation inversion to maintain consistent coordinate system:
+```typescript
+// Before (incorrect)
+mesh.rotation.z = -rotation; // Inverted rotation
+
+// After (correct)
+mesh.rotation.z = rotation;  // Consistent with 2D coordinate system
+```
+
+### 3. Coordinate System Consistency
+**Verified**: All object types now use appropriate layers:
+- Ships: Z=50 ✅
+- Stations: Z=30 ✅  
+- Planets: Z=0 ✅
+- Stars: Z=0 ✅
+
+### Testing
+Added comprehensive integration tests (`UnifiedCoordinateSystem.test.ts`) to verify:
+- Correct layer assignment for all object types
+- Proper coordinate consistency across layers
+- World generation uses correct coordinate system
+- Layer constants match expectations
+
+These fixes ensure that ships and stations are properly separated into different layers as intended by the unified coordinate system design.

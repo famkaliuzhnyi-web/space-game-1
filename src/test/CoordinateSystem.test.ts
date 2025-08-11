@@ -12,6 +12,12 @@ import {
   isValidCoordinate,
   calculateBoundingBox2D,
   convertLegacyCoords,
+  convertPlanetCoords,
+  convertStationCoords,
+  convertShipCoords,
+  convertStarCoords,
+  createSystemCoords,
+  createShipCoords,
   lerp2D,
   smoothStep2D,
   moveTowards2D,
@@ -57,6 +63,70 @@ describe('Unified Coordinate System', () => {
       
       expect(shipCoords).toEqual({ x: 100, y: 200, z: 50 });
       expect(stationCoords).toEqual({ x: 100, y: 200, z: 30 });
+    });
+  });
+
+  describe('Type-Specific Coordinate Functions', () => {
+    test('should convert planet coordinates to correct layer', () => {
+      const coords = { x: 100, y: 200 };
+      const result = convertPlanetCoords(coords);
+      
+      expect(result).toEqual({ x: 100, y: 200, z: COORDINATE_LAYERS.PLANETS });
+      expect(result.z).toBe(0);
+    });
+
+    test('should convert station coordinates to correct layer', () => {
+      const coords = { x: 150, y: 250 };
+      const result = convertStationCoords(coords);
+      
+      expect(result).toEqual({ x: 150, y: 250, z: COORDINATE_LAYERS.STATIONS });
+      expect(result.z).toBe(30);
+    });
+
+    test('should convert ship coordinates to correct layer', () => {
+      const coords = { x: 75, y: 125 };
+      const result = convertShipCoords(coords);
+      
+      expect(result).toEqual({ x: 75, y: 125, z: COORDINATE_LAYERS.SHIPS });
+      expect(result.z).toBe(50);
+    });
+
+    test('should convert star coordinates to correct layer', () => {
+      const coords = { x: 300, y: 400 };
+      const result = convertStarCoords(coords);
+      
+      expect(result).toEqual({ x: 300, y: 400, z: COORDINATE_LAYERS.STARS });
+      expect(result.z).toBe(0);
+    });
+
+    test('should create system coordinates with correct layer', () => {
+      const result = createSystemCoords(500, 600);
+      
+      expect(result).toEqual({ x: 500, y: 600, z: COORDINATE_LAYERS.STARS });
+      expect(result.z).toBe(0);
+    });
+
+    test('should create ship coordinates with correct layer', () => {
+      const result = createShipCoords(25, 50);
+      
+      expect(result).toEqual({ x: 25, y: 50, z: COORDINATE_LAYERS.SHIPS });
+      expect(result.z).toBe(50);
+    });
+
+    test('should maintain layer consistency between type-specific functions', () => {
+      const coords = { x: 100, y: 200 };
+      
+      const legacyPlanet = convertLegacyCoords(coords, 'planet');
+      const typedPlanet = convertPlanetCoords(coords);
+      expect(legacyPlanet.z).toBe(typedPlanet.z);
+
+      const legacyStation = convertLegacyCoords(coords, 'station');
+      const typedStation = convertStationCoords(coords);
+      expect(legacyStation.z).toBe(typedStation.z);
+
+      const legacyShip = convertLegacyCoords(coords, 'ship');
+      const typedShip = convertShipCoords(coords);
+      expect(legacyShip.z).toBe(typedShip.z);
     });
   });
 
