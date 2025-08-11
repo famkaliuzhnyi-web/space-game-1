@@ -198,6 +198,12 @@ export class Renderer {
             this.renderShip(position.x, position.y, obj.object as Ship);
           }
           break;
+        case 'gate':
+          console.log('Rendering gate:', obj.object, 'at position', position);
+          if ('id' in obj.object) {
+            this.renderGate(position.x, position.y, obj.object as any);
+          }
+          break;
       }
     });
     
@@ -500,6 +506,45 @@ export class Renderer {
     this.context.font = '10px monospace';
     this.context.textAlign = 'center';
     this.context.fillText(ship.name, x, y + 20);
+    
+    this.context.restore();
+  }
+
+  /**
+   * Render a gate with distinctive visual effects
+   */
+  private renderGate(x: number, y: number, gate: any): void {
+    this.context.save();
+    
+    // Outer ring - pulsing energy effect
+    const time = Date.now() / 1000;
+    const pulse = Math.sin(time * 2) * 0.3 + 0.7;
+    this.context.strokeStyle = gate.isActive ? `rgba(64, 224, 255, ${pulse})` : '#666666';
+    this.context.lineWidth = 3;
+    this.context.beginPath();
+    this.context.arc(x, y, 25, 0, Math.PI * 2);
+    this.context.stroke();
+    
+    // Inner swirling energy (only for active gates)
+    if (gate.isActive) {
+      this.context.strokeStyle = `rgba(255, 255, 255, ${pulse * 0.5})`;
+      this.context.lineWidth = 2;
+      this.context.beginPath();
+      this.context.arc(x, y, 18, time, time + Math.PI * 1.5);
+      this.context.stroke();
+    }
+    
+    // Center symbol (gate icon)
+    this.context.fillStyle = gate.isActive ? '#40e0ff' : '#888888';
+    this.context.font = '20px monospace';
+    this.context.textAlign = 'center';
+    this.context.fillText('🌀', x, y + 6);
+    
+    // Gate name label
+    this.context.fillStyle = '#ffffff';
+    this.context.font = '10px monospace';
+    this.context.textAlign = 'center';
+    this.context.fillText(gate.name, x, y + 40);
     
     this.context.restore();
   }
