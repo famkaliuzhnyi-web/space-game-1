@@ -158,6 +158,10 @@ export interface TradeRoute {
   risk: number; // 0-1, based on security levels along route
   volume: number; // How much can be traded
   lastCalculated: number; // Timestamp
+  // Gate information for cross-sector routes
+  gateCost?: number; // Energy cost to use gate
+  gateId?: string; // Gate ID required for this route
+  requiresGate?: boolean; // Whether this route requires gate travel
 }
 
 export interface RouteAnalysis {

@@ -261,6 +261,7 @@ export interface TradeDecision {
   quantity?: number;
   targetPrice?: number;
   targetStationId?: string;
+  requiresGate?: string; // Gate ID needed for cross-sector travel
   confidence: number; // 0-100, how confident the AI is in this decision
   reasoning: string; // Human-readable explanation
 }

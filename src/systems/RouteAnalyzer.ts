@@ -1,13 +1,21 @@
 import { TradeRoute, RouteAnalysis, Market } from '../types/economy';
-import { Station } from '../types/world';
+import { Station, Sector, StarSystem } from '../types/world';
 import { getCommodity } from '../data/commodities';
 
 export class RouteAnalyzer {
   private analysisCache: Map<string, RouteAnalysis> = new Map();
   private cacheExpiry: number = 1800000; // 30 minutes cache
+  private worldManager: any = null; // Will be injected to access galaxy data
 
   constructor() {
     // Cache initialization only
+  }
+
+  /**
+   * Set the world manager for access to galaxy data and gates
+   */
+  setWorldManager(worldManager: any): void {
+    this.worldManager = worldManager;
   }
 
   /**
@@ -99,6 +107,18 @@ export class RouteAnalyzer {
     const travelTime = this.calculateTravelTime(distance);
     const risk = this.calculateRouteRisk(originStation, destinationStation);
 
+    // Check if this is a cross-sector route and get gate information
+    let gateCost = 0;
+    let gateId: string | null = null;
+    
+    if (!this.areInSameSector(originStation, destinationStation)) {
+      const gateRoute = this.findGateRoute(originStation, destinationStation);
+      if (gateRoute) {
+        gateCost = gateRoute.gateCost;
+        gateId = gateRoute.gateId;
+      }
+    }
+
     // Check each commodity that's available at origin and in demand at destination
     for (const [commodityId, originCommodity] of originMarket.commodities) {
       const destinationCommodity = destinationMarket.commodities.get(commodityId);
@@ -114,12 +134,15 @@ export class RouteAnalyzer {
       const sellPrice = destinationCommodity.currentPrice;
       const profitPerUnit = sellPrice - buyPrice;
       
-      // Only profitable routes
-      if (profitPerUnit <= 0) continue;
+      // Subtract gate costs from profit for cross-sector routes
+      const adjustedProfitPerUnit = profitPerUnit - (gateCost / Math.max(1, originCommodity.available));
+      
+      // Only profitable routes (accounting for gate costs)
+      if (adjustedProfitPerUnit <= 0) continue;
 
-      const profitMargin = (profitPerUnit / buyPrice) * 100;
+      const profitMargin = (adjustedProfitPerUnit / buyPrice) * 100;
       const volume = Math.min(originCommodity.available, destinationCommodity.demand || 100);
-      const totalProfit = profitPerUnit * volume;
+      const totalProfit = adjustedProfitPerUnit * volume;
       const profitPerHour = totalProfit / Math.max(1, travelTime);
 
       // Create route entry
@@ -128,14 +151,20 @@ export class RouteAnalyzer {
         origin: originMarket.stationId,
         destination: destinationMarket.stationId,
         commodity: commodityId,
-        profitPerUnit,
+        profitPerUnit: adjustedProfitPerUnit,
         profitMargin,
         distance,
         travelTime,
         profitPerHour,
         risk,
         volume,
-        lastCalculated: Date.now()
+        lastCalculated: Date.now(),
+        // Add gate information for cross-sector routes
+        ...(gateId && { 
+          gateCost, 
+          gateId,
+          requiresGate: true 
+        })
       };
 
       routes.push(route);
@@ -145,11 +174,25 @@ export class RouteAnalyzer {
   }
 
   /**
-   * Calculate distance between two stations (simplified)
+   * Calculate distance between two stations, considering gates for cross-sector routes
    */
   private calculateDistance(station1: Station, station2: Station): number {
-    // For now, use a simple distance calculation
-    // In a real implementation, this would use actual coordinates
+    // If stations are in the same sector, use direct distance
+    if (this.areInSameSector(station1, station2)) {
+      const dx = (station1.position?.x || 0) - (station2.position?.x || 0);
+      const dy = (station1.position?.y || 0) - (station2.position?.y || 0);
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // For cross-sector routes, find gate-based distance
+    if (this.worldManager) {
+      const gateRoute = this.findGateRoute(station1, station2);
+      if (gateRoute) {
+        return gateRoute.totalDistance;
+      }
+    }
+
+    // Fallback to direct distance if no gates found
     const dx = (station1.position?.x || 0) - (station2.position?.x || 0);
     const dy = (station1.position?.y || 0) - (station2.position?.y || 0);
     return Math.sqrt(dx * dx + dy * dy);
@@ -159,9 +202,12 @@ export class RouteAnalyzer {
    * Calculate travel time based on distance (in hours)
    */
   private calculateTravelTime(distance: number): number {
-    // Assume average speed of 100 units per hour
-    const speed = 100;
+    // Base travel time calculation
+    const speed = 100; // Average speed of 100 units per hour
     const baseTime = distance / speed;
+    
+    // Gate travel is instantaneous (no additional time cost)
+    // The time cost is just getting to/from the gate
     
     // Add some random variation (±20%)
     const variation = 0.8 + Math.random() * 0.4;
@@ -253,5 +299,118 @@ export class RouteAnalyzer {
       return cached;
     }
     return null;
+  }
+
+  /**
+   * Check if two stations are in the same sector
+   */
+  private areInSameSector(station1: Station, station2: Station): boolean {
+    if (!this.worldManager) return true; // Assume same sector if no world manager
+
+    const galaxy = this.worldManager.getGalaxy();
+    let sector1: Sector | undefined;
+    let sector2: Sector | undefined;
+
+    // Find sectors containing these stations
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        if (system.stations.some((s: Station) => s.id === station1.id)) {
+          sector1 = sector;
+        }
+        if (system.stations.some((s: Station) => s.id === station2.id)) {
+          sector2 = sector;
+        }
+      }
+    }
+
+    return sector1?.id === sector2?.id;
+  }
+
+  /**
+   * Find the best gate route between two stations in different sectors
+   */
+  private findGateRoute(station1: Station, station2: Station): { 
+    totalDistance: number; 
+    gateCost: number; 
+    gateId: string | null;
+  } | null {
+    if (!this.worldManager) return null;
+
+    const galaxy = this.worldManager.getGalaxy();
+    
+    // Find systems containing these stations
+    let system1: StarSystem | undefined;
+    let system2: StarSystem | undefined;
+    let sector1: Sector | undefined;
+    let sector2: Sector | undefined;
+
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        if (system.stations.some((s: Station) => s.id === station1.id)) {
+          system1 = system;
+          sector1 = sector;
+        }
+        if (system.stations.some((s: Station) => s.id === station2.id)) {
+          system2 = system;
+          sector2 = sector;
+        }
+      }
+    }
+
+    if (!system1 || !system2 || !sector1 || !sector2) return null;
+    if (sector1.id === sector2.id) return null; // Same sector, shouldn't use gates
+
+    // Find a gate that can take us to the destination sector
+    let bestRoute: { totalDistance: number; gateCost: number; gateId: string } | null = null;
+
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        for (const gate of system.gates) {
+          if (gate.destinationSectorId === sector2.id && gate.isActive) {
+            // Calculate total distance: station1 → gate → destination system → station2
+            const distanceToGate = this.calculateDirectDistance(station1.position, gate.position);
+            const distanceFromGate = this.calculateDirectDistance(
+              this.findSystemById(gate.destinationSystemId || sector2.systems[0]?.id)?.position || { x: 0, y: 0, z: 0 },
+              station2.position
+            );
+            
+            const totalDistance = distanceToGate + distanceFromGate;
+            
+            if (!bestRoute || totalDistance < bestRoute.totalDistance) {
+              bestRoute = {
+                totalDistance,
+                gateCost: gate.energyCost,
+                gateId: gate.id
+              };
+            }
+          }
+        }
+      }
+    }
+
+    return bestRoute;
+  }
+
+  /**
+   * Calculate direct distance between two coordinate points
+   */
+  private calculateDirectDistance(pos1: { x: number; y: number; z?: number }, pos2: { x: number; y: number; z?: number }): number {
+    const dx = pos2.x - pos1.x;
+    const dy = pos2.y - pos1.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  /**
+   * Find system by ID across all sectors
+   */
+  private findSystemById(systemId?: string): StarSystem | undefined {
+    if (!this.worldManager || !systemId) return undefined;
+
+    const galaxy = this.worldManager.getGalaxy();
+    for (const sector of galaxy.sectors) {
+      const system = sector.systems.find((s: StarSystem) => s.id === systemId);
+      if (system) return system;
+    }
+    return undefined;
   }
 }

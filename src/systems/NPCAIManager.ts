@@ -15,6 +15,7 @@ import { TimeManager } from './TimeManager';
 import { WorldManager } from './WorldManager';
 import { PlayerManager } from './PlayerManager';
 import { NavigationManager } from './NavigationManager';
+import { RouteAnalyzer } from './RouteAnalyzer';
 import { Station, StarSystem } from '../types/world';
 import { SceneManager } from '../engine/SceneManager';
 import { NPCActor } from '../engine/NPCActor';
@@ -47,6 +48,7 @@ export class NPCAIManager {
   private navigationManager: NavigationManager | null = null;
   private sceneManager: SceneManager | null = null;
   private scheduleManager: NPCScheduleManager;
+  private routeAnalyzer: RouteAnalyzer;
   // These will be used in future updates
   // private factionManager: FactionManager;
   // private economicSystem: EconomicSystem;
@@ -81,6 +83,10 @@ export class NPCAIManager {
     
     // Initialize the schedule manager
     this.scheduleManager = new NPCScheduleManager(timeManager, worldManager);
+    
+    // Initialize route analyzer with world manager access
+    this.routeAnalyzer = new RouteAnalyzer();
+    this.routeAnalyzer.setWorldManager(worldManager);
     
     this.initializePersonalityTemplates();
     this.initializeStartingNPCs();
@@ -648,7 +654,11 @@ export class NPCAIManager {
     
     switch (tradeDecision.action) {
       case 'travel':
-        if (tradeDecision.targetStationId) {
+        if (tradeDecision.requiresGate) {
+          // Handle cross-sector travel via gate
+          this.executeGateTravel(npc, tradeDecision.requiresGate, tradeDecision.targetStationId!);
+        } else if (tradeDecision.targetStationId) {
+          // Normal intra-system travel
           this.setNPCDestination(npc, tradeDecision.targetStationId);
         }
         break;
@@ -741,8 +751,11 @@ export class NPCAIManager {
         return {
           action: 'travel',
           targetStationId: profitableRoute.targetStation,
+          requiresGate: profitableRoute.requiresGate,
           confidence: profitableRoute.confidence,
-          reasoning: `Traveling to ${profitableRoute.targetStation} for better prices`
+          reasoning: profitableRoute.requiresGate 
+            ? `Traveling through gate to ${profitableRoute.targetStation} for cross-sector trade`
+            : `Traveling to ${profitableRoute.targetStation} for better prices`
         };
       }
     }
@@ -1835,9 +1848,9 @@ export class NPCAIManager {
   }
 
   /**
-   * Find a profitable trade route with supply chain awareness
+   * Find a profitable trade route with supply chain awareness and cross-sector capabilities
    */
-  private findProfitableRoute(npc: NPCShip, currentSystem: any): { targetStation: string; confidence: number } | null {
+  private findProfitableRoute(npc: NPCShip, currentSystem: any): { targetStation: string; confidence: number; requiresGate?: string } | null {
     const knownRoutes = npc.ai.routeOptimization.knownProfitableRoutes;
     
     if (knownRoutes.length > 0) {
@@ -1854,6 +1867,35 @@ export class NPCAIManager {
       }
     }
     
+    // First try to find routes within current system
+    const localRoute = this.findLocalRoute(npc, currentSystem);
+    if (localRoute) {
+      return localRoute;
+    }
+    
+    // If no good local routes, consider cross-sector routes via gates
+    const crossSectorRoute = this.findCrossSectorRoute(npc, currentSystem);
+    if (crossSectorRoute) {
+      return crossSectorRoute;
+    }
+    
+    // Fallback to random station in current system
+    const availableStations = currentSystem.stations.filter((s: any) => s.id !== npc.position.stationId);
+    if (availableStations.length > 0) {
+      const randomStation = availableStations[Math.floor(Math.random() * availableStations.length)];
+      return {
+        targetStation: randomStation.id,
+        confidence: 30
+      };
+    }
+    
+    return null;
+  }
+
+  /**
+   * Find profitable routes within the current system
+   */
+  private findLocalRoute(npc: NPCShip, currentSystem: any): { targetStation: string; confidence: number } | null {
     // Use supply chain logic to find profitable routes
     const currentStationType = this.getCurrentStationType(npc, currentSystem);
     const currentSupplyChain = this.getSupplyChainCommodities(currentStationType);
@@ -1881,16 +1923,256 @@ export class NPCAIManager {
       }
     }
     
-    // Fallback to random station
-    if (availableStations.length > 0) {
-      const randomStation = availableStations[Math.floor(Math.random() * availableStations.length)];
-      return {
-        targetStation: randomStation.id,
-        confidence: 30
-      };
+    return null;
+  }
+
+  /**
+   * Find profitable cross-sector routes via gates (enhanced with RouteAnalyzer)
+   */
+  private findCrossSectorRoute(npc: NPCShip, currentSystem: any): { targetStation: string; confidence: number; requiresGate?: string } | null {
+    // Only consider cross-sector routes if NPC has sufficient fuel and is a trader
+    if (npc.type !== 'trader' || npc.ship.fuel < 50) {
+      return null;
+    }
+    
+    // Check if current system has active gates
+    const availableGates = currentSystem.gates?.filter((gate: any) => gate.isActive) || [];
+    if (availableGates.length === 0) {
+      return null;
+    }
+
+    // Try to use RouteAnalyzer for comprehensive cross-sector route analysis
+    const routeAnalysis = this.findCrossSectorRoutesUsingAnalyzer(npc);
+    if (routeAnalysis) {
+      return routeAnalysis;
+    }
+
+    // Fallback to original logic if RouteAnalyzer doesn't find routes
+    return this.findCrossSectorRouteFallback(npc, currentSystem, availableGates);
+  }
+
+  /**
+   * Use RouteAnalyzer to find cross-sector routes
+   */
+  private findCrossSectorRoutesUsingAnalyzer(npc: NPCShip): { targetStation: string; confidence: number; requiresGate?: string } | null {
+    // Create mock markets for current analysis
+    // In a real implementation, this would come from an economic system
+    const mockMarkets = this.createMockMarketsForAnalysis();
+    const mockStations = this.createMockStationsMapForAnalysis();
+    
+    if (mockMarkets.size === 0 || mockStations.size === 0) {
+      return null; // No market data available
+    }
+
+    try {
+      const analysis = this.routeAnalyzer.analyzeRoutes(mockMarkets, mockStations);
+      
+      // Filter routes that start from NPC's current station and require gates
+      const crossSectorRoutes = analysis.topRoutes.filter(route => 
+        route.origin === npc.position.stationId && 
+        route.requiresGate &&
+        route.gateCost! <= npc.ship.fuel
+      );
+
+      if (crossSectorRoutes.length > 0) {
+        const bestRoute = crossSectorRoutes[0]; // Top route by profitability
+        
+        return {
+          targetStation: bestRoute.destination,
+          confidence: Math.min(90, Math.max(40, bestRoute.profitMargin * 2)),
+          requiresGate: bestRoute.gateId
+        };
+      }
+    } catch (error) {
+      console.log('RouteAnalyzer error in NPC cross-sector routing:', error);
+    }
+
+    return null;
+  }
+
+  /**
+   * Fallback cross-sector route finding using original logic
+   */
+  private findCrossSectorRouteFallback(npc: NPCShip, currentSystem: any, availableGates: any[]): { targetStation: string; confidence: number; requiresGate?: string } | null {
+    const galaxy = this.worldManager.getGalaxy();
+    const currentStationType = this.getCurrentStationType(npc, currentSystem);
+    if (!currentStationType) {
+      return null; // Can't determine station type
+    }
+    const currentSupplyChain = this.getSupplyChainCommodities(currentStationType);
+    
+    // Evaluate each gate destination
+    for (const gate of availableGates) {
+      // Check if NPC can afford gate travel
+      if (npc.ship.fuel < gate.energyCost) {
+        continue;
+      }
+      
+      // Find destination sector
+      const destinationSector = galaxy.sectors.find((s: any) => s.id === gate.destinationSectorId);
+      if (!destinationSector) {
+        continue;
+      }
+      
+      // Find destination system
+      let destinationSystemId = gate.destinationSystemId;
+      if (!destinationSystemId) {
+        destinationSystemId = destinationSector.systems[0]?.id;
+      }
+      
+      const destinationSystem = destinationSector.systems.find((s: any) => s.id === destinationSystemId);
+      if (!destinationSystem) {
+        continue;
+      }
+      
+      // Analyze stations in destination system for profitable trades
+      for (const station of destinationSystem.stations) {
+        const targetSupplyChain = this.getSupplyChainCommodities(station.type);
+        
+        // Check supply chain compatibility with higher confidence for cross-sector trades
+        const hasUsefulCargo = Array.from(npc.ship.currentCargo.keys()).some(commodity =>
+          targetSupplyChain.consumes.includes(commodity)
+        );
+        
+        const theyProduceWhatWeNeed = targetSupplyChain.produces.some(commodity =>
+          currentSupplyChain.consumes.includes(commodity)
+        );
+        
+        // Special logic for cross-sector supply chains
+        const isCrossSectorSupplyChain = this.isCrossSectorSupplyChain(
+          currentStationType, 
+          station.type,
+          gate.destinationSectorId
+        );
+        
+        if (hasUsefulCargo || theyProduceWhatWeNeed || isCrossSectorSupplyChain) {
+          // Higher confidence for cross-sector routes that complete supply chains
+          const baseConfidence = isCrossSectorSupplyChain ? 80 : 55;
+          const fuelPenalty = (gate.energyCost / npc.ship.fuel) * 10; // Penalty for fuel cost
+          
+          return {
+            targetStation: station.id,
+            confidence: Math.max(40, baseConfidence - fuelPenalty),
+            requiresGate: gate.id
+          };
+        }
+      }
     }
     
     return null;
+  }
+
+  /**
+   * Create mock markets for route analysis (simplified version)
+   * In a full implementation, this would integrate with the economic system
+   */
+  private createMockMarketsForAnalysis(): Map<string, any> {
+    const markets = new Map();
+    const galaxy = this.worldManager.getGalaxy();
+    
+    // Create basic market data for each station
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        for (const station of system.stations) {
+          const market = {
+            stationId: station.id,
+            commodities: this.generateMockCommoditiesForStation(station),
+            lastUpdate: Date.now(),
+            demandFactors: {
+              stationType: 1.0,
+              population: 1.0,
+              securityLevel: 1.0,
+              factionControl: 1.0
+            }
+          };
+          markets.set(station.id, market);
+        }
+      }
+    }
+    
+    return markets;
+  }
+
+  /**
+   * Generate mock commodity data based on station type
+   */
+  private generateMockCommoditiesForStation(station: Station): Map<string, any> {
+    const commodities = new Map();
+    const supplyChain = this.getSupplyChainCommodities(station.type);
+    
+    // Add commodities that this station produces (sells)
+    for (const producedCommodity of supplyChain.produces) {
+      commodities.set(producedCommodity, {
+        commodityId: producedCommodity,
+        available: Math.floor(Math.random() * 50) + 10, // 10-60 units available
+        demand: Math.floor(Math.random() * 20) + 5,
+        currentPrice: this.estimateCommodityValue(producedCommodity) * (0.8 + Math.random() * 0.4), // ±20% price variation
+        priceHistory: [],
+        supplyLevel: 'normal',
+        demandLevel: 'low',
+        productionRate: 10,
+        restockTime: 24
+      });
+    }
+    
+    // Add commodities that this station consumes (buys)
+    for (const consumedCommodity of supplyChain.consumes) {
+      commodities.set(consumedCommodity, {
+        commodityId: consumedCommodity,
+        available: Math.floor(Math.random() * 10) + 1, // 1-11 units available (buying station has less)
+        demand: Math.floor(Math.random() * 40) + 20, // 20-60 units in demand
+        currentPrice: this.estimateCommodityValue(consumedCommodity) * (1.1 + Math.random() * 0.3), // +10-40% price markup for buying
+        priceHistory: [],
+        supplyLevel: 'shortage',
+        demandLevel: 'high',
+        productionRate: -5, // Consuming
+        restockTime: 12
+      });
+    }
+    
+    return commodities;
+  }
+
+  /**
+   * Create mock stations map for route analysis
+   */
+  private createMockStationsMapForAnalysis(): Map<string, Station> {
+    const stations = new Map();
+    const galaxy = this.worldManager.getGalaxy();
+    
+    for (const sector of galaxy.sectors) {
+      for (const system of sector.systems) {
+        for (const station of system.stations) {
+          stations.set(station.id, station);
+        }
+      }
+    }
+    
+    return stations;
+  }
+
+  /**
+   * Check if the route represents a valuable cross-sector supply chain
+   */
+  private isCrossSectorSupplyChain(originStationType: string, destinationStationType: string, destinationSectorId: string): boolean {
+    // Define valuable cross-sector supply chain patterns
+    const crossSectorChains = [
+      // Mining -> Manufacturing pipeline
+      { from: 'mining', to: 'industrial', sector: 'manufacturing-sector' },
+      { from: 'mining', to: 'foundry', sector: 'manufacturing-sector' },
+      // Manufacturing -> Expansion pipeline
+      { from: 'shipyard', to: 'colonial', sector: 'expansion-sector' },
+      { from: 'industrial', to: 'military', sector: 'expansion-sector' },
+      // Core -> Frontier trade
+      { from: 'luxury', to: 'colonial', sector: 'frontier-sector' },
+      { from: 'medical', to: 'exploration', sector: 'frontier-sector' }
+    ];
+    
+    return crossSectorChains.some(chain => 
+      (originStationType === chain.from || originStationType.includes(chain.from)) &&
+      (destinationStationType === chain.to || destinationStationType.includes(chain.to)) &&
+      destinationSectorId === chain.sector
+    );
   }
 
   /**
@@ -2330,5 +2612,86 @@ export class NPCAIManager {
     if (state.lastMarketUpdateTime !== undefined) {
       this.lastMarketUpdateTime = state.lastMarketUpdateTime;
     }
+  }
+
+  /**
+   * Execute gate travel for NPCs to cross sectors
+   */
+  private executeGateTravel(npc: NPCShip, gateId: string, finalTargetStationId: string): void {
+    const galaxy = this.worldManager.getGalaxy();
+    const currentSystem = this.findSystemById(galaxy, npc.position.systemId);
+    
+    if (!currentSystem) {
+      console.log(`NPC ${npc.id}: Cannot find current system for gate travel`);
+      return;
+    }
+
+    const gate = currentSystem.gates.find(g => g.id === gateId);
+    if (!gate || !gate.isActive) {
+      console.log(`NPC ${npc.id}: Gate ${gateId} not found or inactive`);
+      return;
+    }
+
+    // Check if NPC has enough fuel
+    if (npc.ship.fuel < gate.energyCost) {
+      console.log(`NPC ${npc.id}: Insufficient fuel for gate travel. Required: ${gate.energyCost}, Available: ${npc.ship.fuel}`);
+      return;
+    }
+
+    // Deduct fuel cost
+    npc.ship.fuel -= gate.energyCost;
+
+    // Find destination sector
+    const destinationSector = galaxy.sectors.find(s => s.id === gate.destinationSectorId);
+    if (!destinationSector) {
+      console.log(`NPC ${npc.id}: Destination sector not found: ${gate.destinationSectorId}`);
+      return;
+    }
+
+    // Determine destination system
+    let destinationSystemId = gate.destinationSystemId;
+    if (!destinationSystemId) {
+      destinationSystemId = destinationSector.systems[0]?.id;
+    }
+
+    if (!destinationSystemId) {
+      console.log(`NPC ${npc.id}: No destination system available in sector: ${gate.destinationSectorId}`);
+      return;
+    }
+
+    // Update NPC position to destination system
+    npc.position.systemId = destinationSystemId;
+    npc.position.stationId = undefined; // Arrive in space
+    
+    // Set coordinates to destination system center
+    const destinationSystem = destinationSector.systems.find(s => s.id === destinationSystemId);
+    if (destinationSystem) {
+      npc.position.coordinates = {
+        x: destinationSystem.position.x,
+        y: destinationSystem.position.y,
+        z: 50 // Ship layer
+      };
+    }
+
+    // Clear movement state
+    npc.movement.targetStationId = undefined;
+    npc.movement.targetCoordinates = undefined;
+    npc.movement.pathfindingWaypoints = [];
+    npc.movement.currentWaypoint = 0;
+
+    // Update actor if available
+    const npcActor = this.npcActors.get(npc.id);
+    if (npcActor) {
+      npcActor.setPosition(npc.position.coordinates);
+      // Clear target by setting to current position (no clearTarget method available)
+      npcActor.setPosition(npc.position.coordinates);
+    }
+
+    console.log(`NPC ${npc.id} successfully used gate ${gate.name} to travel to ${destinationSector.name} - ${destinationSystemId}`);
+
+    // Now set destination to the final target station in the new sector
+    setTimeout(() => {
+      this.setNPCDestination(npc, finalTargetStationId);
+    }, 1000); // Small delay to simulate gate travel time
   }
 }
