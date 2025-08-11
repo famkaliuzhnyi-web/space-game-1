@@ -909,44 +909,197 @@ export class WorldManager {
   private createGatesForSystem(systemId: string, systemPosition: Coordinates): Gate[] {
     const gates: Gate[] = [];
     
-    // Only Sol System (the start system) gets gates to other sectors
-    // This matches the problem statement - "no gate in start sector to other sectors"
-    if (systemId === 'sol-system') {
-      // Gate to Frontier Sector
-      gates.push({
-        id: 'gate-to-frontier',
-        name: 'Frontier Gate',
-        position: convertStationCoords({ x: systemPosition.x + 450, y: systemPosition.y - 200 }),
-        destinationSectorId: 'frontier-sector',
-        destinationSystemId: 'kepler-442', // Default arrival system
-        energyCost: 50,
-        isActive: true,
-        description: 'Ancient alien gateway leading to the Frontier Sector. Ships require 50 fuel units to transit.'
-      });
-      
-      // Gate to Industrial Sector
-      gates.push({
-        id: 'gate-to-industrial',
-        name: 'Industrial Gate',
-        position: convertStationCoords({ x: systemPosition.x - 300, y: systemPosition.y + 400 }),
-        destinationSectorId: 'industrial-sector',
-        destinationSystemId: 'bernard-star',
-        energyCost: 50,
-        isActive: true,
-        description: 'Ancient alien gateway leading to the Industrial Sector. Heavy manufacturing awaits beyond.'
-      });
-      
-      // Gate to Mining Sector  
-      gates.push({
-        id: 'gate-to-mining',
-        name: 'Mining Gate',
-        position: convertStationCoords({ x: systemPosition.x + 500, y: systemPosition.y + 300 }),
-        destinationSectorId: 'mining-sector',
-        destinationSystemId: 'mining-belt-alpha',
-        energyCost: 60,
-        isActive: true,
-        description: 'Ancient alien gateway leading to the Mining Sector. Rich asteroid belts beyond.'
-      });
+    // Create bidirectional gate network for cross-sector navigation
+    switch (systemId) {
+      case 'sol-system':
+        // Gates from Core Sector to other sectors
+        gates.push(
+          {
+            id: 'gate-to-frontier',
+            name: 'Frontier Gate',
+            position: convertStationCoords({ x: systemPosition.x + 450, y: systemPosition.y - 200 }),
+            destinationSectorId: 'frontier-sector',
+            destinationSystemId: 'kepler-442',
+            energyCost: 50,
+            isActive: true,
+            description: 'Ancient alien gateway leading to the Frontier Sector. Ships require 50 fuel units to transit.'
+          },
+          {
+            id: 'gate-to-industrial',
+            name: 'Industrial Gate',
+            position: convertStationCoords({ x: systemPosition.x - 300, y: systemPosition.y + 400 }),
+            destinationSectorId: 'industrial-sector',
+            destinationSystemId: 'bernard-star',
+            energyCost: 50,
+            isActive: true,
+            description: 'Ancient alien gateway leading to the Industrial Sector. Heavy manufacturing awaits beyond.'
+          },
+          {
+            id: 'gate-to-mining',
+            name: 'Mining Gate',
+            position: convertStationCoords({ x: systemPosition.x + 500, y: systemPosition.y + 300 }),
+            destinationSectorId: 'mining-sector',
+            destinationSystemId: 'mining-belt-alpha',
+            energyCost: 60,
+            isActive: true,
+            description: 'Ancient alien gateway leading to the Mining Sector. Rich asteroid belts beyond.'
+          },
+          {
+            id: 'gate-to-manufacturing',
+            name: 'Manufacturing Gate',
+            position: convertStationCoords({ x: systemPosition.x - 400, y: systemPosition.y - 300 }),
+            destinationSectorId: 'manufacturing-sector',
+            destinationSystemId: 'assembly-prime',
+            energyCost: 55,
+            isActive: true,
+            description: 'Ancient alien gateway leading to the Manufacturing Sector. Advanced production facilities beyond.'
+          }
+        );
+        break;
+
+      case 'kepler-442':
+        // Return gate from Frontier to Core + gate to Expansion
+        gates.push(
+          {
+            id: 'gate-to-core',
+            name: 'Core Gate',
+            position: convertStationCoords({ x: systemPosition.x - 400, y: systemPosition.y + 200 }),
+            destinationSectorId: 'core-sector',
+            destinationSystemId: 'sol-system',
+            energyCost: 50,
+            isActive: true,
+            description: 'Gateway back to the Core Worlds. Earth and Sol system await.'
+          },
+          {
+            id: 'gate-to-expansion',
+            name: 'Expansion Gate',
+            position: convertStationCoords({ x: systemPosition.x + 350, y: systemPosition.y - 150 }),
+            destinationSectorId: 'expansion-sector',
+            destinationSystemId: 'new-horizon',
+            energyCost: 40,
+            isActive: true,
+            description: 'Gateway to the Expansion Sector. New colonies need supplies and ships.'
+          }
+        );
+        break;
+
+      case 'bernard-star':
+        // Return gate from Industrial to Core + gate to Manufacturing
+        gates.push(
+          {
+            id: 'gate-to-core',
+            name: 'Core Gate',
+            position: convertStationCoords({ x: systemPosition.x + 300, y: systemPosition.y - 400 }),
+            destinationSectorId: 'core-sector',
+            destinationSystemId: 'sol-system',
+            energyCost: 50,
+            isActive: true,
+            description: 'Gateway back to the Core Worlds.'
+          },
+          {
+            id: 'gate-to-manufacturing',
+            name: 'Manufacturing Gate',
+            position: convertStationCoords({ x: systemPosition.x + 200, y: systemPosition.y + 350 }),
+            destinationSectorId: 'manufacturing-sector',
+            destinationSystemId: 'refinery-central',
+            energyCost: 45,
+            isActive: true,
+            description: 'Gateway to Manufacturing Sector. Raw materials flow to advanced production.'
+          }
+        );
+        break;
+
+      case 'mining-belt-alpha':
+        // Return gate from Mining to Core + gate to Manufacturing
+        gates.push(
+          {
+            id: 'gate-to-core',
+            name: 'Core Gate',
+            position: convertStationCoords({ x: systemPosition.x - 500, y: systemPosition.y - 300 }),
+            destinationSectorId: 'core-sector',
+            destinationSystemId: 'sol-system',
+            energyCost: 60,
+            isActive: true,
+            description: 'Gateway back to the Core Worlds.'
+          },
+          {
+            id: 'gate-to-manufacturing',
+            name: 'Manufacturing Gate',
+            position: convertStationCoords({ x: systemPosition.x - 200, y: systemPosition.y + 250 }),
+            destinationSectorId: 'manufacturing-sector',
+            destinationSystemId: 'refinery-central',
+            energyCost: 40,
+            isActive: true,
+            description: 'Gateway to Manufacturing Sector. Raw ores flow to refineries.'
+          }
+        );
+        break;
+
+      case 'assembly-prime':
+        // Gates from Manufacturing to Core and Expansion
+        gates.push(
+          {
+            id: 'gate-to-core',
+            name: 'Core Gate',
+            position: convertStationCoords({ x: systemPosition.x + 400, y: systemPosition.y + 300 }),
+            destinationSectorId: 'core-sector',
+            destinationSystemId: 'sol-system',
+            energyCost: 55,
+            isActive: true,
+            description: 'Gateway back to the Core Worlds.'
+          },
+          {
+            id: 'gate-to-expansion',
+            name: 'Expansion Gate',
+            position: convertStationCoords({ x: systemPosition.x + 250, y: systemPosition.y - 200 }),
+            destinationSectorId: 'expansion-sector',
+            destinationSystemId: 'new-horizon',
+            energyCost: 45,
+            isActive: true,
+            description: 'Gateway to Expansion Sector. Completed ships flow to new colonies.'
+          }
+        );
+        break;
+
+      case 'refinery-central':
+        // Gate from Manufacturing to Mining for raw materials
+        gates.push({
+          id: 'gate-to-mining',
+          name: 'Mining Gate',
+          position: convertStationCoords({ x: systemPosition.x + 200, y: systemPosition.y - 250 }),
+          destinationSectorId: 'mining-sector',
+          destinationSystemId: 'mining-belt-alpha',
+          energyCost: 40,
+          isActive: true,
+          description: 'Gateway to Mining Sector. Source of raw materials for refineries.'
+        });
+        break;
+
+      case 'new-horizon':
+        // Return gates from Expansion to Manufacturing and Frontier
+        gates.push(
+          {
+            id: 'gate-to-manufacturing',
+            name: 'Manufacturing Gate',
+            position: convertStationCoords({ x: systemPosition.x - 250, y: systemPosition.y + 200 }),
+            destinationSectorId: 'manufacturing-sector',
+            destinationSystemId: 'assembly-prime',
+            energyCost: 45,
+            isActive: true,
+            description: 'Gateway to Manufacturing Sector. Source of ships and equipment.'
+          },
+          {
+            id: 'gate-to-frontier',
+            name: 'Frontier Gate',
+            position: convertStationCoords({ x: systemPosition.x - 350, y: systemPosition.y + 150 }),
+            destinationSectorId: 'frontier-sector',
+            destinationSystemId: 'kepler-442',
+            energyCost: 40,
+            isActive: true,
+            description: 'Gateway to Frontier Sector. Connection to established frontier systems.'
+          }
+        );
+        break;
     }
     
     return gates;
