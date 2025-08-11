@@ -484,20 +484,20 @@ export class Renderer {
   private renderShip(x: number, y: number, ship: Ship): void {
     this.context.save();
     
-    // Ship hull (triangle pointing up)
+    // Ship hull (triangle pointing right, consistent with ShipActor rendering)
     this.context.fillStyle = '#4a90e2';
     this.context.beginPath();
-    this.context.moveTo(x, y - 8);       // Top point
-    this.context.lineTo(x - 6, y + 6);   // Bottom left
-    this.context.lineTo(x + 6, y + 6);   // Bottom right
+    this.context.moveTo(x + 8, y);       // Front point (nose pointing right)
+    this.context.lineTo(x - 6, y - 6);   // Top wing
+    this.context.lineTo(x - 6, y + 6);   // Bottom wing
     this.context.closePath();
     this.context.fill();
     
-    // Ship engine glow when in transit
+    // Ship engine glow when in transit (behind the ship, pointing left)
     if (ship.location.isInTransit) {
       this.context.fillStyle = '#ff6b42';
       this.context.globalAlpha = 0.7;
-      this.context.fillRect(x - 2, y + 6, 4, 4);
+      this.context.fillRect(x - 6, y - 2, 4, 4);
       this.context.globalAlpha = 1;
     }
     
