@@ -9,6 +9,7 @@ import { Ship } from '../types/player';
 export class SceneManager {
   private currentScene: Scene;
   private shipActor: ShipActor | null = null;
+  private positionUpdateCallback?: (position: { x: number; y: number; z: number }) => void;
 
   constructor() {
     this.currentScene = new Scene();
@@ -43,6 +44,11 @@ export class SceneManager {
     // Create new ship actor
     this.shipActor = new ShipActor(ship);
     this.currentScene.addActor(this.shipActor, 'ship');
+    
+    // Apply stored position update callback if we have one
+    if (this.positionUpdateCallback) {
+      this.shipActor.setPositionUpdateCallback(this.positionUpdateCallback);
+    }
   }
 
   /**
@@ -66,6 +72,19 @@ export class SceneManager {
     }
     
     return true;
+  }
+
+  /**
+   * Set position update callback for continuous collision detection
+   */
+  setPositionUpdateCallback(callback: (position: { x: number; y: number; z: number }) => void): void {
+    // Store the callback for later use
+    this.positionUpdateCallback = callback;
+    
+    // Apply it immediately if we have a ship actor
+    if (this.shipActor) {
+      this.shipActor.setPositionUpdateCallback(callback);
+    }
   }
 
   /**

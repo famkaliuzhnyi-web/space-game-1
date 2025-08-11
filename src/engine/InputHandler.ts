@@ -189,6 +189,7 @@ export class InputHandler {
       if (obj.type === 'planet' && 'radius' in obj.object) clickRadius = obj.object.radius || 25;
       if (obj.type === 'star') clickRadius = 30;
       if (obj.type === 'ship') clickRadius = 10; // Ship has smaller click radius
+      if (obj.type === 'gate') clickRadius = 25; // Gates have larger click radius for easier targeting
 
       if (distance <= clickRadius) {
         clickedOnObject = true;
@@ -202,6 +203,10 @@ export class InputHandler {
             worldManager.moveShipToCoordinates(obj.position.x, obj.position.y);
             console.log(`Left-click: Moving to station coordinates (${obj.position.x}, ${obj.position.y})`);
           }
+        } else if (obj.type === 'gate' && 'id' in obj.object) {
+          // Gate interactions: both left and right click should trigger gate navigation
+          worldManager.navigateToTarget(obj.object.id);
+          console.log(`${action === 'command' ? 'Right' : 'Left'}-click: Using gate ${obj.object.id}`);
         } else {
           // For other objects, just move to their coordinates regardless of action type
           worldManager.moveShipToCoordinates(obj.position.x, obj.position.y);

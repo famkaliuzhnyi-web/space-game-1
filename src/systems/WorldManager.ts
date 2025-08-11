@@ -31,6 +31,11 @@ export class WorldManager {
     // Also set ship in scene manager if available
     if (this.sceneManager) {
       this.sceneManager.setPlayerShip(ship);
+      
+      // Set up position update callback for continuous gate collision detection
+      this.sceneManager.setPositionUpdateCallback((_position) => {
+        this.checkGateCollisions();
+      });
     }
   }
 
@@ -51,6 +56,11 @@ export class WorldManager {
     if (this.playerShip) {
       this.sceneManager.setPlayerShip(this.playerShip);
     }
+
+    // Set up position update callback for continuous gate collision detection
+    this.sceneManager.setPositionUpdateCallback((_position) => {
+      this.checkGateCollisions();
+    });
   }
 
   /**
@@ -78,6 +88,9 @@ export class WorldManager {
     // Update ship coordinates
     this.playerShip.location.coordinates = createShipCoords(currentX, currentY);
 
+    // Check for gate collisions during movement
+    this.checkGateCollisions();
+
     // Check if movement is complete
     if (progress >= 1.0) {
       this.playerShip.location.isInTransit = false;
@@ -93,6 +106,9 @@ export class WorldManager {
         }
         this.pendingDockingTarget = null;
       }
+      
+      // Check for final gate collision at destination
+      this.checkGateCollisions();
     }
   }
 
@@ -1298,7 +1314,58 @@ export class WorldManager {
       this.playerManager.setCurrentStation(null);
     }
 
+    // Update scene manager with new ship position
+    if (this.sceneManager && this.playerShip) {
+      this.sceneManager.setPlayerShip(this.playerShip);
+    }
+
     return true;
+  }
+
+  /**
+   * Check if the player's ship has collided with any gates and trigger gate usage
+   */
+  private checkGateCollisions(): void {
+    if (!this.playerShip || !this.playerShip.location.coordinates) return;
+
+    const currentSystem = this.getCurrentSystem();
+    if (!currentSystem || currentSystem.gates.length === 0) return;
+
+    const shipPos = this.playerShip.location.coordinates;
+    const gateCollisionRadius = 25; // Same as click radius for gates
+
+    // Check collision with each gate in the current system
+    for (const gate of currentSystem.gates) {
+      if (!gate.isActive) continue;
+
+      const distance = this.calculateDistance(shipPos, gate.position);
+      
+      if (distance <= gateCollisionRadius) {
+        console.log(`Ship collided with gate ${gate.name} at distance ${distance.toFixed(2)}`);
+        
+        // Stop ship movement immediately
+        if (this.shipMovement) {
+          this.shipMovement = null;
+          this.playerShip.location.isInTransit = false;
+        }
+        
+        // Stop scene manager ship movement if available
+        if (this.sceneManager) {
+          this.sceneManager.stopShipMovement();
+        }
+        
+        // Trigger gate usage
+        const success = this.useGate(gate.id);
+        if (success) {
+          console.log(`Successfully used gate ${gate.name} for sector transition`);
+        } else {
+          console.log(`Failed to use gate ${gate.name} - insufficient fuel or other issue`);
+        }
+        
+        // Only process the first gate collision to avoid conflicts
+        break;
+      }
+    }
   }
 
   /**
@@ -1326,7 +1393,7 @@ export class WorldManager {
 
     // Use scene manager for actor-based movement if available
     if (this.sceneManager) {
-      // Set up movement completion callback for docking
+      // Set up movement completion callback for docking and gate collision
       const success = this.sceneManager.moveShipTo(worldX, worldY, () => {
         // This callback will be called when movement completes
         if (this.pendingDockingTarget) {
@@ -1338,6 +1405,9 @@ export class WorldManager {
           }
           this.pendingDockingTarget = null;
         }
+        
+        // Check for gate collisions at final destination
+        this.checkGateCollisions();
       });
       return success;
     }
