@@ -1078,15 +1078,18 @@ export class WorldManager {
   moveShipToCoordinates(worldX: number, worldY: number): boolean {
     if (!this.playerShip || !this.playerShip.location.coordinates) return false;
 
-    // Add reasonable bounds to prevent ship from going too far off-screen
+    // Allow unrestricted movement within the current system to reach all planets and stations
+    // Ships should be able to reach any celestial body in their current system
     const currentSystem = this.getCurrentSystem();
     if (currentSystem) {
       const systemX = currentSystem.position.x;
       const systemY = currentSystem.position.y;
       
-      // Limit movement to a reasonable area around the system (±300 units)
-      const boundedX = Math.max(systemX - 300, Math.min(systemX + 300, worldX));
-      const boundedY = Math.max(systemY - 300, Math.min(systemY + 300, worldY));
+      // Apply generous bounds to allow access to distant planets like Jupiter
+      // Expand to ±2000 units to accommodate the furthest objects in any system
+      const maxSystemRadius = 2000;
+      const boundedX = Math.max(systemX - maxSystemRadius, Math.min(systemX + maxSystemRadius, worldX));
+      const boundedY = Math.max(systemY - maxSystemRadius, Math.min(systemY + maxSystemRadius, worldY));
       
       worldX = boundedX;
       worldY = boundedY;
