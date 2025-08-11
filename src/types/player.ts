@@ -27,6 +27,7 @@ export interface Ship {
   equipment: ShipEquipment;
   condition: ShipCondition;
   location: ShipLocation;
+  hubDesign?: import('./shipHubs').ShipHubDesign; // Hub-based ship design for visual rendering
 }
 
 export interface CargoHold {

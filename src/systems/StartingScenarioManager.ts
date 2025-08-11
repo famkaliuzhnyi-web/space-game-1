@@ -7,12 +7,16 @@ import { StartingScenario } from '../types/startingScenarios';
 import { Player, Ship, CargoItem, FactionReputation } from '../types/player';
 import { CharacterManager } from './CharacterManager';
 import { Character } from '../types/character';
+import { HubShipConstructionSystem } from './HubShipConstructionSystem';
+import { ShipHubDesign } from '../types/shipHubs';
 
 export class StartingScenarioManager {
   private characterManager: CharacterManager;
+  private hubConstructionSystem: HubShipConstructionSystem;
 
   constructor(characterManager: CharacterManager) {
     this.characterManager = characterManager;
+    this.hubConstructionSystem = new HubShipConstructionSystem();
   }
 
   /**
@@ -144,7 +148,8 @@ export class StartingScenarioManager {
         systemId: this.getSystemIdFromStation(scenario.startingLocation),
         stationId: scenario.startingLocation,
         isInTransit: false
-      }
+      },
+      hubDesign: this.createDefaultHubDesign(shipClassData.category, shipSetup.shipName)
     };
 
     return ship;
@@ -293,5 +298,157 @@ export class StartingScenarioManager {
     if (player.characterId !== character.id) return false;
     
     return true;
+  }
+
+  /**
+   * Create a default hub design for ships based on their category
+   */
+  private createDefaultHubDesign(category: string, shipName: string): ShipHubDesign {
+    // Create a basic hub design appropriate for the ship category
+    const design = this.hubConstructionSystem.createNewDesign(
+      `${shipName} Design`,
+      { width: 10, height: 6, depth: 8 } // Standard ship size
+    );
+
+    // Define default hub layouts based on ship category
+    switch (category) {
+      case 'courier':
+        this.addCourierHubs(design);
+        break;
+      case 'transport':
+        this.addTransportHubs(design);
+        break;
+      case 'heavy-freight':
+        this.addFreightHubs(design);
+        break;
+      case 'combat':
+        this.addCombatHubs(design);
+        break;
+      case 'explorer':
+        this.addExplorerHubs(design);
+        break;
+      default:
+        this.addBasicHubs(design);
+        break;
+    }
+
+    return design;
+  }
+
+  /**
+   * Add hub configuration for courier ships (fast, minimal cargo)
+   */
+  private addCourierHubs(design: ShipHubDesign): void {
+    // Cockpit
+    this.hubConstructionSystem.addHub(design, 'cockpit-hub', { x: 4, y: 2, z: 0 });
+    // Small reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-small', { x: 1, y: 2, z: 0 });
+    // Ion drive for efficiency
+    this.hubConstructionSystem.addHub(design, 'ion-drive', { x: 0, y: 2, z: 0 });
+    // Minimal cargo
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 6, y: 2, z: 0 });
+    // Life support
+    this.hubConstructionSystem.addHub(design, 'life-support-basic', { x: 4, y: 1, z: 0 });
+    // Sensors
+    this.hubConstructionSystem.addHub(design, 'sensor-array-basic', { x: 4, y: 3, z: 0 });
+  }
+
+  /**
+   * Add hub configuration for transport ships (balanced)
+   */
+  private addTransportHubs(design: ShipHubDesign): void {
+    // Bridge for larger crew
+    this.hubConstructionSystem.addHub(design, 'bridge-block', { x: 3, y: 2, z: 0 });
+    // Medium reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-small', { x: 1, y: 2, z: 0 });
+    // Chemical thruster for power
+    this.hubConstructionSystem.addHub(design, 'chemical-thruster', { x: 0, y: 2, z: 0 });
+    // Multiple cargo holds
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 6, y: 1, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 6, y: 3, z: 0 });
+    // Life support
+    this.hubConstructionSystem.addHub(design, 'life-support-advanced', { x: 1, y: 0, z: 0 });
+    // Basic shields
+    this.hubConstructionSystem.addHub(design, 'shield-generator-light', { x: 3, y: 1, z: 0 });
+  }
+
+  /**
+   * Add hub configuration for freight ships (maximum cargo)
+   */
+  private addFreightHubs(design: ShipHubDesign): void {
+    // Bridge
+    this.hubConstructionSystem.addHub(design, 'bridge-block', { x: 2, y: 2, z: 0 });
+    // Large reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-large', { x: 0, y: 1, z: 0 });
+    // Fusion drive for power
+    this.hubConstructionSystem.addHub(design, 'fusion-drive', { x: 0, y: 4, z: 0 });
+    // Maximum cargo
+    this.hubConstructionSystem.addHub(design, 'bulk-storage', { x: 5, y: 1, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-automated', { x: 5, y: 4, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 8, y: 2, z: 0 });
+    // Life support
+    this.hubConstructionSystem.addHub(design, 'life-support-advanced', { x: 2, y: 0, z: 0 });
+  }
+
+  /**
+   * Add hub configuration for combat ships (heavy weapons/shields)
+   */
+  private addCombatHubs(design: ShipHubDesign): void {
+    // Bridge with tactical systems
+    this.hubConstructionSystem.addHub(design, 'bridge-block', { x: 3, y: 2, z: 0 });
+    // Powerful reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-small', { x: 1, y: 2, z: 0 });
+    // Fusion drive for maneuverability  
+    this.hubConstructionSystem.addHub(design, 'fusion-drive', { x: 0, y: 1, z: 0 });
+    // Heavy shields
+    this.hubConstructionSystem.addHub(design, 'shield-generator-heavy', { x: 5, y: 2, z: 0 });
+    // Armor
+    this.hubConstructionSystem.addHub(design, 'armor-plating-heavy', { x: 3, y: 1, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'armor-plating-heavy', { x: 3, y: 3, z: 0 });
+    // Minimal cargo
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 7, y: 2, z: 0 });
+    // Advanced life support
+    this.hubConstructionSystem.addHub(design, 'life-support-advanced', { x: 1, y: 0, z: 0 });
+    // RCS for maneuverability
+    this.hubConstructionSystem.addHub(design, 'rcs-thrusters', { x: 2, y: 4, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'gyroscope', { x: 4, y: 4, z: 0 });
+  }
+
+  /**
+   * Add hub configuration for explorer ships (sensors, range)
+   */
+  private addExplorerHubs(design: ShipHubDesign): void {
+    // Command center for analysis
+    this.hubConstructionSystem.addHub(design, 'command-center', { x: 2, y: 2, z: 0 });
+    // Efficient reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-small', { x: 0, y: 2, z: 0 });
+    // Ion drive for efficiency
+    this.hubConstructionSystem.addHub(design, 'ion-drive', { x: 0, y: 0, z: 0 });
+    // Advanced sensors
+    this.hubConstructionSystem.addHub(design, 'sensor-array-advanced', { x: 5, y: 2, z: 0 });
+    // Long range communication
+    this.hubConstructionSystem.addHub(design, 'long-range-transmitter', { x: 2, y: 0, z: 0 });
+    // Moderate cargo for supplies
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 6, y: 2, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'specialized-container', { x: 8, y: 2, z: 0 });
+    // Extended life support
+    this.hubConstructionSystem.addHub(design, 'life-support-advanced', { x: 2, y: 4, z: 0 });
+    this.hubConstructionSystem.addHub(design, 'crew-quarters', { x: 4, y: 4, z: 0 });
+  }
+
+  /**
+   * Add basic hub configuration for unknown ship types
+   */
+  private addBasicHubs(design: ShipHubDesign): void {
+    // Basic cockpit
+    this.hubConstructionSystem.addHub(design, 'cockpit-hub', { x: 4, y: 2, z: 0 });
+    // Small reactor
+    this.hubConstructionSystem.addHub(design, 'fusion-reactor-small', { x: 1, y: 2, z: 0 });
+    // Basic thruster
+    this.hubConstructionSystem.addHub(design, 'chemical-thruster', { x: 0, y: 2, z: 0 });
+    // Standard cargo
+    this.hubConstructionSystem.addHub(design, 'cargo-hold-standard', { x: 6, y: 2, z: 0 });
+    // Basic life support
+    this.hubConstructionSystem.addHub(design, 'life-support-basic', { x: 4, y: 1, z: 0 });
   }
 }

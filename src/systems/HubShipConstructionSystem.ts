@@ -361,7 +361,8 @@ export class HubShipConstructionSystem {
         systemId: 'system-001',
         stationId: stationId,
         isInTransit: false
-      }
+      },
+      hubDesign: design // Store the hub design for visual rendering
     };
 
     return ship;
