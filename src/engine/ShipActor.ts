@@ -254,6 +254,11 @@ export class ShipActor extends Actor {
    * Render ship hull based on ship class
    */
   private renderShipHull(context: CanvasRenderingContext2D): void {
+    // Check if ship has hub design and render as hubs
+    if (this.ship.hubDesign && this.renderAsHubComposition(context)) {
+      return;
+    }
+
     const category = this.ship.class.category;
     
     // Try to render with textures first
@@ -263,6 +268,173 @@ export class ShipActor extends Actor {
     
     // Fallback to original solid color rendering
     this.renderSolidColorHull(context, category);
+  }
+
+  /**
+   * Render ship as a composition of its individual hubs
+   */
+  private renderAsHubComposition(context: CanvasRenderingContext2D): boolean {
+    const hubDesign = this.ship.hubDesign;
+    if (!hubDesign || hubDesign.hubs.length === 0) {
+      return false;
+    }
+
+    try {
+      // Calculate overall ship bounds for scaling
+      const bounds = this.calculateHubBounds(hubDesign);
+      const targetShipSize = this.getShipRenderSize();
+      const scale = Math.min(
+        targetShipSize.width / bounds.width,
+        targetShipSize.height / bounds.height
+      );
+
+      // Center the ship design
+      const offsetX = -bounds.centerX * scale;
+      const offsetY = -bounds.centerY * scale;
+
+      context.save();
+      context.translate(offsetX, offsetY);
+      context.scale(scale, scale);
+
+      // Render each hub as a colored rectangle
+      for (const hubPlacement of hubDesign.hubs) {
+        const template = this.getHubTemplate(hubPlacement.templateId);
+        if (!template) continue;
+
+        this.renderSingleHub(context, hubPlacement, template);
+      }
+
+      context.restore();
+      return true;
+    } catch (error) {
+      console.warn('Failed to render hub composition:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Render a single hub component
+   */
+  private renderSingleHub(
+    context: CanvasRenderingContext2D,
+    hubPlacement: import('../types/shipHubs').HubPlacement,
+    template: import('../types/shipHubs').ShipHubTemplate
+  ): void {
+    const hubSize = 4; // Base size for each hub unit
+    const x = hubPlacement.position.x * hubSize;
+    const y = hubPlacement.position.y * hubSize;
+    const width = template.size.width * hubSize;
+    const height = template.size.height * hubSize;
+
+    // Get color based on hub category
+    const hubColor = this.getHubCategoryColor(template.category);
+    
+    // Fill the hub area
+    context.fillStyle = hubColor;
+    context.fillRect(x, y, width, height);
+    
+    // Add outline for better visibility
+    context.strokeStyle = '#000000';
+    context.lineWidth = 0.5;
+    context.strokeRect(x, y, width, height);
+
+    // Add category indicator for larger hubs
+    if (width >= hubSize * 2 || height >= hubSize * 2) {
+      const centerX = x + width / 2;
+      const centerY = y + height / 2;
+      
+      context.fillStyle = '#ffffff';
+      context.font = `${hubSize * 0.6}px monospace`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(template.category[0].toUpperCase(), centerX, centerY);
+    }
+  }
+
+  /**
+   * Get color for hub category
+   */
+  private getHubCategoryColor(category: import('../types/shipHubs').HubCategory): string {
+    switch (category) {
+      case 'command': return '#4a90e2'; // Blue
+      case 'power': return '#ff9500';   // Orange
+      case 'propulsion': return '#00aa55'; // Green
+      case 'cargo': return '#8b4513';   // Brown
+      case 'defense': return '#ff4444'; // Red
+      case 'utility': return '#9966cc'; // Purple
+      case 'structural': return '#808080'; // Gray
+      default: return '#666666';        // Default gray
+    }
+  }
+
+  /**
+   * Calculate bounds of the hub design
+   */
+  private calculateHubBounds(hubDesign: import('../types/shipHubs').ShipHubDesign): {
+    width: number;
+    height: number;
+    centerX: number;
+    centerY: number;
+  } {
+    if (hubDesign.hubs.length === 0) {
+      return { width: 10, height: 10, centerX: 5, centerY: 5 };
+    }
+
+    let minX = Infinity, minY = Infinity;
+    let maxX = -Infinity, maxY = -Infinity;
+
+    for (const hubPlacement of hubDesign.hubs) {
+      const template = this.getHubTemplate(hubPlacement.templateId);
+      if (!template) continue;
+
+      const x1 = hubPlacement.position.x;
+      const y1 = hubPlacement.position.y;
+      const x2 = x1 + template.size.width;
+      const y2 = y1 + template.size.height;
+
+      minX = Math.min(minX, x1);
+      minY = Math.min(minY, y1);
+      maxX = Math.max(maxX, x2);
+      maxY = Math.max(maxY, y2);
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    return { width, height, centerX, centerY };
+  }
+
+  /**
+   * Get the target render size for the ship
+   */
+  private getShipRenderSize(): { width: number; height: number } {
+    // Base size on ship category, similar to existing system
+    const category = this.ship.class.category;
+    switch (category) {
+      case 'heavy-freight': return { width: 20, height: 16 };
+      case 'transport': return { width: 16, height: 12 };
+      case 'combat': return { width: 14, height: 10 };
+      case 'courier': return { width: 10, height: 8 };
+      case 'explorer':
+      default: return { width: 12, height: 10 };
+    }
+  }
+
+  /**
+   * Get hub template (lazy import to avoid circular dependencies)
+   */
+  private getHubTemplate(templateId: string): import('../types/shipHubs').ShipHubTemplate | undefined {
+    // Dynamic import to avoid circular dependency issues
+    try {
+      // This is a simplified lookup - in a real implementation, 
+      // you might want to inject this dependency or use a service
+      return require('../data/shipHubs').getHubTemplate(templateId);
+    } catch (error) {
+      console.warn(`Failed to load hub template ${templateId}:`, error);
+      return undefined;
+    }
   }
 
   /**
