@@ -2622,19 +2622,16 @@ export class NPCAIManager {
     const currentSystem = this.findSystemById(galaxy, npc.position.systemId);
     
     if (!currentSystem) {
-      console.log(`NPC ${npc.id}: Cannot find current system for gate travel`);
       return;
     }
 
     const gate = currentSystem.gates.find(g => g.id === gateId);
     if (!gate || !gate.isActive) {
-      console.log(`NPC ${npc.id}: Gate ${gateId} not found or inactive`);
       return;
     }
 
     // Check if NPC has enough fuel
     if (npc.ship.fuel < gate.energyCost) {
-      console.log(`NPC ${npc.id}: Insufficient fuel for gate travel. Required: ${gate.energyCost}, Available: ${npc.ship.fuel}`);
       return;
     }
 
@@ -2644,7 +2641,6 @@ export class NPCAIManager {
     // Find destination sector
     const destinationSector = galaxy.sectors.find(s => s.id === gate.destinationSectorId);
     if (!destinationSector) {
-      console.log(`NPC ${npc.id}: Destination sector not found: ${gate.destinationSectorId}`);
       return;
     }
 
@@ -2655,7 +2651,6 @@ export class NPCAIManager {
     }
 
     if (!destinationSystemId) {
-      console.log(`NPC ${npc.id}: No destination system available in sector: ${gate.destinationSectorId}`);
       return;
     }
 
@@ -2686,8 +2681,6 @@ export class NPCAIManager {
       // Clear target by setting to current position (no clearTarget method available)
       npcActor.setPosition(npc.position.coordinates);
     }
-
-    console.log(`NPC ${npc.id} successfully used gate ${gate.name} to travel to ${destinationSector.name} - ${destinationSystemId}`);
 
     // Now set destination to the final target station in the new sector
     setTimeout(() => {
