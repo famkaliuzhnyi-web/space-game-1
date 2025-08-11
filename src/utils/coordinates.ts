@@ -108,6 +108,78 @@ export function createLayeredPosition(x: number, y: number, objectType: string):
 }
 
 /**
+ * Type-specific coordinate conversion functions
+ * These functions automatically apply the correct Z-layer for each object type,
+ * eliminating the need to manually specify object types in every conversion.
+ */
+
+/**
+ * Convert 2D coordinates to 3D coordinates for planets (Z=0)
+ */
+export function convertPlanetCoords(coords: { x: number; y: number }): Vector3D {
+  return {
+    x: coords.x,
+    y: coords.y,
+    z: COORDINATE_LAYERS.PLANETS
+  };
+}
+
+/**
+ * Convert 2D coordinates to 3D coordinates for stations (Z=30)
+ */
+export function convertStationCoords(coords: { x: number; y: number }): Vector3D {
+  return {
+    x: coords.x,
+    y: coords.y,
+    z: COORDINATE_LAYERS.STATIONS
+  };
+}
+
+/**
+ * Convert 2D coordinates to 3D coordinates for ships (Z=50)
+ */
+export function convertShipCoords(coords: { x: number; y: number }): Vector3D {
+  return {
+    x: coords.x,
+    y: coords.y,
+    z: COORDINATE_LAYERS.SHIPS
+  };
+}
+
+/**
+ * Convert 2D coordinates to 3D coordinates for stars (Z=0)
+ */
+export function convertStarCoords(coords: { x: number; y: number }): Vector3D {
+  return {
+    x: coords.x,
+    y: coords.y,
+    z: COORDINATE_LAYERS.STARS
+  };
+}
+
+/**
+ * Create star system coordinates (same layer as stars, Z=0)
+ */
+export function createSystemCoords(x: number, y: number): Vector3D {
+  return {
+    x,
+    y,
+    z: COORDINATE_LAYERS.STARS
+  };
+}
+
+/**
+ * Create ship coordinates (Z=50)
+ */
+export function createShipCoords(x: number, y: number): Vector3D {
+  return {
+    x,
+    y,
+    z: COORDINATE_LAYERS.SHIPS
+  };
+}
+
+/**
  * Normalize coordinates to ensure consistent formatting
  */
 export function normalizeCoordinates(coords: Vector3D): Vector3D {
