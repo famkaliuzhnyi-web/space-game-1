@@ -268,7 +268,7 @@ describe('ShipConstructionSystem', () => {
       const stats = constructionSystem.calculatePerformanceStats(config);
       
       expect(stats.cargoCapacity).toBe(100); // Light freighter base cargo
-      expect(stats.speed).toBe(120); // Light freighter base speed
+      expect(stats.speed).toBe(30); // Light freighter base speed (reduced from 120)
       expect(stats.shields).toBe(25); // Light freighter base shields
       expect(stats.fuelEfficiency).toBe(1.0); // Base efficiency
       expect(stats.weaponDamage).toBe(0); // No weapons
@@ -291,7 +291,7 @@ describe('ShipConstructionSystem', () => {
       const stats = constructionSystem.calculatePerformanceStats(config);
       
       expect(stats.cargoCapacity).toBe(125); // 100 + 25
-      expect(stats.speed).toBe(130); // 120 + 10
+      expect(stats.speed).toBe(40); // 30 + 10 (reduced from 130)
       expect(stats.fuelEfficiency).toBe(1.1); // 1.0 + 0.1
     });
 
