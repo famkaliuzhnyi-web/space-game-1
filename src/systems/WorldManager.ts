@@ -1139,11 +1139,11 @@ export class WorldManager {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> {
+  getAllVisibleObjects(): Array<{type: string, object: Station | Planet | Ship | Gate | {name: string; type: string}, position: Coordinates}> {
     const currentSystem = this.getCurrentSystem();
     if (!currentSystem) return [];
 
-    const objects: Array<{type: string, object: Station | Planet | Ship | {name: string; type: string}, position: Coordinates}> = [];
+    const objects: Array<{type: string, object: Station | Planet | Ship | Gate | {name: string; type: string}, position: Coordinates}> = [];
 
     // Add star
     objects.push({
@@ -1195,6 +1195,17 @@ export class WorldManager {
       });
     }
 
+    // Add gates in current system
+    currentSystem.gates.forEach(gate => {
+      console.log('Adding gate to visible objects:', gate.name, 'at position', gate.position);
+      objects.push({
+        type: 'gate',
+        object: gate,
+        position: gate.position
+      });
+    });
+
+    console.log('Total visible objects:', objects.length, 'Types:', objects.map(obj => obj.type));
     return objects;
   }
 

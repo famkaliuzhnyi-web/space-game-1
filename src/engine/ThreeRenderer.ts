@@ -450,6 +450,8 @@ export class ThreeRenderer {
         return this.createCargo(position.x, position.y, obj.object);
       case 'debris':
         return this.createDebris(position.x, position.y, obj.object);
+      case 'gate':
+        return this.createGate(position.x, position.y, obj.object);
       default:
         // Create a generic dummy mesh for unknown object types
         return this.createDummyMesh(obj.type, position.x, position.y);
@@ -763,6 +765,73 @@ export class ThreeRenderer {
   }
 
   /**
+   * Create a 3D gate representation
+   */
+  private createGate(_x: number, _y: number, gate: any): THREE.Object3D {
+    const gateGroup = new THREE.Group();
+
+    // Outer ring - main gate structure
+    const outerRingGeometry = new THREE.TorusGeometry(25, 3, 8, 16);
+    const outerRingMaterial = new THREE.MeshLambertMaterial({
+      color: gate.isActive ? 0x40e0ff : 0x666666,
+      emissive: gate.isActive ? 0x001133 : 0x000000,
+      emissiveIntensity: gate.isActive ? 0.3 : 0
+    });
+    const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
+    gateGroup.add(outerRing);
+
+    // Inner energy field (only for active gates)
+    if (gate.isActive) {
+      const innerFieldGeometry = new THREE.RingGeometry(18, 22, 16);
+      const innerFieldMaterial = new THREE.MeshBasicMaterial({
+        color: 0x40e0ff,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide
+      });
+      const innerField = new THREE.Mesh(innerFieldGeometry, innerFieldMaterial);
+      gateGroup.add(innerField);
+
+      // Swirling energy particles
+      const particleCount = 20;
+      const particleGeometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2;
+        const radius = 20;
+        positions[i * 3] = Math.cos(angle) * radius;
+        positions[i * 3 + 1] = Math.sin(angle) * radius;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 2;
+      }
+      
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      
+      const particleMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 2,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      gateGroup.add(particles);
+    }
+
+    // Center symbol/indicator
+    const centerGeometry = new THREE.SphereGeometry(3, 8, 6);
+    const centerMaterial = new THREE.MeshLambertMaterial({
+      color: gate.isActive ? 0x40e0ff : 0x888888,
+      emissive: gate.isActive ? 0x002244 : 0x000000,
+      emissiveIntensity: gate.isActive ? 0.5 : 0
+    });
+    const centerSphere = new THREE.Mesh(centerGeometry, centerMaterial);
+    gateGroup.add(centerSphere);
+
+    return gateGroup;
+  }
+
+  /**
    * Add subtle animations to 3D objects
    */
   private animate3DObject(mesh: THREE.Object3D, objectType: string): void {
@@ -819,6 +888,40 @@ export class ThreeRenderer {
         // Slow rotation
         mesh.rotation.x += 0.002;
         mesh.rotation.y += 0.003;
+        break;
+      case 'gate':
+        // Gate animations
+        if (mesh instanceof THREE.Group) {
+          // Outer ring slow rotation
+          const outerRing = mesh.children[0];
+          if (outerRing) {
+            outerRing.rotation.z += 0.005;
+          }
+          
+          // Inner energy field pulsing (second child, if exists)
+          if (mesh.children.length > 1) {
+            const innerField = mesh.children[1];
+            if (innerField instanceof THREE.Mesh && innerField.material instanceof THREE.MeshBasicMaterial) {
+              const pulse = Math.sin(time * 2) * 0.2 + 0.3;
+              innerField.material.opacity = pulse;
+            }
+          }
+          
+          // Swirling energy particles (third child, if exists)
+          if (mesh.children.length > 2) {
+            const particles = mesh.children[2];
+            if (particles instanceof THREE.Points) {
+              particles.rotation.z += 0.02;
+            }
+          }
+          
+          // Center sphere pulsing (last child)
+          const centerSphere = mesh.children[mesh.children.length - 1];
+          if (centerSphere instanceof THREE.Mesh && centerSphere.material instanceof THREE.MeshLambertMaterial) {
+            const pulse = Math.sin(time * 3) * 0.3 + 0.5;
+            centerSphere.material.emissiveIntensity = pulse;
+          }
+        }
         break;
       default:
         // Generic slow rotation for unknown objects
