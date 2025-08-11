@@ -164,6 +164,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         // 3D mode is now always available and active
         console.log('3D mode active:', engineRef.current.is3DAvailable());
         
+        // Expose engine to window object for e2e testing in debug mode
+        if (debugMode) {
+          (window as any).gameEngine = engineRef.current;
+          console.log('DEBUG: Game engine exposed to window.gameEngine for e2e testing');
+        }
+        
         // Initial resize to fit the container
         handleResize();
         

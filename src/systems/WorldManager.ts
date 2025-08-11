@@ -1262,7 +1262,6 @@ export class WorldManager {
       if (this.playerManager) {
         const player = this.playerManager.getPlayer();
         if (player.credits < gate.energyCost) {
-          console.log(`Insufficient fuel credits for gate travel. Required: ${gate.energyCost}, Available: ${player.credits}`);
           return false;
         }
         
@@ -1274,7 +1273,6 @@ export class WorldManager {
     // Find destination sector
     const destinationSector = this.galaxy.sectors.find(s => s.id === gate.destinationSectorId);
     if (!destinationSector) {
-      console.log(`Destination sector not found: ${gate.destinationSectorId}`);
       return false;
     }
 
@@ -1286,7 +1284,6 @@ export class WorldManager {
     }
 
     if (!destinationSystemId) {
-      console.log(`No destination system available in sector: ${gate.destinationSectorId}`);
       return false;
     }
 
@@ -1322,7 +1319,6 @@ export class WorldManager {
       this.sceneManager.setPlayerShip(this.playerShip);
     }
 
-    console.log(`Successfully used gate ${gate.name} to travel to ${destinationSector.name} - ${destinationSystemId}`);
     return true;
   }
 
@@ -1503,7 +1499,6 @@ export class WorldManager {
 
     // Add gates in current system
     currentSystem.gates.forEach(gate => {
-      console.log('Adding gate to visible objects:', gate.name, 'at position', gate.position);
       objects.push({
         type: 'gate',
         object: gate,

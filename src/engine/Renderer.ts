@@ -199,7 +199,6 @@ export class Renderer {
           }
           break;
         case 'gate':
-          console.log('Rendering gate:', obj.object, 'at position', position);
           if ('id' in obj.object) {
             this.renderGate(position.x, position.y, obj.object as any);
           }
