@@ -251,7 +251,7 @@ export const SHIP_CLASSES: Record<string, any> = {
     category: 'transport',
     baseCargoCapacity: 100,
     baseFuelCapacity: 50,
-    baseSpeed: 120,
+    baseSpeed: 30,
     baseShields: 25,
     equipmentSlots: {
       engines: 1,
@@ -267,7 +267,7 @@ export const SHIP_CLASSES: Record<string, any> = {
     category: 'heavy-freight',
     baseCargoCapacity: 250,
     baseFuelCapacity: 80,
-    baseSpeed: 80,
+    baseSpeed: 20,
     baseShields: 40,
     equipmentSlots: {
       engines: 2,
@@ -283,7 +283,7 @@ export const SHIP_CLASSES: Record<string, any> = {
     category: 'courier',
     baseCargoCapacity: 50,
     baseFuelCapacity: 40,
-    baseSpeed: 200,
+    baseSpeed: 50,
     baseShields: 15,
     equipmentSlots: {
       engines: 2,

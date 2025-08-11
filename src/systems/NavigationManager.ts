@@ -35,7 +35,7 @@ export class NavigationManager {
   private timeManager: TimeManager;
   private activeTravels: Map<string, TravelPlan> = new Map();
   private travelHistory: TravelPlan[] = [];
-  private defaultSpeed: number = 100; // units per hour
+  private defaultSpeed: number = 25; // units per hour
 
   constructor(timeManager: TimeManager) {
     this.timeManager = timeManager;
