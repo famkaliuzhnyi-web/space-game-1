@@ -1,0 +1,226 @@
+.sectors-map-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 20, 30, 0.95);
+  border: 2px solid #555;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.4em;
+  color: #4a90e2;
+  text-shadow: 0 0 5px rgba(74, 144, 226, 0.3);
+}
+
+.close-button {
+  background: #d0021b;
+  border: none;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #ff4757;
+  transform: scale(1.1);
+}
+
+.map-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #111;
+}
+
+.sectors-map-canvas {
+  cursor: pointer;
+  background: radial-gradient(ellipse at center, #000611 0%, #000 70%);
+  border-radius: 4px;
+}
+
+.sectors-map-canvas:hover {
+  cursor: crosshair;
+}
+
+.sector-info-panel {
+  background: rgba(30, 30, 40, 0.9);
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sector-info-panel h3 {
+  margin: 0 0 10px 0;
+  color: #4a90e2;
+  font-size: 1.2em;
+  text-shadow: 0 0 3px rgba(74, 144, 226, 0.5);
+}
+
+.sector-details p {
+  margin: 5px 0;
+  font-size: 0.9em;
+  line-height: 1.4;
+}
+
+.sector-systems {
+  margin-top: 10px;
+}
+
+.sector-systems ul {
+  margin: 5px 0 0 0;
+  padding-left: 20px;
+  font-size: 0.85em;
+  color: #ccc;
+}
+
+.sector-systems li {
+  margin: 2px 0;
+}
+
+.navigate-button {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.navigate-button:hover {
+  background: linear-gradient(135deg, #357abd, #2c5a8f);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: rgba(30, 30, 40, 0.6);
+  border-radius: 6px;
+  border: 1px solid #444;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #333;
+}
+
+.map-instructions {
+  text-align: center;
+  font-size: 0.8em;
+  color: #aaa;
+  font-style: italic;
+  margin: 0;
+}
+
+.map-instructions p {
+  margin: 0;
+}
+
+/* Scrollbar styling for webkit browsers */
+.sector-info-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sector-info-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.sector-info-panel::-webkit-scrollbar-thumb {
+  background: #4a90e2;
+  border-radius: 3px;
+}
+
+.sector-info-panel::-webkit-scrollbar-thumb:hover {
+  background: #357abd;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 1000px) {
+  .sectors-map-panel {
+    padding: 15px;
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .sectors-map-canvas {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+  }
+  
+  .map-legend {
+    gap: 10px;
+  }
+  
+  .legend-item {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel-header h2 {
+    font-size: 1.2em;
+  }
+  
+  .sectors-map-canvas {
+    max-width: 400px;
+  }
+  
+  .map-legend {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

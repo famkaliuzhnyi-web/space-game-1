@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense, startTransition } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, InfoPanel } from '../ui';
+import { NavigationPanel, SectorsMapPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, InfoPanel } from '../ui';
 // Import heavy panels lazily
 import { 
   FleetManagementPanel, 
@@ -49,7 +49,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showScenarioSelection, setShowScenarioSelection] = useState(false);
@@ -96,6 +96,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   
   // Computed panel visibility states for backward compatibility
   const showNavigation = activePanel === 'navigation';
+  const showSectorsMap = activePanel === 'sectors-map';
   const showMarket = activePanel === 'market';
   const showContracts = activePanel === 'contracts';
   const showRouteAnalysis = activePanel === 'routes';
@@ -552,6 +553,22 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   };
 
+  const handleNavigateToSector = (sectorId: string) => {
+    if (engineRef.current) {
+      const progressionSystem = engineRef.current.getCharacterProgressionSystem();
+      
+      // For now, just log the sector navigation - can be implemented later
+      console.log(`Navigating to sector: ${sectorId}`);
+      
+      // Award sector exploration experience
+      progressionSystem.awardExplorationExperience('sector_visit', {
+        riskLevel: 2 // Sector navigation is moderately rewarding
+      });
+      
+      // TODO: Implement actual sector navigation in WorldManager
+    }
+  };
+
   const getNavigationTargets = () => {
     if (engineRef.current) {
       return engineRef.current.getWorldManager().getAvailableTargets();
@@ -964,6 +981,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           Nav
         </button>
         <button 
+          onClick={() => toggleActivePanelWithTransition('sectors-map')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            backgroundColor: activePanel === 'sectors-map' ? '#4a90e2' : undefined
+          }}
+          title="Sectors Map (S)"
+        >
+          🗺️ Map
+        </button>
+        <button 
           onClick={handleOpenMarket} 
           disabled={!engineRef.current || !!engineError}
           style={{ 
@@ -1061,6 +1088,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         onClose={() => setActivePanel(null)}
         onNavigate={handleNavigate}
         targets={getNavigationTargets()}
+      />
+
+      {/* Sectors Map Panel */}
+      <SectorsMapPanel
+        isVisible={showSectorsMap}
+        onClose={() => setActivePanel(null)}
+        galaxy={engineRef.current?.getWorldManager()?.getGalaxy() || { sectors: [], currentPlayerLocation: { sectorId: '', systemId: '' } }}
+        onNavigateToSector={handleNavigateToSector}
       />
 
       {/* Market Panel */}
