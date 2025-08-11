@@ -55,7 +55,13 @@ describe('Starting Scenarios Data', () => {
   it('should have scenarios with reasonable credit ranges', () => {
     Object.values(STARTING_SCENARIOS).forEach(scenario => {
       expect(scenario.startingCredits).toBeGreaterThanOrEqual(500);
-      expect(scenario.startingCredits).toBeLessThanOrEqual(100000);
+      
+      // Allow higher limits for debug scenarios
+      if (scenario.id.includes('debug') || scenario.name.toLowerCase().includes('debug')) {
+        expect(scenario.startingCredits).toBeLessThanOrEqual(2000000); // 2M for debug
+      } else {
+        expect(scenario.startingCredits).toBeLessThanOrEqual(100000);
+      }
     });
   });
 

@@ -8,267 +8,277 @@
 import { StoryQuest, FactionStoryline, StoryArc } from '../types/quests';
 
 /**
- * ENHANCED TRADERS GUILD STORYLINES
- * Multi-arc progression from merchant to guild leader
+ * ENHANCED MEGACORPORATION STORYLINES
+ * Multi-arc progression within major corporate factions
  */
-export const TRADERS_GUILD_STORYLINES: StoryQuest[] = [
-  // Arc 1: The Apprentice Merchant
+
+/**
+ * RAIJIN CORPORATION STORYLINES
+ * Military technology and defense systems
+ */
+export const RAIJIN_CORP_STORYLINES: StoryQuest[] = [
+  // Arc 1: Defense Technology Specialist
   {
-    id: 'tg_first_contract',
-    title: 'First Steps in Commerce',
-    description: 'Your contact at the Traders Guild has arranged a simple delivery contract to test your capabilities. Success here will open doors to greater opportunities.',
+    id: 'raijin_first_contract',
+    title: 'Weapons Testing Initiative',
+    description: 'Raijin Corporation requires field testing of their latest energy weapon systems. Prove your combat capabilities and reliability.',
     type: 'faction_storyline',
-    category: 'trading',
+    category: 'combat',
     status: 'available',
     requirements: {
-      reputation: { 'traders_guild': 0 }
+      reputation: { 'raijin-corp': 0 }
     },
     objectives: [
       {
-        id: 'deliver_electronics',
-        description: 'Deliver 10 units of Electronics to Vega Station',
-        type: 'deliver',
-        target: 'vega-station',
-        quantity: 10,
-        completed: false
-      }
-    ],
-    rewards: {
-      credits: 8000,
-      experience: 150,
-      reputation: { 'traders_guild': 15 }
-    },
-    giver: 'Marcus Chen',
-    location: 'Earth Station Alpha',
-    factionId: 'traders_guild',
-    storyArc: 'tg_apprentice_arc',
-    nextQuest: 'tg_market_analysis',
-    priority: 8,
-    repeatable: false,
-    timeLimit: 72, // hours
-    dialogue: {
-      intro: "Welcome to the Guild, pilot. I'm Marcus Chen, and I'll be your liaison for now. We have a simple delivery that will test your reliability.",
-      success: "Excellent work! You've proven yourself capable. The Guild has bigger plans for merchants like you.",
-      failure: "Disappointing. The Guild expects reliability above all else. Perhaps you're not ready for bigger opportunities."
-    }
-  },
-
-  {
-    id: 'tg_market_analysis',
-    title: 'Market Intelligence',
-    description: 'The Guild needs detailed market data from three frontier stations. This intelligence will help identify profitable trade routes and potential expansion opportunities.',
-    type: 'faction_storyline',
-    category: 'exploration',
-    status: 'locked',
-    requirements: {
-      completedQuests: ['tg_first_contract'],
-      reputation: { 'traders_guild': 15 }
-    },
-    objectives: [
-      {
-        id: 'scan_markets',
-        description: 'Perform market analysis at Kepler-442, Gliese 667C, and TRAPPIST-1 stations',
-        type: 'visit',
-        quantity: 3,
+        id: 'test_weapons',
+        description: 'Field test Thunder Strike energy weapons in combat scenarios',
+        type: 'combat',
+        quantity: 5,
         completed: false
       },
       {
-        id: 'collect_price_data',
-        description: 'Collect commodity price data for at least 5 different goods',
+        id: 'collect_data',
+        description: 'Gather performance data from weapon systems',
         type: 'collect',
-        quantity: 5,
+        quantity: 10,
         completed: false
       }
     ],
     rewards: {
       credits: 12000,
       experience: 200,
-      reputation: { 'traders_guild': 20 },
-      unlocks: ['advanced_market_scanner', 'price_prediction_algorithms']
+      reputation: { 'raijin-corp': 20 }
     },
-    giver: 'Dr. Sarah Kim',
-    location: 'Earth Station Alpha',
-    factionId: 'traders_guild',
-    storyArc: 'tg_apprentice_arc',
-    nextQuest: 'tg_corporate_sabotage',
-    priority: 7,
+    giver: 'Admiral Yukiko Tanaka',
+    location: 'Titan Industrial Complex',
+    factionId: 'raijin-corp',
+    storyArc: 'raijin_specialist_arc',
+    nextQuest: 'raijin_defense_systems',
+    priority: 8,
     repeatable: false,
-    timeLimit: 96,
+    timeLimit: 72,
     dialogue: {
-      intro: "The Guild is expanding, but we need data. These frontier stations hold the key to our next phase of growth.",
-      success: "Outstanding! This data reveals significant opportunities. You're ready for more... sensitive assignments.",
-      failure: "Without proper market intelligence, the Guild cannot make strategic decisions. This setback affects our expansion plans."
+      intro: "Welcome to Raijin Corporation. I'm Admiral Tanaka. We need pilots who can handle our advanced weapon systems.",
+      success: "Excellent performance! Your combat data will help us refine our weapons technology.",
+      failure: "Our weapons require skilled operators. Perhaps you need more training before handling Raijin technology."
     }
   },
 
-  // Arc 2: Corporate Warfare
   {
-    id: 'tg_corporate_sabotage',
-    title: 'Industrial Espionage',
-    description: 'Industrial Consortium is undercutting Guild prices using illegal dumping. Investigate their operations and gather evidence of their violations.',
+    id: 'raijin_defense_systems',
+    title: 'Shield Network Installation',
+    description: 'Help Raijin install their new modular defense platform systems at key strategic locations throughout the system.',
     type: 'faction_storyline',
-    category: 'investigation',
+    category: 'construction',
     status: 'locked',
     requirements: {
-      completedQuests: ['tg_market_analysis'],
-      reputation: { 'traders_guild': 35 },
-      skills: { 'hacking': 25, 'stealth': 20 }
+      completedQuests: ['raijin_first_contract'],
+      reputation: { 'raijin-corp': 20 }
     },
     objectives: [
       {
-        id: 'infiltrate_facility',
-        description: 'Access Industrial Consortium facility database',
-        type: 'hacking',
-        completed: false
-      },
-      {
-        id: 'gather_evidence',
-        description: 'Obtain proof of illegal dumping practices',
-        type: 'collect',
+        id: 'install_platforms',
+        description: 'Install defense platforms at 3 strategic locations',
+        type: 'build',
         quantity: 3,
         completed: false
       },
       {
-        id: 'avoid_detection',
-        description: 'Complete mission without triggering security alerts',
+        id: 'test_systems',
+        description: 'Test integrated defense network functionality',
+        type: 'technical',
+        completed: false
+      }
+    ],
+    rewards: {
+      credits: 18000,
+      experience: 300,
+      reputation: { 'raijin-corp': 25 },
+      unlocks: ['advanced_weapon_systems', 'defense_contractor_license']
+    },
+    giver: 'Director Kenji Matsumoto',
+    location: 'Titan Industrial Complex',
+    factionId: 'raijin-corp',
+    storyArc: 'raijin_specialist_arc',
+    nextQuest: 'raijin_corporate_warfare',
+    priority: 7,
+    repeatable: false,
+    timeLimit: 96,
+    dialogue: {
+      intro: "Our modular defense systems represent the future of space security. Help us demonstrate their effectiveness.",
+      success: "The defense network is operational. Your technical expertise is valuable to Raijin Corporation.",
+      failure: "Defense systems require precision installation. The network integrity has been compromised."
+    }
+  },
+
+  // Arc 2: Corporate Military Operations
+  {
+    id: 'raijin_corporate_warfare',
+    title: 'Military Technology Espionage',
+    description: 'Investigate competitors attempting to steal Raijin proprietary weapon designs and prevent industrial espionage.',
+    type: 'faction_storyline',
+    category: 'investigation',
+    status: 'locked',
+    requirements: {
+      completedQuests: ['raijin_defense_systems'],
+      reputation: { 'raijin-corp': 45 },
+      skills: { 'combat': 30, 'investigation': 25 }
+    },
+    objectives: [
+      {
+        id: 'identify_spies',
+        description: 'Identify corporate spies attempting to steal technology',
+        type: 'investigation',
+        quantity: 3,
+        completed: false
+      },
+      {
+        id: 'neutralize_threats',
+        description: 'Neutralize espionage attempts through combat or negotiation',
+        type: 'combat',
+        quantity: 2,
+        completed: false
+      },
+      {
+        id: 'protect_secrets',
+        description: 'Ensure proprietary weapon designs remain secure',
         type: 'stealth',
         completed: false,
         hidden: true
       }
     ],
     rewards: {
-      credits: 25000,
-      experience: 350,
+      credits: 35000,
+      experience: 450,
       reputation: { 
-        'traders_guild': 30,
-        'industrial_consortium': -15
+        'raijin-corp': 40,
+        'pirates': -20
       },
-      unlocks: ['corporate_intelligence_network']
+      unlocks: ['corporate_security_clearance', 'advanced_energy_weapons']
     },
-    giver: 'Commander Elena Vasquez',
-    location: 'Guild Headquarters',
-    factionId: 'traders_guild',
-    storyArc: 'tg_corporate_warfare_arc',
-    nextQuest: 'tg_economic_warfare',
+    giver: 'Security Chief Lin Zhang',
+    location: 'Raijin Security Division',
+    factionId: 'raijin-corp',
+    storyArc: 'raijin_warfare_arc',
+    nextQuest: 'raijin_fleet_command',
     priority: 9,
     repeatable: false,
     consequences: {
-      success: ['industrial_consortium_prices_increase', 'guild_market_share_growth'],
-      failure: ['security_investigation', 'guild_reputation_loss']
+      success: ['raijin_technology_secured', 'competitor_operations_disrupted'],
+      failure: ['technology_leak', 'corporate_reputation_damage']
     }
   }
 ];
 
 /**
- * SECURITY FORCES STORYLINES
- * Law enforcement and peacekeeping narratives
+ * INDEPENDENT SYSTEMS STORYLINES
+ * Freedom and self-governance narratives
  */
-export const SECURITY_FORCES_STORYLINES: StoryQuest[] = [
+export const INDEPENDENT_SYSTEMS_STORYLINES: StoryQuest[] = [
   {
-    id: 'sf_patrol_duty',
-    title: 'Patrol Officer',
-    description: 'Join Security Forces on routine patrol duty to demonstrate your commitment to law and order.',
+    id: 'ind_freedom_fighter',
+    title: 'Defender of Independence',
+    description: 'Help Independent Systems resist corporate encroachment and maintain their freedom from megacorporation control.',
     type: 'faction_storyline',
     category: 'combat',
     status: 'available',
     requirements: {
-      reputation: { 'security_forces': 0 },
-      attributes: { 'courage': 15 }
+      reputation: { 'independents': 0 },
+      attributes: { 'integrity': 15 }
     },
     objectives: [
       {
-        id: 'complete_patrols',
-        description: 'Complete 3 patrol circuits in Core Worlds Sector',
-        type: 'visit',
+        id: 'defend_colonies',
+        description: 'Defend 3 independent colonies from corporate takeover attempts',
+        type: 'combat',
         quantity: 3,
         completed: false
       },
       {
-        id: 'respond_to_incidents',
-        description: 'Respond to at least 2 security incidents',
-        type: 'interact',
-        quantity: 2,
+        id: 'supply_resistance',
+        description: 'Deliver weapons and supplies to resistance movements',
+        type: 'deliver',
+        quantity: 5,
         completed: false
       }
     ],
     rewards: {
       credits: 15000,
       experience: 250,
-      reputation: { 'security_forces': 20 },
-      unlocks: ['security_clearance_level_1']
+      reputation: { 'independents': 25 },
+      unlocks: ['freedom_fighter_badge']
     },
-    giver: 'Captain Rodriguez',
-    location: 'Security Station Bravo',
-    factionId: 'security_forces',
-    storyArc: 'sf_officer_arc',
-    nextQuest: 'sf_pirate_investigation',
-    priority: 6,
+    giver: 'Governor Maria Volkov',
+    location: 'Freedom Station',
+    factionId: 'independents',
+    storyArc: 'ind_resistance_arc',
+    nextQuest: 'ind_corporate_espionage',
+    priority: 7,
     repeatable: false
   },
 
   {
-    id: 'sf_organized_crime',
-    title: 'Shadow Network',
-    description: 'Intelligence suggests a sophisticated criminal organization is operating across multiple sectors. Investigate their activities and dismantle their network.',
+    id: 'ind_pirate_alliance',
+    title: 'Unlikely Alliance',
+    description: 'Form temporary alliances with reformed pirates to protect independent systems from corporate aggression.',
     type: 'faction_storyline',
-    category: 'investigation',
+    category: 'diplomacy',
     status: 'locked',
     requirements: {
-      completedQuests: ['sf_patrol_duty'],
-      reputation: { 'security_forces': 40 },
-      skills: { 'investigation': 30, 'combat': 25 }
+      completedQuests: ['ind_freedom_fighter'],
+      reputation: { 'independents': 25, 'pirates': -10 },
+      skills: { 'negotiation': 20, 'leadership': 15 }
     },
     objectives: [
       {
-        id: 'identify_network',
-        description: 'Identify key members of the criminal organization',
-        type: 'investigation',
-        quantity: 5,
+        id: 'negotiate_alliance',
+        description: 'Negotiate temporary ceasefire with Void Reapers',
+        type: 'diplomacy',
         completed: false
       },
       {
-        id: 'disrupt_operations',
-        description: 'Disrupt 3 criminal operations',
-        type: 'combat',
-        quantity: 3,
+        id: 'coordinate_defense',
+        description: 'Coordinate joint defense operations',
+        type: 'leadership',
+        quantity: 2,
         completed: false
       },
       {
-        id: 'capture_leader',
-        description: 'Capture the organization leader alive',
-        type: 'combat',
+        id: 'maintain_trust',
+        description: 'Maintain alliance without compromising independent values',
+        type: 'diplomacy',
         completed: false
       }
     ],
     rewards: {
-      credits: 50000,
-      experience: 500,
-      reputation: { 'security_forces': 50 },
-      unlocks: ['detective_badge', 'organized_crime_database']
+      credits: 25000,
+      experience: 400,
+      reputation: { 'independents': 30, 'pirates': 15 },
+      unlocks: ['diplomatic_immunity', 'reformed_pirate_contacts']
     },
-    giver: 'Detective Sarah Chen',
-    location: 'Security Headquarters',
-    factionId: 'security_forces',
-    storyArc: 'sf_detective_arc',
-    priority: 10,
+    giver: 'Admiral Sarah Chen',
+    location: 'Independent Fleet Command',
+    factionId: 'independents',
+    storyArc: 'ind_resistance_arc',
+    priority: 9,
     repeatable: false,
     branches: [
       {
-        id: 'negotiate_surrender',
-        description: 'Attempt to negotiate the leader\'s surrender',
-        requirements: { skills: { 'negotiation': 35 } },
+        id: 'trust_pirates',
+        description: 'Place full trust in pirate alliance',
+        requirements: { skills: { 'courage': 25 } },
         outcomes: {
-          success: { reputation: { 'security_forces': 10 }, unlocks: ['peaceful_resolution_commendation'] },
-          failure: { consequences: ['leader_escapes', 'additional_casualties'] }
+          success: { reputation: { 'pirates': 20 }, unlocks: ['pirate_fleet_support'] },
+          failure: { consequences: ['betrayal_by_pirates', 'independent_losses'] }
         }
       },
       {
-        id: 'direct_assault',
-        description: 'Launch a direct assault on the criminal stronghold',
-        requirements: { skills: { 'combat': 40 } },
+        id: 'limited_cooperation',
+        description: 'Maintain cautious, limited cooperation',
+        requirements: { skills: { 'wisdom': 20 } },
         outcomes: {
-          success: { reputation: { 'security_forces': 5 }, unlocks: ['tactical_assault_commendation'] },
-          failure: { consequences: ['civilian_casualties', 'public_relations_damage'] }
+          success: { reputation: { 'independents': 15 }, unlocks: ['tactical_alliance'] },
+          failure: { consequences: ['alliance_breakdown', 'missed_opportunities'] }
         }
       }
     ]
@@ -276,53 +286,65 @@ export const SECURITY_FORCES_STORYLINES: StoryQuest[] = [
 ];
 
 /**
- * OUTER COLONIES COALITION STORYLINES
- * Frontier survival and independence themes
+ * CRIMSON FLEET PIRATES STORYLINES
+ * Criminal organization and black market operations
  */
-export const OUTER_COLONIES_STORYLINES: StoryQuest[] = [
+export const PIRATES_STORYLINES: StoryQuest[] = [
   {
-    id: 'oc_supply_run',
-    title: 'Lifeline to the Frontier',
-    description: 'Remote colonies depend on supply runs for essential materials. Help keep the frontier alive.',
+    id: 'pirates_initiation',
+    title: 'Blood and Steel Initiation',
+    description: 'Prove your worth to the Void Reapers through acts of piracy and loyalty to the code of the void.',
     type: 'faction_storyline',
-    category: 'humanitarian',
+    category: 'piracy',
     status: 'available',
     requirements: {
-      reputation: { 'outer_colonies_coalition': 0 }
+      reputation: { 'pirates': 0 },
+      attributes: { 'ruthlessness': 10 }
     },
     objectives: [
       {
-        id: 'deliver_supplies',
-        description: 'Deliver medical supplies and food to 3 remote colonies',
-        type: 'deliver',
+        id: 'piracy_raids',
+        description: 'Successfully raid 3 corporate cargo convoys',
+        type: 'piracy',
         quantity: 3,
         completed: false
       },
       {
-        id: 'emergency_rescue',
-        description: 'Respond to emergency distress calls',
-        type: 'interact',
-        quantity: 2,
+        id: 'fence_goods',
+        description: 'Sell stolen goods through black market channels',
+        type: 'trading',
+        quantity: 50,
         completed: false
+      },
+      {
+        id: 'avoid_capture',
+        description: 'Evade security forces during operations',
+        type: 'stealth',
+        completed: false,
+        hidden: true
       }
     ],
     rewards: {
-      credits: 18000,
-      experience: 280,
-      reputation: { 'outer_colonies_coalition': 25 },
-      unlocks: ['frontier_supply_contracts']
+      credits: 20000,
+      experience: 200,
+      reputation: { 
+        'pirates': 30, 
+        'raijin-corp': -10,
+        'bellator-corp': -15
+      },
+      unlocks: ['void_reaper_membership', 'black_market_access']
     },
-    giver: 'Governor Maria Santos',
-    location: 'Frontier Command Station',
-    factionId: 'outer_colonies_coalition',
-    storyArc: 'oc_frontier_hero_arc',
-    nextQuest: 'oc_independence_movement',
-    priority: 7,
+    giver: 'Captain Red Morgan',
+    location: 'Hidden Asteroid Base',
+    factionId: 'pirates',
+    storyArc: 'pirates_crew_arc',
+    nextQuest: 'pirates_territory_war',
+    priority: 6,
     repeatable: false,
     dialogue: {
-      intro: "These colonies are the future of humanity, but they need support to survive. Are you willing to help?",
-      success: "You've saved lives today. The frontier remembers its friends.",
-      failure: "Without these supplies, people will suffer. The colonies can't afford unreliable partners."
+      intro: "The void is harsh, but the Void Reapers take care of their own. Prove you can take what you need to survive.",
+      success: "You've got steel in your spine and fire in your belly. Welcome to the Reapers, pirate.",
+      failure: "The galaxy is full of weaklings who can't do what's necessary. Maybe you're one of them."
     }
   }
 ];
@@ -333,72 +355,59 @@ export const OUTER_COLONIES_STORYLINES: StoryQuest[] = [
  */
 export const ENHANCED_STORY_ARCS: StoryArc[] = [
   {
-    id: 'tg_apprentice_arc',
-    title: 'Guild Apprenticeship',
-    description: 'Your journey from independent pilot to Guild member',
-    factionId: 'traders_guild',
-    quests: ['tg_first_contract', 'tg_market_analysis'],
+    id: 'raijin_specialist_arc',
+    title: 'Defense Technology Specialist',
+    description: 'Your journey from weapon tester to military technology expert',
+    factionId: 'raijin-corp',
+    quests: ['raijin_first_contract', 'raijin_defense_systems'],
     status: 'available',
     prerequisites: {
-      reputation: { 'traders_guild': 0 }
+      reputation: { 'raijin-corp': 0 }
     },
     rewards: {
       credits: 5000,
-      unlocks: ['guild_membership_card']
+      unlocks: ['raijin_specialist_certification']
     }
   },
 
   {
-    id: 'tg_corporate_warfare_arc',
-    title: 'Economic Warfare',
-    description: 'Navigate the dangerous world of corporate espionage and economic manipulation',
-    factionId: 'traders_guild',
-    quests: ['tg_corporate_sabotage', 'tg_economic_warfare', 'tg_market_manipulation'],
+    id: 'raijin_warfare_arc',
+    title: 'Corporate Military Operations',
+    description: 'Navigate the dangerous world of corporate espionage and military contracts',
+    factionId: 'raijin-corp',
+    quests: ['raijin_corporate_warfare', 'raijin_fleet_command'],
     status: 'locked',
     prerequisites: {
-      completedArcs: ['tg_apprentice_arc'],
-      reputation: { 'traders_guild': 35 }
+      completedArcs: ['raijin_specialist_arc'],
+      reputation: { 'raijin-corp': 45 }
     },
     rewards: {
       credits: 25000,
-      unlocks: ['corporate_warfare_specialist']
+      unlocks: ['corporate_military_specialist']
     }
   },
 
   {
-    id: 'sf_officer_arc',
-    title: 'Security Officer Training',
-    description: 'Learn the fundamentals of law enforcement and peacekeeping',
-    factionId: 'security_forces',
-    quests: ['sf_patrol_duty', 'sf_pirate_investigation'],
+    id: 'ind_resistance_arc',
+    title: 'Freedom Fighter',
+    description: 'Fight for independence against corporate domination',
+    factionId: 'independents',
+    quests: ['ind_freedom_fighter', 'ind_pirate_alliance'],
     status: 'available',
     prerequisites: {
-      reputation: { 'security_forces': 0 }
+      reputation: { 'independents': 0 }
     }
   },
 
   {
-    id: 'sf_detective_arc',
-    title: 'Criminal Investigation Unit',
-    description: 'Join the elite detective unit tackling organized crime',
-    factionId: 'security_forces',
-    quests: ['sf_organized_crime', 'sf_corruption_investigation'],
-    status: 'locked',
-    prerequisites: {
-      completedArcs: ['sf_officer_arc'],
-      reputation: { 'security_forces': 40 }
-    }
-  },
-
-  {
-    id: 'oc_frontier_hero_arc',
-    title: 'Hero of the Frontier',
-    description: 'Become a legendary figure in the outer colonies',
-    factionId: 'outer_colonies_coalition',
-    quests: ['oc_supply_run', 'oc_independence_movement', 'oc_colonial_defense'],
+    id: 'pirates_crew_arc',
+    title: 'Void Reapers Initiation',
+    description: 'Rise through the ranks of the galaxy\'s most notorious pirate organization',
+    factionId: 'pirates',
+    quests: ['pirates_initiation', 'pirates_territory_war'],
     status: 'available',
     prerequisites: {
-      reputation: { 'outer_colonies_coalition': 0 }
+      reputation: { 'pirates': 0 }
     }
   }
 ];
@@ -409,57 +418,24 @@ export const ENHANCED_STORY_ARCS: StoryArc[] = [
  */
 export const ENHANCED_FACTION_STORYLINES: FactionStoryline[] = [
   {
-    factionId: 'traders_guild',
-    title: 'Rise of the Merchant Prince',
-    description: 'Ascend from humble trader to economic powerbroker in the galaxy\'s most influential commercial organization.',
+    factionId: 'raijin-corp',
+    title: 'Master of War Technology',
+    description: 'Rise from weapon tester to military technology expert in the galaxy\'s premier defense corporation.',
     arcs: [
       {
-        id: 'tg_apprentice_arc',
-        title: 'Guild Apprenticeship',
-        description: 'Learn the fundamentals of Guild operations and prove your worth',
-        factionId: 'traders_guild',
-        quests: ['tg_first_contract', 'tg_market_analysis'],
+        id: 'raijin_specialist_arc',
+        title: 'Defense Technology Specialist',
+        description: 'Learn advanced weapon systems and prove your combat capabilities',
+        factionId: 'raijin-corp',
+        quests: ['raijin_first_contract', 'raijin_defense_systems'],
         status: 'available'
       },
       {
-        id: 'tg_corporate_warfare_arc',
-        title: 'Economic Warfare Specialist',
-        description: 'Master the art of corporate espionage and market manipulation',
-        factionId: 'traders_guild',
-        quests: ['tg_corporate_sabotage', 'tg_economic_warfare'],
-        status: 'locked'
-      }
-    ],
-    reputation_requirements: {
-      friendly: 25,
-      allied: 60,
-      trusted: 120
-    },
-    unlocks: {
-      allied: ['guild_executive_privileges', 'advanced_trading_algorithms'],
-      trusted: ['merchant_prince_title', 'economic_warfare_authorization']
-    }
-  },
-
-  {
-    factionId: 'security_forces',
-    title: 'Guardian of Order',
-    description: 'Rise through the ranks of Security Forces to become a defender of galactic law and order.',
-    arcs: [
-      {
-        id: 'sf_officer_arc',
-        title: 'Officer Training',
-        description: 'Complete basic training and prove yourself as a capable officer',
-        factionId: 'security_forces',
-        quests: ['sf_patrol_duty', 'sf_pirate_investigation'],
-        status: 'available'
-      },
-      {
-        id: 'sf_detective_arc',
-        title: 'Detective Division',
-        description: 'Join the elite detective unit and tackle organized crime',
-        factionId: 'security_forces',
-        quests: ['sf_organized_crime'],
+        id: 'raijin_warfare_arc',
+        title: 'Corporate Military Operations',
+        description: 'Master corporate espionage and advanced military tactics',
+        factionId: 'raijin-corp',
+        quests: ['raijin_corporate_warfare'],
         status: 'locked'
       }
     ],
@@ -469,22 +445,47 @@ export const ENHANCED_FACTION_STORYLINES: FactionStoryline[] = [
       trusted: 150
     },
     unlocks: {
-      allied: ['security_clearance_level_2', 'advanced_weapons_permit'],
-      trusted: ['commander_rank', 'classified_mission_access']
+      allied: ['advanced_energy_weapons', 'defense_contractor_privileges'],
+      trusted: ['military_technology_access', 'corporate_fleet_command']
     }
   },
 
   {
-    factionId: 'outer_colonies_coalition',
-    title: 'Champion of the Frontier',
-    description: 'Become a legendary hero of the outer colonies and champion of frontier independence.',
+    factionId: 'independents',
+    title: 'Champion of Freedom',
+    description: 'Fight for independence and self-governance against corporate domination.',
     arcs: [
       {
-        id: 'oc_frontier_hero_arc',
-        title: 'Hero of the Frontier',
-        description: 'Help the colonies survive and thrive in the dangerous frontier',
-        factionId: 'outer_colonies_coalition',
-        quests: ['oc_supply_run', 'oc_independence_movement'],
+        id: 'ind_resistance_arc',
+        title: 'Freedom Fighter',
+        description: 'Defend independent systems from corporate takeover',
+        factionId: 'independents',
+        quests: ['ind_freedom_fighter', 'ind_pirate_alliance'],
+        status: 'available'
+      }
+    ],
+    reputation_requirements: {
+      friendly: 25,
+      allied: 60,
+      trusted: 120
+    },
+    unlocks: {
+      allied: ['freedom_fighter_status', 'independent_fleet_access'],
+      trusted: ['resistance_leader_title', 'liberation_authority']
+    }
+  },
+
+  {
+    factionId: 'pirates',
+    title: 'Void Reapers Captain',
+    description: 'Rise through the ranks of the galaxy\'s most notorious pirate organization.',
+    arcs: [
+      {
+        id: 'pirates_crew_arc',
+        title: 'Pirate Initiation',
+        description: 'Prove your worth through acts of piracy and loyalty to the Fleet',
+        factionId: 'pirates',
+        quests: ['pirates_initiation'],
         status: 'available'
       }
     ],
@@ -494,8 +495,8 @@ export const ENHANCED_FACTION_STORYLINES: FactionStoryline[] = [
       trusted: 100
     },
     unlocks: {
-      allied: ['frontier_hero_status', 'emergency_priority_contracts'],
-      trusted: ['colonial_governor_influence', 'independence_leader_title']
+      allied: ['black_market_dealer_license', 'pirate_fleet_support'],
+      trusted: ['void_reaper_captain', 'underworld_influence']
     }
   }
 ];

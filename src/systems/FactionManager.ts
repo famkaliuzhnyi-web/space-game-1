@@ -57,89 +57,184 @@ export class FactionManager {
   }
 
   /**
-   * Initialize default factions with enhanced properties
+   * Initialize megacorporation factions with enhanced properties
    */
   private initializeFactions(): void {
     const defaultFactions: FactionInfo[] = [
+      // Military Megacorporations
       {
-        id: 'traders-guild',
-        name: 'Traders Guild',
-        description: 'Independent merchant organization focused on free trade',
-        homeStation: 'trade-hub-1',
-        colors: { primary: '#4ade80', secondary: '#22c55e' },
-        influence: 7,
-        relationships: {
-          'industrial-consortium': 0.3,
-          'security-forces': -0.2,
-          'outer-colonies': 0.2,
-          'earth-federation': 0.1
-        },
-        territories: ['trade-hub-1', 'merchant-outpost-2'],
-        specializations: ['Commerce', 'Trade Routes', 'Market Intelligence']
-      },
-      {
-        id: 'earth-federation',
-        name: 'Earth Federation',
-        description: 'Government alliance representing Earth and core worlds',
-        homeStation: 'earth-station',
-        colors: { primary: '#3b82f6', secondary: '#1d4ed8' },
-        influence: 9,
-        relationships: {
-          'outer-colonies': -0.5,
-          'security-forces': 0.4,
-          'industrial-consortium': 0.2,
-          'traders-guild': 0.1
-        },
-        territories: ['earth-station', 'core-world-1', 'core-world-2'],
-        specializations: ['Governance', 'Military', 'Infrastructure']
-      },
-      {
-        id: 'outer-colonies',
-        name: 'Outer Colonies Coalition',
-        description: 'Alliance of frontier settlements seeking independence',
-        homeStation: 'frontier-station-1',
-        colors: { primary: '#f59e0b', secondary: '#d97706' },
-        influence: 6,
-        relationships: {
-          'earth-federation': -0.5,
-          'traders-guild': 0.2,
-          'industrial-consortium': -0.3,
-          'security-forces': -0.4
-        },
-        territories: ['frontier-station-1', 'frontier-station-2', 'mining-outpost-3'],
-        specializations: ['Mining', 'Frontier Survival', 'Independence Movement']
-      },
-      {
-        id: 'industrial-consortium',
-        name: 'Industrial Consortium',
-        description: 'Corporate alliance controlling heavy industry and mining',
-        homeStation: 'industrial-complex-1',
-        colors: { primary: '#8b5cf6', secondary: '#7c3aed' },
+        id: 'raijin-corp',
+        name: 'Raijin Corporation',
+        description: 'Military technology and defense systems specialist',
+        homeStation: 'titan-industrial-complex',
+        colors: { primary: '#fbbf24', secondary: '#f59e0b' },
         influence: 8,
         relationships: {
-          'traders-guild': 0.3,
-          'outer-colonies': -0.3,
-          'earth-federation': 0.2,
-          'security-forces': 0.1
+          'bellator-corp': 0.7,
+          'tekton-corp': 0.4,
+          'pirates': -0.8,
+          'independents': -0.1
         },
-        territories: ['industrial-complex-1', 'manufacturing-hub-1', 'research-station-alpha'],
-        specializations: ['Manufacturing', 'Research & Development', 'Heavy Industry']
+        territories: ['titan-industrial-complex', 'wolf359-defense-grid', 'proxima-defense-station'],
+        specializations: ['Energy Weapons', 'Defense Systems', 'Military Technology']
       },
       {
-        id: 'security-forces',
-        name: 'Security Forces',
-        description: 'Joint law enforcement and defense organization',
-        homeStation: 'security-outpost-1',
-        colors: { primary: '#ef4444', secondary: '#dc2626' },
+        id: 'bellator-corp',
+        name: 'Bellator Corporation',
+        description: 'Elite military contracting and combat services',
+        homeStation: 'ares-station-mars',
+        colors: { primary: '#dc2626', secondary: '#b91c1c' },
         influence: 7,
         relationships: {
-          'earth-federation': 0.4,
-          'traders-guild': -0.2,
-          'outer-colonies': -0.4,
-          'industrial-consortium': 0.1
+          'raijin-corp': 0.7,
+          'pirates': -0.9,
+          'mercenaries': 0.2,
+          'independents': 0.1
         },
-        territories: ['security-outpost-1', 'patrol-base-beta'],
-        specializations: ['Law Enforcement', 'Defense', 'Intelligence']
+        territories: ['ares-station-mars', 'luna-military-academy', 'titan-training-base'],
+        specializations: ['Military Forces', 'Security Services', 'Combat Training']
+      },
+      // Food/Bio Megacorporations
+      {
+        id: 'sigmatower-corp',
+        name: 'SigmaTower Corporation',
+        description: 'Biotechnology and life sciences innovation leader',
+        homeStation: 'sigmatower-arcology-europa',
+        colors: { primary: '#10b981', secondary: '#059669' },
+        influence: 8,
+        relationships: {
+          'botanica-corp': 0.6,
+          'independents': 0.3,
+          'pirates': -0.2
+        },
+        territories: ['sigmatower-arcology-europa', 'titan-biolab', 'medical-research-stations'],
+        specializations: ['Genetic Engineering', 'Pharmaceuticals', 'Biomedical Technology']
+      },
+      {
+        id: 'botanica-corp',
+        name: 'Botanica Corporation',
+        description: 'Agriculture and ecosystem engineering specialists',
+        homeStation: 'gaia-station-l4',
+        colors: { primary: '#22c55e', secondary: '#16a34a' },
+        influence: 6,
+        relationships: {
+          'sigmatower-corp': 0.6,
+          'independents': 0.4,
+          'pirates': -0.1
+        },
+        territories: ['gaia-station-l4', 'new-eden-terraforming', 'agricultural-complexes'],
+        specializations: ['Terraforming', 'Sustainable Agriculture', 'Ecosystem Engineering']
+      },
+      // Engineering Megacorporations
+      {
+        id: 'yugen-corp',
+        name: 'Yūgen Corporation',
+        description: 'Advanced engineering and quantum technology pioneers',
+        homeStation: 'heisenberg-complex-sigma7',
+        colors: { primary: '#8b5cf6', secondary: '#7c3aed' },
+        influence: 9,
+        relationships: {
+          'tekton-corp': 0.8,
+          'raijin-corp': 0.3,
+          'independents': 0.2
+        },
+        territories: ['heisenberg-complex-sigma7', 'quantum-labs-asteroid-belt', 'deep-space-research'],
+        specializations: ['Quantum Technology', 'Theoretical Engineering', 'Precision Manufacturing']
+      },
+      {
+        id: 'tekton-corp',
+        name: 'Tekton Corporation',
+        description: 'Heavy construction and infrastructure development',
+        homeStation: 'forge-prime-ceres',
+        colors: { primary: '#6b7280', secondary: '#4b5563' },
+        influence: 8,
+        relationships: {
+          'yugen-corp': 0.8,
+          'raijin-corp': 0.4,
+          'volans-corp': 0.3,
+          'independents': 0.2
+        },
+        territories: ['forge-prime-ceres', 'jupiter-great-ring', 'construction-yards'],
+        specializations: ['Mega Construction', 'Heavy Manufacturing', 'Infrastructure']
+      },
+      // Delivery/Logistics Megacorporations
+      {
+        id: 'shiden-corp',
+        name: 'Shiden Corporation',
+        description: 'Express delivery and high-speed logistics',
+        homeStation: 'velocity-station-earth-mars',
+        colors: { primary: '#a855f7', secondary: '#9333ea' },
+        influence: 7,
+        relationships: {
+          'volans-corp': 0.6,
+          'independents': 0.3,
+          'pirates': -0.3
+        },
+        territories: ['velocity-station-earth-mars', 'lightning-network-hubs', 'express-relay-stations'],
+        specializations: ['Express Delivery', 'Emergency Logistics', 'Racing Technology']
+      },
+      {
+        id: 'volans-corp',
+        name: 'Volans Corporation',
+        description: 'Comprehensive transportation and bulk logistics',
+        homeStation: 'transit-central-luna',
+        colors: { primary: '#0891b2', secondary: '#0e7490' },
+        influence: 8,
+        relationships: {
+          'shiden-corp': 0.6,
+          'tekton-corp': 0.3,
+          'independents': 0.2
+        },
+        territories: ['transit-central-luna', 'cargo-terminals', 'trade-route-hubs'],
+        specializations: ['Bulk Transport', 'Logistics Management', 'Trade Routes']
+      },
+      // Non-Corporate Factions
+      {
+        id: 'independents',
+        name: 'Independent Systems',
+        description: 'Alliance of free colonies and independent settlements',
+        homeStation: 'freedom-station',
+        colors: { primary: '#84cc16', secondary: '#65a30d' },
+        influence: 5,
+        relationships: {
+          'pirates': -0.5,
+          'mercenaries': 0.1,
+          'botanica-corp': 0.4,
+          'sigmatower-corp': 0.3
+        },
+        territories: ['freedom-station', 'independent-colonies', 'free-ports'],
+        specializations: ['Self-Governance', 'Local Trade', 'Cultural Diversity']
+      },
+      {
+        id: 'pirates',
+        name: 'Void Reapers',
+        description: 'Organized piracy and black market operations',
+        homeStation: 'hidden-base',
+        colors: { primary: '#be185d', secondary: '#9d174d' },
+        influence: 4,
+        relationships: {
+          'raijin-corp': -0.8,
+          'bellator-corp': -0.9,
+          'independents': -0.5,
+          'mercenaries': -0.2
+        },
+        territories: ['hidden-bases', 'lawless-systems', 'asteroid-hideouts'],
+        specializations: ['Raiding Operations', 'Black Market', 'Salvage Operations']
+      },
+      {
+        id: 'mercenaries',
+        name: 'Mercenary Guilds',
+        description: 'Independent military contractors and freelance warriors',
+        homeStation: 'mercenary-haven',
+        colors: { primary: '#d97706', secondary: '#b45309' },
+        influence: 5,
+        relationships: {
+          'bellator-corp': 0.2,
+          'independents': 0.1,
+          'pirates': -0.2
+        },
+        territories: ['mercenary-haven', 'contract-stations', 'warrior-outposts'],
+        specializations: ['Contract Military', 'Freelance Security', 'Tactical Services']
       }
     ];
 
