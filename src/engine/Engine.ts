@@ -422,8 +422,14 @@ export class Engine implements GameEngine {
     // Scene manager should already be connected and ship should be set
     // This method can be used for any additional scene setup
     const playerShip = this.systemManager.getPlayerManager().getShip();
-    if (playerShip) {
+    if (playerShip && playerShip.location.coordinates) {
       console.log('Player ship initialized in scene:', playerShip.name, 'at', playerShip.location.coordinates);
+      
+      // Initialize camera to center on player ship for proper coordinate mapping
+      const shipPos = playerShip.location.coordinates;
+      this.camera.x = shipPos.x;
+      this.camera.y = shipPos.y;
+      console.log(`Camera initialized to follow ship at (${this.camera.x}, ${this.camera.y})`);
     }
   }
 

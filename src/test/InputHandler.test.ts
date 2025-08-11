@@ -208,7 +208,8 @@ describe('InputHandler', () => {
       const clickHandler = vi.fn();
       inputHandler.setClickHandler(clickHandler);
       
-      mockInputManager.addClickEvent(0, { x: 100, y: 100 });
+      // Use right-click (button 2) as left-clicks should not move ships by design
+      mockInputManager.addClickEvent(2, { x: 100, y: 100 });
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       expect(clickHandler).toHaveBeenCalled();
@@ -232,11 +233,12 @@ describe('InputHandler', () => {
       camera.y = 50;
       camera.zoom = 2;
       
-      mockInputManager.addClickEvent(0, { x: 400, y: 300 }); // Center of canvas
+      // Use right-click (button 2) as left-clicks should not move ships by design
+      mockInputManager.addClickEvent(2, { x: 400, y: 300 }); // Center of canvas
       
       inputHandler.updateCamera(camera, 0.1, mockInputManager as any);
       
-      expect(clickHandler).toHaveBeenCalledWith(50, 50, 'move'); // Should match camera position with action
+      expect(clickHandler).toHaveBeenCalledWith(50, 50, 'command'); // Right-click should use 'command' action
     });
   });
 
