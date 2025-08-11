@@ -3,6 +3,14 @@ Space Game is a fully functional space trading RPG built with React 18, TypeScri
 
 **Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
+## 📚 Additional Documentation Resources
+
+**For comprehensive workflows and troubleshooting:**
+- **[Development Workflows](../DEVELOPMENT_WORKFLOWS.md)** - Step-by-step procedures for common tasks
+- **[Troubleshooting Guide](../TROUBLESHOOTING.md)** - Quick solutions for common issues  
+- **[Repository README](../README.md)** - Project overview and architecture
+- **[Issue Templates](./ISSUE_TEMPLATES/README.md)** - Structured development task templates
+
 ## Working Effectively
 
 ### Bootstrap, Build, and Test the Repository
