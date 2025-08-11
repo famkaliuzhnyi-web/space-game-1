@@ -4,6 +4,24 @@
 
 Built with React, TypeScript, and Vite - featuring a fully playable space trading RPG with character progression, combat, diplomacy, and economic strategy.
 
+## 🤖 Quick Start for AI Agents
+
+**Essential First Steps:**
+```bash
+npm install           # ~1 minute installation
+npm run build        # ~3 seconds (NEVER cancel, timeout: 60s)
+npm run test         # ~14 seconds (expected: 954/954 pass, 2 AudioContext fails normal)
+```
+
+**Key Resources:**
+- 📋 [**Copilot Instructions**](./.github/copilot-instructions.md) - **Complete agent guide with validation steps**
+- ⚡ [**Quick Reference Card**](./AGENT_QUICK_REFERENCE.md) - **Essential commands and expectations**
+- 🏗️ [**Repository Structure**](#-technical-details) - Architecture and file organization
+- 🧪 [**Testing Guide**](#-development--testing) - Test framework and validation
+- 🔧 [**Development Workflows**](./DEVELOPMENT_WORKFLOWS.md) - Common tasks and procedures
+
+**Critical Validation:** Always test character creation flow after changes!
+
 ## 🎮 Game Features
 
 ### Core Gameplay Systems
@@ -44,12 +62,19 @@ npm run test    # Run comprehensive test suite
 
 ## 📖 Documentation 
 
+### 🤖 For AI Agents & Developers
+- **[🤖 Copilot Instructions](./.github/copilot-instructions.md)** - **START HERE** - Complete guide for AI agents
+- **[📋 Game Design Docs](./docs/README.md)** - Complete design specification  
+- **[🔧 Issue Templates](./.github/ISSUE_TEMPLATES/README.md)** - Structured development tasks
+
 ### Quick Reference
 - **[🎮 Complete Feature List](./FEATURES_IMPLEMENTED.md)** - All implemented systems and features
 - **[📊 Progress Tracker](./PROGRESS_TRACKER.md)** - Current implementation status  
-- **[📋 Game Design Docs](./docs/README.md)** - Complete design specification
 
 ### Development & Planning  
+- **[🛠️ Development Workflows](./DEVELOPMENT_WORKFLOWS.md)** - Step-by-step development procedures
+- **[🚨 Troubleshooting Guide](./TROUBLESHOOTING.md)** - Quick solutions for common issues
+- **[🤖 Agent Task Template](./.github/ISSUE_TEMPLATES/agent-task-template.md)** - Structured development tasks
 - **[Execution Plan](./EXECUTION_PLAN.md)** - Master development roadmap
 - **[Agent Instructions](./AGENT_INSTRUCTIONS.md)** - Guidelines for GitHub agents
 - **[Task Templates](./TASK_TEMPLATES.md)** - Development task templates
