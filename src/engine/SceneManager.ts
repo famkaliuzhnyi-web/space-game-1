@@ -69,6 +69,15 @@ export class SceneManager {
   }
 
   /**
+   * Set position update callback for continuous collision detection
+   */
+  setPositionUpdateCallback(callback: (position: { x: number; y: number; z: number }) => void): void {
+    if (this.shipActor) {
+      this.shipActor.setPositionUpdateCallback(callback);
+    }
+  }
+
+  /**
    * Stop ship movement
    */
   stopShipMovement(): void {

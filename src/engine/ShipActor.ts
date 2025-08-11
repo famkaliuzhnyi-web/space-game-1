@@ -16,6 +16,7 @@ export class ShipActor extends Actor {
   private rotationSpeed: number;
   private thrustParticles: Array<{ x: number; y: number; life: number }> = [];
   private movementCompleteCallback?: () => void;
+  private positionUpdateCallback?: (position: Vector3D) => void;
   private useTextures: boolean = true;
 
   constructor(ship: Ship) {
@@ -92,6 +93,13 @@ export class ShipActor extends Actor {
    */
   setMovementCompleteCallback(callback: () => void): void {
     this.movementCompleteCallback = callback;
+  }
+
+  /**
+   * Set callback to be called whenever ship position updates during movement
+   */
+  setPositionUpdateCallback(callback: (position: Vector3D) => void): void {
+    this.positionUpdateCallback = callback;
   }
 
   /**
@@ -194,6 +202,11 @@ export class ShipActor extends Actor {
     
     // Update ship's location in the ship object
     this.ship.location.coordinates = createLayeredPosition(this.position.x, this.position.y, 'ship');
+    
+    // Notify position update callback for collision detection
+    if (this.positionUpdateCallback) {
+      this.positionUpdateCallback(this.position);
+    }
     
     // Update thrust particles
     this.updateThrustParticles(deltaTime);
