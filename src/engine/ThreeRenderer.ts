@@ -5,6 +5,9 @@ import { Station, Planet } from '../types/world';
 import { Camera } from './Renderer';
 import { StarGenerator } from './StarGenerator';
 import { SceneManager } from './SceneManager';
+import { hubModelGenerator } from './HubModelGenerator';
+import { Ship } from '../types/player';
+import { getHubTemplate } from '../data/shipHubs';
 
 /**
  * Three.js-based 3D renderer for the space game engine.
@@ -189,6 +192,174 @@ export class ThreeRenderer {
     shipGroup.add(rightWing);
 
     return shipGroup;
+  }
+
+  /**
+   * Create a 3D player ship using hub-based construction
+   */
+  createHubBasedShip(ship: Ship, position?: { x: number; y: number; z: number }): THREE.Object3D {
+    const shipGroup = new THREE.Group();
+    shipGroup.name = `player-ship-${ship.id}`;
+    
+    // Position the ship
+    if (position) {
+      shipGroup.position.set(position.x, position.y, position.z);
+    }
+
+    // If ship has hub design, render it as hub composition
+    if (ship.hubDesign && ship.hubDesign.hubs.length > 0) {
+      const hubs = ship.hubDesign.hubs.map(hubPlacement => {
+        const template = getHubTemplate(hubPlacement.templateId);
+        if (!template) return null;
+
+        return {
+          template,
+          position: {
+            x: hubPlacement.position.x,
+            y: hubPlacement.position.y, 
+            z: hubPlacement.position.z
+          }
+        };
+      }).filter(hub => hub !== null) as Array<{ template: any; position: { x: number; y: number; z: number } }>;
+
+      // Generate hub-based ship model
+      const hubShipModel = hubModelGenerator.generateShipFromHubDesign(hubs, {
+        scale: 1.0,
+        opacity: 0.9
+      });
+      
+      shipGroup.add(hubShipModel);
+      
+      // Add ship name label
+      this.addShipNameLabel(shipGroup, ship.name);
+      
+    } else {
+      // Fallback to traditional ship model based on class
+      const fallbackShip = this.createFallbackShip(ship);
+      shipGroup.add(fallbackShip);
+    }
+
+    return shipGroup;
+  }
+
+  /**
+   * Create a fallback ship model for ships without hub designs
+   */
+  private createFallbackShip(ship: Ship): THREE.Object3D {
+    const shipGroup = new THREE.Group();
+    
+    // Create a ship based on class category
+    const category = ship.class.category;
+    let hullColor = 0x4a90e2; // Default blue
+    let shipScale = 1.0;
+    
+    switch (category) {
+      case 'courier':
+        hullColor = 0x00ff88; // Green for fast couriers
+        shipScale = 0.7;
+        break;
+      case 'transport':
+        hullColor = 0x4a90e2; // Blue for transports
+        shipScale = 1.0;
+        break;
+      case 'heavy-freight':
+        hullColor = 0x8844ff; // Purple for heavy freight
+        shipScale = 1.5;
+        break;
+      case 'combat':
+        hullColor = 0xff4444; // Red for combat ships
+        shipScale = 0.9;
+        break;
+      case 'explorer':
+        hullColor = 0xffaa00; // Orange for explorers
+        shipScale = 0.8;
+        break;
+    }
+
+    // Main hull
+    const hullGeometry = new THREE.ConeGeometry(2 * shipScale, 8 * shipScale, 6);
+    const hullMaterial = new THREE.MeshLambertMaterial({ color: hullColor });
+    const hullMesh = new THREE.Mesh(hullGeometry, hullMaterial);
+    hullMesh.rotation.z = Math.PI / 2; // Point forward
+    shipGroup.add(hullMesh);
+
+    // Engine glow
+    const engineGeometry = new THREE.SphereGeometry(1 * shipScale, 6, 6);
+    const engineMaterial = new THREE.MeshBasicMaterial({
+      color: 0x00aaff,
+      transparent: true,
+      opacity: 0.6
+    });
+    const engineMesh = new THREE.Mesh(engineGeometry, engineMaterial);
+    engineMesh.position.set(-6 * shipScale, 0, 0);
+    shipGroup.add(engineMesh);
+
+    this.addShipNameLabel(shipGroup, ship.name);
+
+    return shipGroup;
+  }
+
+  /**
+   * Add a name label to a ship
+   */
+  private addShipNameLabel(shipGroup: THREE.Object3D, shipName: string): void {
+    // Create a simple text label using a plane with canvas texture
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    canvas.width = 256;
+    canvas.height = 64;
+    
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    context.fillStyle = '#ffffff';
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(shipName, canvas.width / 2, canvas.height / 2);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    const labelMaterial = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+
+    const labelGeometry = new THREE.PlaneGeometry(8, 2);
+    const labelMesh = new THREE.Mesh(labelGeometry, labelMaterial);
+    labelMesh.position.set(0, 0, 6);
+    labelMesh.name = 'ship-label';
+    
+    shipGroup.add(labelMesh);
+  }
+
+  /**
+   * Update or add a player ship to the scene
+   */
+  updatePlayerShip(ship: Ship): void {
+    const existingShip = this.spaceObjects.get(`player-ship-${ship.id}`);
+    
+    if (existingShip) {
+      // Remove existing ship
+      this.scene.remove(existingShip);
+      this.spaceObjects.delete(`player-ship-${ship.id}`);
+    }
+
+    // Create new hub-based ship
+    const shipPosition = ship.location.coordinates ? {
+      x: ship.location.coordinates.x,
+      y: ship.location.coordinates.y,
+      z: 0
+    } : { x: 0, y: 0, z: 0 };
+
+    const shipObject = this.createHubBasedShip(ship, shipPosition);
+    this.scene.add(shipObject);
+    this.spaceObjects.set(`player-ship-${ship.id}`, shipObject);
+    
+    // Store ship data for interactions
+    this.objectDataMap.set(`player-ship-${ship.id}`, ship);
   }
 
   /**
@@ -661,6 +832,12 @@ export class ThreeRenderer {
    * Create a 3D ship representation
    */
   private createShip(_x: number, _y: number, ship: any): THREE.Object3D {
+    // If this is a proper Ship object with hub design, use hub-based rendering
+    if (ship && typeof ship === 'object' && 'hubDesign' in ship && ship.hubDesign) {
+      return this.createHubBasedShip(ship as Ship);
+    }
+
+    // Fallback to traditional ship model
     const shipGroup = new THREE.Group();
 
     // Main hull
