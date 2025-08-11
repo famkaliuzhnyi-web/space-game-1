@@ -1,123 +1,151 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, test, expect } from 'vitest';
+import { ShipActor } from '../engine/ShipActor';
+import { Ship } from '../types/player';
+import { Vector3D } from '../types';
+import { createLayeredPosition } from '../utils/coordinates';
 
-/**
- * Test to verify ship rotation behavior fix for 3D coordinate system
- * This test demonstrates the actual coordinate system mismatch issue
- */
-describe('Ship Rotation 3D Coordinate Fix', () => {
-  
-  describe('Coordinate System Analysis', () => {
-    it('should demonstrate the Y-axis flip mismatch issue', () => {
-      // Simulate 2D canvas movement scenarios
-      const movements2D = [
-        { name: 'RIGHT', target: { x: 100, y: 0 }, expectedRotation: 0 },
-        { name: 'DOWN', target: { x: 0, y: 100 }, expectedRotation: Math.PI/2 },
-        { name: 'LEFT', target: { x: -100, y: 0 }, expectedRotation: Math.PI },
-        { name: 'UP', target: { x: 0, y: -100 }, expectedRotation: -Math.PI/2 },
-        { name: 'DIAGONAL_DOWN_RIGHT', target: { x: 100, y: 100 }, expectedRotation: Math.PI/4 }
-      ];
-
-      movements2D.forEach(movement => {
-        // Calculate 2D rotation angle (this is correct)
-        const angle2D = Math.atan2(movement.target.y, movement.target.x);
-        expect(angle2D).toBeCloseTo(movement.expectedRotation, 3);
-
-        // Simulate 3D position conversion (Y-flip)
-        const position3D = {
-          x: movement.target.x,
-          y: -movement.target.y,  // Y coordinate is flipped in 3D
-          z: 0
-        };
-
-        // Current buggy behavior: rotation is applied directly
-        const currentRotationIn3D = angle2D;
-
-        // For movements that involve Y-axis, this causes mismatch
-        if (movement.name === 'DOWN') {
-          // Ship moves down in 2D (y: +100), rotates π/2 to face down
-          // In 3D, position becomes (0, -100) but rotation stays π/2
-          // This makes ship face UP in 3D coordinate system (wrong!)
-          expect(position3D.y).toBe(-100); // Position correctly flipped
-          expect(currentRotationIn3D).toBe(Math.PI/2); // Rotation not adjusted
-          
-          // The ship is now at (0, -100) facing UP (π/2) instead of DOWN
-          // This is the bug: ship moves down but faces up
-        }
-
-        if (movement.name === 'UP') {
-          // Ship moves up in 2D (y: -100), rotates -π/2 to face up  
-          // In 3D, position becomes (0, 100) but rotation stays -π/2
-          // This makes ship face DOWN in 3D coordinate system (wrong!)
-          expect(position3D.y).toBe(100); // Position correctly flipped
-          expect(currentRotationIn3D).toBe(-Math.PI/2); // Rotation not adjusted
-          
-          // The ship is now at (0, 100) facing DOWN (-π/2) instead of UP
-          // This is the bug: ship moves up but faces down
-        }
-      });
-    });
-
-    it('should verify the fix maintains proper directional relationship', () => {
-      const testCases = [
-        { name: 'RIGHT', angle: 0, expectedCorrected: 0 },
-        { name: 'DOWN', angle: Math.PI/2, expectedCorrected: -Math.PI/2 },
-        { name: 'LEFT', angle: Math.PI, expectedCorrected: -Math.PI },
-        { name: 'UP', angle: -Math.PI/2, expectedCorrected: Math.PI/2 }
-      ];
-
-      testCases.forEach(testCase => {
-        // Current buggy behavior
-        const currentBuggyRotation = testCase.angle;
-        
-        // Corrected rotation (negate to account for Y-flip)
-        const correctedRotation = -testCase.angle;
-        
-        expect(correctedRotation).toBeCloseTo(testCase.expectedCorrected, 3);
-
-        console.log(`${testCase.name}:`);
-        console.log(`  Original 2D rotation: ${testCase.angle.toFixed(3)} rad`);
-        console.log(`  Current (buggy) 3D rotation: ${currentBuggyRotation.toFixed(3)} rad`);
-        console.log(`  Corrected 3D rotation: ${correctedRotation.toFixed(3)} rad`);
-      });
-    });
-
-    it('should handle edge cases and diagonal movements correctly', () => {
-      const diagonalCases = [
-        { target: { x: 100, y: 100 }, name: 'DOWN_RIGHT' },
-        { target: { x: -100, y: 100 }, name: 'DOWN_LEFT' },
-        { target: { x: -100, y: -100 }, name: 'UP_LEFT' },
-        { target: { x: 100, y: -100 }, name: 'UP_RIGHT' }
-      ];
-
-      diagonalCases.forEach(testCase => {
-        const angle2D = Math.atan2(testCase.target.y, testCase.target.x);
-        const correctedAngle3D = -angle2D;
-
-        // Verify that corrected angle maintains proper quadrant
-        const originalQuadrant = getQuadrant(testCase.target.x, testCase.target.y);
-        const correctedMovement = {
-          x: testCase.target.x,
-          y: -testCase.target.y // Y-flip for 3D
-        };
-        const correctedQuadrant = getQuadrant(correctedMovement.x, correctedMovement.y);
-
-        // After correction, ship should face the direction it's moving in 3D space
-        const expectedAngleIn3D = Math.atan2(correctedMovement.y, correctedMovement.x);
-        
-        expect(correctedAngle3D).toBeCloseTo(expectedAngleIn3D, 3);
-        console.log(`${testCase.name}: Original angle ${angle2D.toFixed(3)} -> Corrected ${correctedAngle3D.toFixed(3)}`);
-      });
-    });
-  });
+// Mock ship data for testing
+const createTestShip = (id: string, x: number = 0, y: number = 0): Ship => ({
+  id,
+  name: `Test Ship ${id}`,
+  class: {
+    id: 'test-class',
+    name: 'Test Class',
+    category: 'courier',
+    description: 'Test ship class',
+    baseSpeed: 100,
+    baseCargo: 50,
+    baseShielding: 10,
+    baseFuel: 100,
+    baseMass: 1000,
+    equipment: {
+      requiredWeapons: 0,
+      requiredShields: 0,
+      requiredEngines: 1,
+      maxWeapons: 2,
+      maxShields: 2,
+      maxEngines: 2,
+      maxUtilities: 2,
+      maxCargo: 100
+    }
+  },
+  equipment: {
+    weapons: [],
+    shields: [],
+    engines: [{
+      id: 'test-engine',
+      name: 'Test Engine',
+      type: 'engine',
+      description: 'Test engine',
+      mass: 100,
+      value: 1000,
+      effects: { speed: 0 },
+      category: 'propulsion'
+    }],
+    utilities: []
+  },
+  cargo: [],
+  location: {
+    sector: 'test',
+    system: 'test',
+    isInTransit: false,
+    coordinates: createLayeredPosition(x, y, 'ship')
+  },
+  fuel: 100,
+  condition: { hull: 100, systems: 100 },
+  reputation: {}
 });
 
-/**
- * Helper function to determine quadrant
- */
-function getQuadrant(x: number, y: number): string {
-  if (x >= 0 && y >= 0) return 'Q1';
-  if (x < 0 && y >= 0) return 'Q2'; 
-  if (x < 0 && y < 0) return 'Q3';
-  if (x >= 0 && y < 0) return 'Q4';
-  return 'ORIGIN';
-}
+describe('Ship Rotation Behavior Fix', () => {
+  test('should verify the fix prevents "flies side forward" issue', () => {
+    console.log('\n=== Testing Ship Movement Behavior (After Fix) ===');
+    
+    // Create a ship at origin facing right (default rotation = 0)
+    const ship = createTestShip('test-ship', 0, 0);
+    const shipActor = new ShipActor(ship);
+    
+    // Slow down rotation to make the behavior visible
+    (shipActor as any).rotationSpeed = 1.0; // Much slower rotation (1 rad/sec instead of 30)
+    
+    // Set the ship to face a specific direction first (upward, -90 degrees)
+    // This creates a situation where the ship faces one way but needs to move another
+    (shipActor as any).rotation = -Math.PI / 2; // Force ship to face UP
+    
+    // Set target to the LEFT (180 degrees from current facing direction)
+    // After fix: ship should move LEFT toward target, not UP in facing direction
+    const target: Vector3D = { x: -100, y: 0, z: 50 }; // Go LEFT while facing UP
+    shipActor.setTarget(target);
+    
+    console.log('Initial ship position:', { x: shipActor.position.x, y: shipActor.position.y });
+    console.log('Initial ship rotation (degrees):', (shipActor.rotation * 180 / Math.PI).toFixed(1));
+    console.log('Target position:', target);
+    
+    // Simulate movement for several frames
+    const deltaTime = 1/60; // 60 FPS
+    const frames = 10;
+    let perfectMovementCount = 0;
+    
+    for (let frame = 0; frame < frames; frame++) {
+      const oldPosition = { x: shipActor.position.x, y: shipActor.position.y };
+      const oldRotation = shipActor.rotation;
+      
+      shipActor.update(deltaTime);
+      
+      const newPosition = { x: shipActor.position.x, y: shipActor.position.y };
+      const newRotation = shipActor.rotation;
+      
+      // Calculate movement direction
+      const movementX = newPosition.x - oldPosition.x;
+      const movementY = newPosition.y - oldPosition.y;
+      
+      if (Math.abs(movementX) > 0.01 || Math.abs(movementY) > 0.01) {
+        const movementAngle = Math.atan2(movementY, movementX);
+        
+        // Calculate angle to target
+        const targetAngle = Math.atan2(target.y - oldPosition.y, target.x - oldPosition.x);
+        
+        const rotationDegrees = (newRotation * 180 / Math.PI).toFixed(1);
+        const movementDegrees = (movementAngle * 180 / Math.PI).toFixed(1);
+        const targetDegrees = (targetAngle * 180 / Math.PI).toFixed(1);
+        
+        console.log(`Frame ${frame + 1}:`);
+        console.log(`  Position: (${newPosition.x.toFixed(1)}, ${newPosition.y.toFixed(1)})`);
+        console.log(`  Ship facing: ${rotationDegrees}°`);
+        console.log(`  Movement direction: ${movementDegrees}°`);
+        console.log(`  Target direction: ${targetDegrees}°`);
+        
+        // Check if ship is moving toward target (should be close to perfect after fix)
+        const targetAngleDiff = Math.abs(movementAngle - targetAngle);
+        const normalizedTargetDiff = Math.min(targetAngleDiff, 2 * Math.PI - targetAngleDiff);
+        
+        // After fix, movement should align with target direction (within 5 degrees)
+        if (normalizedTargetDiff < Math.PI / 36) { // Within 5 degrees of target
+          console.log(`  ✅ Ship is moving perfectly toward target (${(normalizedTargetDiff * 180 / Math.PI).toFixed(1)}° difference)`);
+          perfectMovementCount++;
+        } else {
+          console.log(`  ⚠️ Ship movement is slightly off target by ${(normalizedTargetDiff * 180 / Math.PI).toFixed(1)}°`);
+        }
+        
+        console.log();
+      }
+      
+      // Stop if we've reached the target
+      if (!shipActor.isMoving()) {
+        console.log('Ship reached target.');
+        break;
+      }
+    }
+    
+    // After fix, ship should move directly toward target most/all of the time
+    console.log(`Perfect movement frames: ${perfectMovementCount} out of ${frames}`);
+    expect(perfectMovementCount).toBeGreaterThan(5); // Most frames should have perfect movement
+    console.log('✅ Fix verified: Ship now moves toward target instead of in facing direction');
+  });
+
+  test('should demonstrate expected behavior after fix', () => {
+    console.log('\n=== Expected Behavior After Fix ===');
+    console.log('The ship should always move toward the target, even while rotating.');
+    console.log('Movement direction should match target direction, not facing direction.');
+    console.log('This provides better arcade-style space game controls.');
+  });
+});
