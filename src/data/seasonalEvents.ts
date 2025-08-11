@@ -14,7 +14,7 @@ import { SeasonalContent } from '../types/quests';
 export const TRADE_FESTIVALS: SeasonalContent[] = [
   {
     id: 'galactic_commerce_week',
-    name: 'Galactic Commerce Week',
+    name: 'Megacorp Commerce Week',
     description: 'The annual celebration of interstellar trade brings unprecedented opportunities for profit and networking across the galaxy.',
     startMonth: 4,
     endMonth: 4, // April only
@@ -36,8 +36,9 @@ export const TRADE_FESTIVALS: SeasonalContent[] = [
         experience: 750,
         items: ['golden_trader_badge', 'commerce_week_medal', 'exclusive_trade_algorithms'],
         reputation: {
-          'traders_guild': 50,
-          'industrial_consortium': 25
+          'volans-corp': 30,
+          'shiden-corp': 25,
+          'tekton-corp': 20
         }
       }
     ],

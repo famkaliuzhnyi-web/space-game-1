@@ -11,7 +11,7 @@ import { CharacterManager } from './CharacterManager';
 import { PlayerManager } from './PlayerManager';
 import { TimeManager } from './TimeManager';
 import { EventManager } from './EventManager';
-import { TRADERS_GUILD_STORYLINES, SECURITY_FORCES_STORYLINES, OUTER_COLONIES_STORYLINES, ENHANCED_STORY_ARCS, ENHANCED_FACTION_STORYLINES } from '../data/factionStorylines';
+import { RAIJIN_CORP_STORYLINES, INDEPENDENT_SYSTEMS_STORYLINES, PIRATES_STORYLINES, ENHANCED_STORY_ARCS, ENHANCED_FACTION_STORYLINES } from '../data/factionStorylines';
 import { ENHANCED_SEASONAL_EVENTS } from '../data/seasonalEvents';
 import { ENDGAME_QUESTS } from '../data/endgameContent';
 
@@ -753,7 +753,7 @@ export class QuestManager {
     this.addQuest({
       id: 'si_manufacturing_opportunity',
       title: 'Manufacturing Partnership',
-      description: 'Stellar Industries is looking for reliable contractors to help with their manufacturing operations.',
+      description: 'Tekton Corporation is looking for reliable contractors to help with their manufacturing operations.',
       type: 'faction_storyline',
       category: 'trading',
       status: 'available',
@@ -764,7 +764,7 @@ export class QuestManager {
       objectives: [
         {
           id: 'deliver_raw_materials',
-          description: 'Deliver raw materials to Stellar Industries manufacturing facility',
+          description: 'Deliver raw materials to Tekton Corporation manufacturing facility',
           type: 'deliver',
           quantity: 3,
           completed: false
@@ -786,7 +786,7 @@ export class QuestManager {
     this.addQuest({
       id: 'si_mining_expansion',
       title: 'Asteroid Mining Expansion',
-      description: 'Help Stellar Industries establish a new mining operation in a contested asteroid belt.',
+      description: 'Help Tekton Corporation establish a new mining operation in a contested asteroid belt.',
       type: 'faction_storyline',
       category: 'exploration',
       status: 'locked',
@@ -827,7 +827,7 @@ export class QuestManager {
     this.addQuest({
       id: 'si_corporate_espionage',
       title: 'Industrial Secrets',
-      description: 'Stellar Industries suspects corporate espionage. Help them investigate and protect their operations.',
+      description: 'Tekton Corporation suspects corporate espionage. Help them investigate and protect their operations.',
       type: 'faction_storyline',
       category: 'investigation',
       status: 'locked',
@@ -869,7 +869,7 @@ export class QuestManager {
     this.addQuest({
       id: 'qd_research_delivery',
       title: 'Classified Research Transport',
-      description: 'Quantum Dynamics needs a discrete pilot to transport sensitive research materials.',
+      description: 'Yūgen Corporation needs a discrete pilot to transport sensitive research materials.',
       type: 'faction_storyline',
       category: 'trading',
       status: 'available',
@@ -902,7 +902,7 @@ export class QuestManager {
     this.addQuest({
       id: 'qd_prototype_testing',
       title: 'Advanced Weapon Systems Test',
-      description: 'Test Quantum Dynamics\' latest weapon prototypes in controlled combat scenarios.',
+      description: 'Test Raijin Corporation latest weapon prototypes in controlled combat scenarios.',
       type: 'faction_storyline',
       category: 'combat',
       status: 'locked',
@@ -943,7 +943,7 @@ export class QuestManager {
     this.addQuest({
       id: 'qd_ai_conspiracy',
       title: 'The AI Conspiracy',
-      description: 'Uncover a conspiracy involving rogue AI development within Quantum Dynamics.',
+      description: 'Uncover a conspiracy involving rogue AI development within Yūgen Corporation.',
       type: 'faction_storyline',
       category: 'investigation',
       status: 'locked',
@@ -1075,7 +1075,7 @@ export class QuestManager {
     this.addQuest({
       id: 'nx_information_network',
       title: 'Network Integration',
-      description: 'Help Nexus Corporation expand their information network by installing communication relays.',
+      description: 'Help Shiden Corporation expand their delivery network by installing communication relays.',
       type: 'faction_storyline',
       category: 'exploration',
       status: 'available',
@@ -1149,7 +1149,7 @@ export class QuestManager {
     this.addQuest({
       id: 'nx_corporate_takeover',
       title: 'Information War',
-      description: 'Use information warfare to help Nexus Corporation execute a hostile takeover of a rival company.',
+      description: 'Use logistics expertise to help Volans Corporation execute efficient supply chain operations.',
       type: 'faction_storyline',
       category: 'investigation',
       status: 'locked',
@@ -1700,7 +1700,7 @@ export class QuestManager {
     const stellarIndustriesStoryline: FactionStoryline = {
       factionId: 'stellar_industries',
       title: 'Industrial Dominion',
-      description: 'Rise through the ranks of Stellar Industries and help them achieve industrial supremacy.',
+      description: 'Rise through the ranks of Tekton Corporation and help them achieve industrial supremacy.',
       arcs: [
         {
           id: 'si_industrial_rise',
@@ -1724,7 +1724,7 @@ export class QuestManager {
     const quantumDynamicsStoryline: FactionStoryline = {
       factionId: 'quantum_dynamics',
       title: 'Technological Supremacy',
-      description: 'Advance cutting-edge technology and uncover dark secrets in Quantum Dynamics\' research programs.',
+      description: 'Advance cutting-edge technology and uncover dark secrets in Yūgen Corporation research programs.',
       arcs: [
         {
           id: 'qd_tech_advancement',
@@ -1748,7 +1748,7 @@ export class QuestManager {
     const nexusCorpStoryline: FactionStoryline = {
       factionId: 'nexus_corp',
       title: 'Information War',
-      description: 'Master the art of information warfare and help Nexus Corporation dominate through data control.',
+      description: 'Master the art of logistics management and help Shiden Corporation dominate through fast delivery.',
       arcs: [
         {
           id: 'nx_data_dominance',
@@ -1969,18 +1969,18 @@ export class QuestManager {
    * Load enhanced faction storylines from data files
    */
   private loadEnhancedFactionStorylines(): void {
-    // Load Traders Guild storylines
-    TRADERS_GUILD_STORYLINES.forEach(quest => {
+    // Load Raijin Corporation storylines
+    RAIJIN_CORP_STORYLINES.forEach(quest => {
       this.questDefinitions.set(quest.id, quest);
     });
 
-    // Load Security Forces storylines
-    SECURITY_FORCES_STORYLINES.forEach(quest => {
+    // Load Independent Systems storylines
+    INDEPENDENT_SYSTEMS_STORYLINES.forEach(quest => {
       this.questDefinitions.set(quest.id, quest);
     });
 
-    // Load Outer Colonies storylines
-    OUTER_COLONIES_STORYLINES.forEach(quest => {
+    // Load Pirates storylines
+    PIRATES_STORYLINES.forEach(quest => {
       this.questDefinitions.set(quest.id, quest);
     });
 
@@ -2000,9 +2000,9 @@ export class QuestManager {
     });
 
     console.log('Enhanced faction storylines loaded', {
-      tradersGuildQuests: TRADERS_GUILD_STORYLINES.length,
-      securityForcesQuests: SECURITY_FORCES_STORYLINES.length,
-      outerColoniesQuests: OUTER_COLONIES_STORYLINES.length,
+      raijinCorpQuests: RAIJIN_CORP_STORYLINES.length,
+      independentSystemsQuests: INDEPENDENT_SYSTEMS_STORYLINES.length,
+      piratesQuests: PIRATES_STORYLINES.length,
       storyArcs: ENHANCED_STORY_ARCS.length,
       factionStorylines: ENHANCED_FACTION_STORYLINES.length,
       endgameQuests: ENDGAME_QUESTS.length
