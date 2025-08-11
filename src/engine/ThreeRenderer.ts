@@ -162,7 +162,7 @@ export class ThreeRenderer {
 
     const hullMaterial = new THREE.MeshLambertMaterial({ color: hullColor });
     const hullMesh = new THREE.Mesh(hullGeometry, hullMaterial);
-    hullMesh.rotateZ(Math.PI / 2); // Point to the right
+    hullMesh.rotation.z = Math.PI / 2; // Point to the right
     shipGroup.add(hullMesh);
 
     // Engine glow
