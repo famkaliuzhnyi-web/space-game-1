@@ -39,11 +39,13 @@ interface GameCanvasProps {
   height?: number;
   className?: string;
   debugMode?: boolean;
+  debugShipConstructor?: boolean;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   className = '',
-  debugMode = false
+  debugMode = false,
+  debugShipConstructor = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -234,14 +236,18 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         const existingCharacter = characterManager.getCharacter();
         
         if (!existingCharacter) {
-          if (debugMode) {
+          if (debugMode || debugShipConstructor) {
             // In debug mode, automatically create a debug character and apply debug scenario
             console.log('Debug mode: Creating debug character automatically');
             
+            // Choose appropriate scenario based on debug type
+            const scenarioId = debugShipConstructor ? 'debug-ship-constructor' : 'debug-tester';
+            const characterBackground = debugShipConstructor ? 'engineer' : 'merchant';
+            
             // Create a debug character
             const debugCharacter = characterManager.createCharacter(
-              'debug-tester-1',
-              'Debug Tester',
+              `${scenarioId}-1`,
+              debugShipConstructor ? 'Ship Constructor' : 'Debug Tester',
               { 
                 gender: 'other', 
                 age: 30, 
@@ -250,18 +256,30 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 hairColor: 'brown',
                 eyeColor: 'blue'
               },
-              'merchant',
-              { strength: 15, intelligence: 15, charisma: 15, endurance: 15, dexterity: 15, perception: 15 },
-              { trading: 10, negotiation: 10, economics: 10, engineering: 10, piloting: 10, navigation: 10, combat: 10, tactics: 10, security: 10, networking: 10, investigation: 10, leadership: 10 }
+              characterBackground,
+              debugShipConstructor 
+                ? { strength: 10, intelligence: 20, charisma: 10, endurance: 10, dexterity: 15, perception: 15 }
+                : { strength: 15, intelligence: 15, charisma: 15, endurance: 15, dexterity: 15, perception: 15 },
+              debugShipConstructor
+                ? { trading: 15, negotiation: 10, economics: 15, engineering: 25, piloting: 20, navigation: 15, combat: 10, tactics: 10, security: 10, networking: 10, investigation: 10, leadership: 15 }
+                : { trading: 10, negotiation: 10, economics: 10, engineering: 10, piloting: 10, navigation: 10, combat: 10, tactics: 10, security: 10, networking: 10, investigation: 10, leadership: 10 }
             );
             
             if (debugCharacter) {
-              // Apply debug scenario
-              const debugScenario = STARTING_SCENARIOS['debug-tester'];
+              // Apply appropriate debug scenario
+              const debugScenario = STARTING_SCENARIOS[scenarioId];
               if (debugScenario) {
                 setSelectedScenario(debugScenario);
                 handleScenarioApplication(debugScenario);
                 console.log('Debug scenario applied:', debugScenario.name);
+                
+                // If debug ship constructor mode, automatically open ship management panel
+                if (debugShipConstructor) {
+                  setTimeout(() => {
+                    console.log('Auto-opening ship management panel for ship constructor debug mode');
+                    setActivePanelWithTransition('ship');
+                  }, 1000); // Give time for scenario to be applied
+                }
               }
             }
           } else {

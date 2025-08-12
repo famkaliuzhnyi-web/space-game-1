@@ -345,6 +345,97 @@ export const STARTING_SCENARIOS: Record<string, StartingScenario> = {
     }
   },
 
+  'debug-ship-constructor': {
+    id: 'debug-ship-constructor',
+    name: 'Debug Ship Constructor',
+    description: 'Debug mode focused on ship construction and design testing. Provides unlimited resources specifically for testing ship building systems.',
+    difficulty: 'easy',
+    category: 'balanced',
+    
+    characterSetup: {
+      backgroundId: 'engineer',
+      attributeModifiers: {
+        strength: 10,
+        intelligence: 20, // High intelligence for engineering
+        charisma: 10,
+        endurance: 10,
+        dexterity: 15,
+        perception: 15
+      },
+      skillModifiers: {
+        engineering: 25, // Maximum engineering skills
+        piloting: 20,
+        navigation: 15,
+        trading: 15,
+        negotiation: 10,
+        economics: 15,
+        combat: 10,
+        tactics: 10,
+        security: 10,
+        networking: 10,
+        investigation: 10,
+        leadership: 15
+      },
+      startingEquipment: ['engineering-tool', 'salvage-scanner'] // Use existing equipment IDs
+    },
+    
+    startingCredits: 2000000, // Extra credits for ship construction
+    startingLocation: 'corporate-headquarters', // Use existing station ID
+    
+    startingShip: {
+      shipClassId: 'heavy-freighter', // Use existing ship class
+      shipName: 'Design Workshop',
+      condition: {
+        hull: 1.0,
+        engines: 1.0,
+        cargo: 1.0,
+        shields: 1.0
+      },
+      equipment: {
+        engines: ['premium-engine'],
+        cargo: ['automated-cargo-system', 'expanded-cargo-hold'],
+        shields: ['premium-shields'],
+        weapons: [],
+        utility: ['advanced-nav-computer', 'deep-scanner', 'tractor-beam']
+      }
+    },
+    
+    factionStandings: {
+      'traders-guild': 60,
+      'security-forces': 25,
+      'outer-colonies': 40,
+      'corporate-alliance': 75, // Excellent standing with corporate alliance
+      'pilots-federation': 50,
+      'salvagers-union': 60
+    },
+    
+    startingCargo: {
+      'high-tech-components': 200,
+      'scrap-metal': 300,
+      'salvaged-components': 100
+    },
+    
+    startingQuests: [], // Remove non-existent quest IDs for now
+    
+    backgroundStory: 'You are a master ship constructor with access to unlimited resources and cutting-edge facilities. Your mission is to test and validate all ship construction systems and create innovative designs.',
+    objectives: [
+      'Test all ship construction systems and components',
+      'Design and build ships using the 3D constructor',
+      'Validate hull integrity and performance systems',
+      'Test advanced ship configurations and layouts',
+      'Experiment with exotic materials and technologies'
+    ],
+    
+    specialConditions: {
+      tradeDiscountPercent: 50, // Massive discounts on construction materials
+      contractPayoutModifier: 2.0,
+      reputationGainModifier: 2.0,
+      hasContracts: {
+        contractIds: [] // Remove non-existent contract IDs for now
+      }
+    }
+  },
+
   'debug-tester': {
     id: 'debug-tester',
     name: 'Debug Tester',
