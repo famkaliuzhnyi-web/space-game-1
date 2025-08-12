@@ -1,0 +1,30 @@
+.tetris-panel {
+  font-family: 'Courier New', monospace;
+}
+
+.tetris-panel button:hover {
+  transform: scale(1.05);
+  transition: transform 0.1s ease;
+}
+
+.tetris-panel button:active {
+  transform: scale(0.95);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tetris-panel {
+    padding: 10px !important;
+    margin: 10px !important;
+  }
+  
+  .tetris-content {
+    flex-direction: column;
+  }
+  
+  .tetris-stats-header {
+    flex-direction: column !important;
+    gap: 10px;
+    text-align: center;
+  }
+}

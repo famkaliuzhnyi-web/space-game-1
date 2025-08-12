@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, Suspense, startTransition } from 'react';
 import { Engine } from '../../engine';
-import { NavigationPanel, SectorsMapPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, InfoPanel } from '../ui';
+import { NavigationPanel, SectorsMapPanel, MarketPanel, ContractPanel, TradeRoutePanel, EquipmentMarketPanel, FactionReputationPanel, CharacterSheet, EventsPanel, InfoPanel, TetrisPanel } from '../ui';
 // Import heavy panels lazily
 import { 
   FleetManagementPanel, 
@@ -52,7 +52,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | 'tetris' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showScenarioSelection, setShowScenarioSelection] = useState(false);
@@ -117,6 +117,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showInvestment = activePanel === 'investment';
 
   const showQuests = activePanel === 'quests';
+  const showTetris = activePanel === 'tetris';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -1146,6 +1147,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Quests {(questCounts.active > 0 || questCounts.available > 0) && `(${questCounts.active}/${questCounts.available})`}
         </button>
+        <button 
+          onClick={() => setActivePanel(activePanel === 'tetris' ? null : 'tetris')} 
+          style={{ 
+            backgroundColor: activePanel === 'tetris' ? '#4a90e2' : undefined,
+            border: '2px solid #ff6b00'
+          }}
+          title="Tetris Game (T)"
+        >
+          🎮 Tetris
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -1406,6 +1417,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             onClose={closePanelWithTransition}
           />
         </Suspense>
+      )}
+
+      {/* Tetris Panel */}
+      {showTetris && (
+        <TetrisPanel
+          onClose={() => setActivePanel(null)}
+        />
       )}
 
       {/* NPC Panel */}
