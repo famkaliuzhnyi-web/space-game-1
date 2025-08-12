@@ -1,15 +1,21 @@
 import { useState } from 'react'
 import './App.css'
 import GameApp from './GameApp'
+import TicTacToe from './components/ui/TicTacToe'
 
 function App() {
   const [score, setScore] = useState(0)
   const [showGame, setShowGame] = useState(false)
+  const [showTicTacToe, setShowTicTacToe] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
   const [debugShipConstructor, setDebugShipConstructor] = useState(false)
 
   if (showGame) {
     return <GameApp debugMode={debugMode} debugShipConstructor={debugShipConstructor} />;
+  }
+
+  if (showTicTacToe) {
+    return <TicTacToe onBack={() => setShowTicTacToe(false)} />;
   }
 
   return (
@@ -22,6 +28,10 @@ function App() {
       <div className="space-actions">
         <button className="space-button primary" onClick={() => { setDebugMode(false); setDebugShipConstructor(false); setShowGame(true); }}>
           🚀 Launch Game
+        </button>
+        <button className="space-button primary" onClick={() => setShowTicTacToe(true)} 
+                style={{ backgroundColor: '#e24a90', border: '2px solid #e85aa8' }}>
+          🎮 Play Tic-Tac-Toe
         </button>
         <button className="space-button debug" onClick={() => { setDebugMode(true); setDebugShipConstructor(false); setShowGame(true); }} 
                 style={{ backgroundColor: '#ff6b35', border: '2px solid #ff8c42' }}>
