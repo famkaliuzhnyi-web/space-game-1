@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Debug</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 20px; 
+            font-family: monospace; 
+            background: #1a1a1a; 
+            color: #ffffff; 
+        }
+        canvas { 
+            border: 1px solid #333; 
+            display: block; 
+            margin: 20px 0; 
+            background: #000;
+        }
+        .debug-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .info-panel {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .info-panel h3 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .coords {
+            font-family: monospace;
+            background: #222;
+            padding: 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Navigation System Debug</h1>
+    <p>Right-click on the canvas to move the ship. Left-click and drag to pan camera. Mouse wheel to zoom.</p>
+    
+    <canvas id="debugCanvas" width="800" height="600"></canvas>
+    
+    <div class="debug-info">
+        <div class="info-panel">
+            <h3>Mouse Info</h3>
+            <div>Screen: <span class="coords" id="screenCoords">0, 0</span></div>
+            <div>World: <span class="coords" id="worldCoords">0, 0</span></div>
+        </div>
+        <div class="info-panel">
+            <h3>Camera Info</h3>
+            <div>Position: <span class="coords" id="cameraPos">0, 0</span></div>
+            <div>Zoom: <span class="coords" id="cameraZoom">1.0</span></div>
+        </div>
+        <div class="info-panel">
+            <h3>Ship Info</h3>
+            <div>Position: <span class="coords" id="shipPos">0, 0</span></div>
+            <div>Target: <span class="coords" id="shipTarget">None</span></div>
+            <div>Rotation: <span class="coords" id="shipRotation">0</span></div>
+        </div>
+        <div class="info-panel">
+            <h3>Movement Info</h3>
+            <div>Distance: <span class="coords" id="distance">0</span></div>
+            <div>Speed: <span class="coords" id="speed">0</span></div>
+            <div>Status: <span class="coords" id="status">Idle</span></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('debugCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Camera system (matches game's InputHandler logic)
+        const camera = { x: 0, y: 0, zoom: 1.0 };
+        
+        // Ship system
+        const ship = {
+            x: 0, y: 0, 
+            targetX: null, targetY: null, 
+            rotation: 0,
+            velocity: { x: 0, y: 0 },
+            maxSpeed: 100,
+            rotationSpeed: 30,
+            isMoving: false
+        };
+        
+        // UI elements
+        const screenCoordsEl = document.getElementById('screenCoords');
+        const worldCoordsEl = document.getElementById('worldCoords');
+        const cameraPosEl = document.getElementById('cameraPos');
+        const cameraZoomEl = document.getElementById('cameraZoom');
+        const shipPosEl = document.getElementById('shipPos');
+        const shipTargetEl = document.getElementById('shipTarget');
+        const shipRotationEl = document.getElementById('shipRotation');
+        const distanceEl = document.getElementById('distance');
+        const speedEl = document.getElementById('speed');
+        const statusEl = document.getElementById('status');
+        
+        // Convert screen coordinates to world coordinates (matches InputHandler logic)
+        function screenToWorld(screenX, screenY) {
+            const ndcX = ((screenX - canvas.width / 2) / (canvas.width / 2));
+            const ndcY = ((screenY - canvas.height / 2) / (canvas.height / 2));
+            
+            const viewportWorldWidth = canvas.width / camera.zoom;
+            const viewportWorldHeight = canvas.height / camera.zoom;
+            
+            const worldX = camera.x + (ndcX * viewportWorldWidth / 2);
+            const worldY = camera.y + (ndcY * viewportWorldHeight / 2);
+            
+            return { x: worldX, y: worldY };
+        }
+        
+        // Convert world coordinates to screen coordinates for rendering
+        function worldToScreen(worldX, worldY) {
+            const relativeX = (worldX - camera.x) * camera.zoom;
+            const relativeY = (worldY - camera.y) * camera.zoom;
+            
+            const screenX = canvas.width / 2 + relativeX;
+            const screenY = canvas.height / 2 + relativeY;
+            
+            return { x: screenX, y: screenY };
+        }
+        
+        // Angle normalization (matches coordinates.ts)
+        function normalizeAngle(angle) {
+            let normalized = ((angle % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
+            if (normalized > Math.PI) {
+                normalized -= 2 * Math.PI;
+            }
+            return normalized;
+        }
+        
+        // Calculate angle from one point to another
+        function angleToTarget(fromX, fromY, toX, toY) {
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            return Math.atan2(dy, dx);
+        }
+        
+        // Rotate towards target angle
+        function rotateTowards(currentAngle, targetAngle, maxChange) {
+            let diff = targetAngle - currentAngle;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            
+            const change = Math.sign(diff) * Math.min(Math.abs(diff), maxChange);
+            return normalizeAngle(currentAngle + change);
+        }
+        
+        // Update ship movement
+        function updateShip(deltaTime) {
+            if (ship.targetX === null || ship.targetY === null) {
+                ship.velocity.x = 0;
+                ship.velocity.y = 0;
+                ship.isMoving = false;
+                return;
+            }
+            
+            const dx = ship.targetX - ship.x;
+            const dy = ship.targetY - ship.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            const arrivalRadius = 5;
+            
+            if (distance <= arrivalRadius) {
+                // Arrived
+                ship.x = ship.targetX;
+                ship.y = ship.targetY;
+                ship.targetX = null;
+                ship.targetY = null;
+                ship.velocity.x = 0;
+                ship.velocity.y = 0;
+                ship.isMoving = false;
+                return;
+            }
+            
+            // Calculate target rotation
+            const targetRotation = angleToTarget(ship.x, ship.y, ship.targetX, ship.targetY);
+            
+            // Rotate towards target
+            const maxRotationChange = ship.rotationSpeed * deltaTime;
+            ship.rotation = rotateTowards(ship.rotation, targetRotation, maxRotationChange);
+            
+            // Move towards target
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+            
+            ship.velocity.x = dirX * ship.maxSpeed;
+            ship.velocity.y = dirY * ship.maxSpeed;
+            
+            ship.x += ship.velocity.x * deltaTime;
+            ship.y += ship.velocity.y * deltaTime;
+            ship.isMoving = true;
+        }
+        
+        // Render everything
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+            
+            for (let x = -1000; x <= 1000; x += gridSize) {
+                const screenPos = worldToScreen(x, 0);
+                if (screenPos.x >= 0 && screenPos.x <= canvas.width) {
+                    ctx.beginPath();
+                    ctx.moveTo(screenPos.x, 0);
+                    ctx.lineTo(screenPos.x, canvas.height);
+                    ctx.stroke();
+                }
+            }
+            
+            for (let y = -1000; y <= 1000; y += gridSize) {
+                const screenPos = worldToScreen(0, y);
+                if (screenPos.y >= 0 && screenPos.y <= canvas.height) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, screenPos.y);
+                    ctx.lineTo(canvas.width, screenPos.y);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw origin
+            const origin = worldToScreen(0, 0);
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(origin.x - 10, origin.y);
+            ctx.lineTo(origin.x + 10, origin.y);
+            ctx.moveTo(origin.x, origin.y - 10);
+            ctx.lineTo(origin.x, origin.y + 10);
+            ctx.stroke();
+            
+            // Draw ship
+            const shipScreen = worldToScreen(ship.x, ship.y);
+            
+            ctx.save();
+            ctx.translate(shipScreen.x, shipScreen.y);
+            ctx.rotate(ship.rotation);
+            
+            // Ship body
+            ctx.fillStyle = ship.isMoving ? '#4CAF50' : '#2196F3';
+            ctx.beginPath();
+            ctx.moveTo(15, 0);
+            ctx.lineTo(-8, -6);
+            ctx.lineTo(-8, 6);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Ship direction indicator
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(20, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            // Draw target if exists
+            if (ship.targetX !== null && ship.targetY !== null) {
+                const targetScreen = worldToScreen(ship.targetX, ship.targetY);
+                
+                ctx.strokeStyle = '#FF5722';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(targetScreen.x, targetScreen.y, 10, 0, 2 * Math.PI);
+                ctx.stroke();
+                
+                // Line to target
+                ctx.strokeStyle = '#FF5722';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(shipScreen.x, shipScreen.y);
+                ctx.lineTo(targetScreen.x, targetScreen.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+        
+        // Update debug info
+        function updateDebugInfo(mouseX, mouseY) {
+            const worldPos = screenToWorld(mouseX, mouseY);
+            
+            screenCoordsEl.textContent = `${mouseX}, ${mouseY}`;
+            worldCoordsEl.textContent = `${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)}`;
+            cameraPosEl.textContent = `${camera.x.toFixed(2)}, ${camera.y.toFixed(2)}`;
+            cameraZoomEl.textContent = camera.zoom.toFixed(2);
+            shipPosEl.textContent = `${ship.x.toFixed(2)}, ${ship.y.toFixed(2)}`;
+            
+            if (ship.targetX !== null) {
+                shipTargetEl.textContent = `${ship.targetX.toFixed(2)}, ${ship.targetY.toFixed(2)}`;
+                const dx = ship.targetX - ship.x;
+                const dy = ship.targetY - ship.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                distanceEl.textContent = distance.toFixed(2);
+            } else {
+                shipTargetEl.textContent = 'None';
+                distanceEl.textContent = '0';
+            }
+            
+            shipRotationEl.textContent = (ship.rotation * 180 / Math.PI).toFixed(1) + '°';
+            
+            const speed = Math.sqrt(ship.velocity.x * ship.velocity.x + ship.velocity.y * ship.velocity.y);
+            speedEl.textContent = speed.toFixed(2);
+            
+            statusEl.textContent = ship.isMoving ? 'Moving' : 'Idle';
+        }
+        
+        // Mouse tracking
+        let mouseX = 0, mouseY = 0;
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        
+        // Right click to move ship
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const worldPos = screenToWorld(mouseX, mouseY);
+            ship.targetX = worldPos.x;
+            ship.targetY = worldPos.y;
+            console.log(`Ship target set to: (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)})`);
+        });
+        
+        // Camera controls
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) { // Left click
+                isDragging = true;
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            
+            if (isDragging) {
+                const deltaX = mouseX - dragStartX;
+                const deltaY = mouseY - dragStartY;
+                
+                camera.x -= deltaX / camera.zoom;
+                camera.y -= deltaY / camera.zoom;
+                
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+            }
+        });
+        
+        // Zoom with mouse wheel
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomSpeed = 0.002;
+            const zoomChange = -e.deltaY * zoomSpeed;
+            const newZoom = Math.max(0.1, Math.min(3, camera.zoom + zoomChange));
+            
+            if (newZoom !== camera.zoom) {
+                // Zoom to cursor
+                const worldXBeforeZoom = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const worldYBeforeZoom = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                
+                camera.zoom = newZoom;
+                
+                const worldXAfterZoom = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
+                const worldYAfterZoom = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+                
+                camera.x += worldXBeforeZoom - worldXAfterZoom;
+                camera.y += worldYBeforeZoom - worldYAfterZoom;
+            }
+        });
+        
+        // Main loop
+        let lastTime = Date.now();
+        function gameLoop() {
+            const currentTime = Date.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            updateShip(deltaTime);
+            render();
+            updateDebugInfo(mouseX, mouseY);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+</body>
+</html>

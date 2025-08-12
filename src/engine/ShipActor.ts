@@ -112,7 +112,7 @@ export class ShipActor extends Actor {
   }
 
   /**
-   * Update ship movement with enhanced physics model for precision
+   * Update ship movement with simplified physics model
    * Each ship has turn speed and straight speed based on mass and engines
    * Acceleration to max speed always happens within 1 second
    */
@@ -124,24 +124,19 @@ export class ShipActor extends Actor {
       return;
     }
 
-    // Calculate direction and distance to target
+    // Calculate direction to target
     const dx = this.targetPosition.x - this.position.x;
     const dy = this.targetPosition.y - this.position.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Enhanced arrival radius for better precision
-    const arrivalRadius = 2.0; // Reduced from 5 for more precise positioning
+    // Simple arrival threshold 
+    const arrivalRadius = 5; 
     
     if (distance <= arrivalRadius) {
-      // Arrived at target - snap to exact position for precision
-      this.position.x = this.targetPosition.x;
-      this.position.y = this.targetPosition.y;
+      // Arrived at target
       this.velocity = { x: 0, y: 0 };
       this.targetPosition = null;
       this.ship.location.isInTransit = false;
-      
-      // Update ship's location to exact coordinates
-      this.ship.location.coordinates = createLayeredPosition(this.position.x, this.position.y, 'ship');
       
       // Call movement completion callback if set
       if (this.movementCompleteCallback) {
@@ -159,19 +154,18 @@ export class ShipActor extends Actor {
     const maxRotationChange = this.rotationSpeed * deltaTime;
     this.rotation = rotateTowards(this.rotation, targetRotation, maxRotationChange);
     
-    // Enhanced speed control based on distance with improved braking
+    // Simple speed control based on distance
     const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
     
-    // Calculate braking distance (physics-based: distance = velocity² / (2 × acceleration))
-    const brakingDistance = (currentSpeed * currentSpeed) / (2 * this.acceleration);
-    
-    // Target speed based on distance - start braking early enough to stop smoothly
+    // Target speed based on distance - start slowing down early enough to stop
     let targetSpeed = this.maxSpeed;
+    const brakingDistance = (this.maxSpeed * this.maxSpeed) / (2 * this.acceleration); // Physics: v²/(2a)
     
-    if (distance < brakingDistance * 2.5) {
-      // Enhanced braking calculation for smoother arrival
-      const brakingFactor = Math.max(0.05, distance / (brakingDistance * 2.5));
-      targetSpeed = this.maxSpeed * brakingFactor;
+    if (distance < brakingDistance) {
+      // Calculate the speed needed to stop exactly at the target
+      // Using: v = √(2*a*d) where v=speed, a=deceleration, d=distance
+      targetSpeed = Math.sqrt(2 * this.acceleration * Math.max(0, distance - arrivalRadius));
+      targetSpeed = Math.max(targetSpeed, this.maxSpeed * 0.1); // Minimum 10% of max speed
     }
     
     // Calculate movement direction - always move toward target for arcade-style gameplay
@@ -200,16 +194,6 @@ export class ShipActor extends Actor {
       // Maintain current speed in ship's facing direction
       this.velocity.x = shipDirectionX * currentSpeed;
       this.velocity.y = shipDirectionY * currentSpeed;
-    }
-    
-    // Prevent overshooting - limit movement per frame
-    const maxMovementThisFrame = Math.min(distance, this.maxSpeed * deltaTime);
-    const actualSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
-    
-    if (actualSpeed * deltaTime > maxMovementThisFrame) {
-      const limitFactor = maxMovementThisFrame / (actualSpeed * deltaTime);
-      this.velocity.x *= limitFactor;
-      this.velocity.y *= limitFactor;
     }
     
     // Apply velocity to position
