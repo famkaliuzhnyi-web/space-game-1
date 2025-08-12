@@ -6,9 +6,10 @@ function App() {
   const [score, setScore] = useState(0)
   const [showGame, setShowGame] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
+  const [debugShipConstructor, setDebugShipConstructor] = useState(false)
 
   if (showGame) {
-    return <GameApp debugMode={debugMode} />;
+    return <GameApp debugMode={debugMode} debugShipConstructor={debugShipConstructor} />;
   }
 
   return (
@@ -19,12 +20,16 @@ function App() {
       </div>
       
       <div className="space-actions">
-        <button className="space-button primary" onClick={() => { setDebugMode(false); setShowGame(true); }}>
+        <button className="space-button primary" onClick={() => { setDebugMode(false); setDebugShipConstructor(false); setShowGame(true); }}>
           🚀 Launch Game
         </button>
-        <button className="space-button debug" onClick={() => { setDebugMode(true); setShowGame(true); }} 
+        <button className="space-button debug" onClick={() => { setDebugMode(true); setDebugShipConstructor(false); setShowGame(true); }} 
                 style={{ backgroundColor: '#ff6b35', border: '2px solid #ff8c42' }}>
           🔧 Debug Start
+        </button>
+        <button className="space-button debug" onClick={() => { setDebugMode(false); setDebugShipConstructor(true); setShowGame(true); }} 
+                style={{ backgroundColor: '#35a7ff', border: '2px solid #42a7ff' }}>
+          🛠️ Debug Ship Constructor
         </button>
         <button className="space-button secondary" onClick={() => setScore((score) => score + 10)}>
           Collect Star ⭐ (Score: {score})
@@ -38,7 +43,8 @@ function App() {
       </p>
 
       <p className="space-debug-info" style={{ fontSize: '12px', color: '#888', marginTop: '10px' }}>
-        🔧 Debug Start: Skip character creation with maximum resources for testing
+        🔧 Debug Start: Skip character creation with maximum resources for testing<br/>
+        🛠️ Debug Ship Constructor: Load directly into ship construction interface
       </p>
       
       <p className="space-footer">
