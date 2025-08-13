@@ -16,9 +16,13 @@
     "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@types/qrcode": "^1.5.5",
     "@types/three": "^0.179.0",
+    "qrcode": "^1.5.4",
+    "qrcode-generator": "^2.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-qr-code": "^2.0.18",
     "three": "^0.179.1"
   },
   "devDependencies": {

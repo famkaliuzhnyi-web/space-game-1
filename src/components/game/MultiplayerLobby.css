@@ -1,0 +1,252 @@
+.multiplayer-lobby {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  color: white;
+  padding: 20px;
+}
+
+.lobby-menu,
+.hosting-lobby,
+.joining-lobby {
+  background: rgba(0, 20, 40, 0.9);
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.lobby-menu h1,
+.hosting-lobby h2,
+.joining-lobby h2 {
+  margin-bottom: 20px;
+  color: #4fc3f7;
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.host-btn,
+.join-btn,
+.start-game-btn,
+.join-submit-btn {
+  background: linear-gradient(45deg, #4fc3f7, #29b6f6);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.host-btn:hover,
+.join-btn:hover,
+.start-game-btn:hover,
+.join-submit-btn:hover {
+  background: linear-gradient(45deg, #29b6f6, #0288d1);
+  transform: translateY(-2px);
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.qr-code-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  margin: 30px 0;
+}
+
+.qr-code-container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.session-info {
+  text-align: center;
+}
+
+.token-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.session-token {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+  max-width: 300px;
+  display: inline-block;
+}
+
+.copy-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.copy-btn:hover {
+  background: #45a049;
+}
+
+.token-hint {
+  font-size: 12px;
+  color: #bbb;
+  margin-top: 10px;
+}
+
+.lobby-status {
+  margin: 20px 0;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.player-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 15px;
+  border-radius: 20px;
+  text-align: left;
+}
+
+.player-item.host {
+  background: linear-gradient(45deg, #ffd700, #ffed4a);
+  color: #333;
+}
+
+.lobby-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.waiting-message {
+  color: #ffb74d;
+  font-style: italic;
+}
+
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 30px 0;
+}
+
+.input-group {
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4fc3f7;
+}
+
+.token-input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.token-input:focus {
+  outline: none;
+  border-color: #4fc3f7;
+}
+
+.join-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.join-submit-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.connection-status {
+  margin: 15px 0;
+  font-size: 14px;
+}
+
+.status-connected {
+  color: #4caf50;
+}
+
+.status-connecting {
+  color: #ffb74d;
+}
+
+.status-disconnected {
+  color: #f44336;
+}
+
+@media (max-width: 600px) {
+  .multiplayer-lobby {
+    padding: 10px;
+  }
+
+  .lobby-menu,
+  .hosting-lobby,
+  .joining-lobby {
+    padding: 20px;
+  }
+
+  .qr-code-section {
+    flex-direction: column;
+  }
+
+  .token-container {
+    flex-direction: column;
+  }
+
+  .session-token {
+    max-width: 250px;
+  }
+}
