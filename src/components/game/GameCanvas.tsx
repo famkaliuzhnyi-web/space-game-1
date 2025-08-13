@@ -52,6 +52,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
@@ -139,6 +140,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     const initializeEngine = async () => {
       try {
         setIsLoading(true);
+        setLoadingTimeout(false);
         setEngineError(null);
 
         // Add a small delay to ensure canvas is properly mounted
@@ -155,16 +157,28 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           return;
         }
 
-        // Initialize the game engine
-        engineRef.current = new Engine(canvasRef.current);
-        
-        // Start the engine
-        engineRef.current.start();
-        setIsEngineRunning(true);
-        setIsLoading(false);
-        
-        // 3D mode is now always available and active
-        console.log('3D mode active:', engineRef.current.is3DAvailable());
+        // Set loading timeout detection (prevent infinite white screen)
+        const timeoutId = setTimeout(() => {
+          console.warn('Engine initialization timeout detected - potential white screen issue');
+          setLoadingTimeout(true);
+        }, 15000); // 15 second timeout
+
+        try {
+          // Initialize the game engine
+          engineRef.current = new Engine(canvasRef.current);
+          
+          // Start the engine
+          engineRef.current.start();
+          setIsEngineRunning(true);
+          setIsLoading(false);
+          clearTimeout(timeoutId);
+          
+          // 3D mode is now always available and active
+          console.log('3D mode active:', engineRef.current.is3DAvailable());
+        } catch (engineInitError) {
+          clearTimeout(timeoutId);
+          throw engineInitError;
+        }
         
         // Expose engine to window object for e2e testing in debug mode
         if (debugMode) {
@@ -385,6 +399,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const retryInitialization = () => {
     setEngineError(null);
+    setLoadingTimeout(false);
     setIsLoading(true);
     // Force re-mount by changing a key or reloading
     window.location.reload();
@@ -944,7 +959,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   return (
     <div className={`game-canvas-container ${className}`} style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {/* Loading state */}
+      {/* Loading state with enhanced feedback */}
       {isLoading && (
         <div style={{
           position: 'absolute',
@@ -960,14 +975,52 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           alignItems: 'center',
           zIndex: 10
         }}>
-          <div>Loading Game Engine...</div>
-          <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7 }}>
-            Initializing canvas and graphics
+          <div style={{ marginBottom: '20px' }}>
+            {loadingTimeout ? '⚠️ Loading Taking Longer Than Expected' : 'Loading Game Engine...'}
           </div>
+          <div style={{ 
+            width: '40px', 
+            height: '40px', 
+            border: '4px solid #333', 
+            borderTop: '4px solid #4a90e2',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '15px'
+          }} />
+          <div style={{ marginTop: '10px', fontSize: '12px', opacity: 0.7, textAlign: 'center' }}>
+            {loadingTimeout ? (
+              <>
+                <div>If this screen persists, try refreshing the page.</div>
+                <div>Your browser may not support WebGL or 3D rendering.</div>
+                <button 
+                  onClick={retryInitialization}
+                  style={{
+                    marginTop: '15px',
+                    padding: '10px 20px',
+                    backgroundColor: '#4a90e2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔄 Retry Loading
+                </button>
+              </>
+            ) : (
+              'Initializing canvas and graphics'
+            )}
+          </div>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       )}
 
-      {/* Error state */}
+      {/* Error state with white screen prevention guidance */}
       {engineError && (
         <div style={{
           position: 'absolute',
@@ -988,8 +1041,24 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           <div style={{ marginBottom: '20px', color: '#ff6b6b' }}>
             ⚠️ Engine Error
           </div>
-          <div style={{ marginBottom: '20px', fontSize: '14px' }}>
+          <div style={{ marginBottom: '20px', fontSize: '14px', maxWidth: '500px' }}>
             {engineError}
+          </div>
+          <div style={{ marginBottom: '20px', fontSize: '12px', opacity: 0.8, maxWidth: '500px' }}>
+            {engineError.includes('3D renderer') || engineError.includes('WebGL') ? (
+              <>
+                <div>This error typically occurs when:</div>
+                <ul style={{ textAlign: 'left', margin: '10px 0' }}>
+                  <li>Your browser doesn't support WebGL</li>
+                  <li>Hardware acceleration is disabled</li>
+                  <li>Graphics drivers need updating</li>
+                  <li>Running in an unsupported environment</li>
+                </ul>
+                <div>Try updating your browser or enabling hardware acceleration in browser settings.</div>
+              </>
+            ) : (
+              'If you see a white screen after clicking retry, please refresh the entire page.'
+            )}
           </div>
           <button 
             onClick={retryInitialization}
