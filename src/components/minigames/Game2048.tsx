@@ -25,6 +25,10 @@ export const Game2048: React.FC<Game2048Props> = ({
   const [moves, setMoves] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  
+  // Touch gesture state
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
 
   // Initialize game with starting tiles
   useEffect(() => {
@@ -184,6 +188,50 @@ export const Game2048: React.FC<Game2048Props> = ({
     }
   }, [gameWon, gameOver, score, onGameEnd]);
 
+  // Touch/swipe gesture handling
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setTouchEnd(null);
+      setTouchStart({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setTouchEnd({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const deltaX = touchEnd.x - touchStart.x;
+    const deltaY = touchEnd.y - touchStart.y;
+    const minSwipeDistance = 50;
+
+    // Determine swipe direction
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      // Horizontal swipe
+      if (Math.abs(deltaX) > minSwipeDistance) {
+        move(deltaX > 0 ? 'right' : 'left');
+      }
+    } else {
+      // Vertical swipe
+      if (Math.abs(deltaY) > minSwipeDistance) {
+        move(deltaY > 0 ? 'down' : 'up');
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -209,73 +257,65 @@ export const Game2048: React.FC<Game2048Props> = ({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [move]);
 
-  // Get tile color based on value
-  const getTileColor = (value: number | null): string => {
-    if (!value) return 'var(--color-card-bg)';
-    
-    const colors: { [key: number]: string } = {
-      2: '#eee4da',
-      4: '#ede0c8',
-      8: '#f2b179',
-      16: '#f59563',
-      32: '#f67c5f',
-      64: '#f65e3b',
-      128: '#edcf72',
-      256: '#edcc61',
-      512: '#edc850',
-      1024: '#edc53f',
-      2048: '#edc22e',
-      4096: '#3c3a32',
-    };
-    
-    return colors[value] || '#3c3a32';
+  // Get tile color based on value - now using data attributes for CSS
+  const getTileColor = (_value: number | null): string => {
+    // Colors are now handled in CSS via data-value attributes
+    return 'rgba(238, 228, 218, 0.35)'; // Default empty cell color
   };
 
   const getTileTextColor = (value: number | null): string => {
-    if (!value) return 'transparent';
-    return value <= 4 ? '#776e65' : '#f9f6f2';
+    // Text colors are now handled in CSS via data-value attributes
+    return value ? '#776e65' : 'transparent';
   };
 
   return (
-    <div className="game-2048">
+    <div className="game-2048" role="application" aria-label="2048 puzzle game">
       <div className="game-2048-header">
-        <div className="game-2048-info">
-          <div>Target: {targetTile.toLocaleString()}</div>
-          <div>Score: {score.toLocaleString()}</div>
-          <div>Moves: {moves}/{moveLimit}</div>
+        <div className="game-2048-info" role="group" aria-label="Game statistics">
+          <div aria-label={`Target: ${targetTile.toLocaleString()}`}>Target: {targetTile.toLocaleString()}</div>
+          <div aria-label={`Score: ${score.toLocaleString()}`}>Score: {score.toLocaleString()}</div>
+          <div aria-label={`Moves: ${moves} out of ${moveLimit}`}>Moves: {moves}/{moveLimit}</div>
         </div>
-        {gameWon && <div className="game-status won">🎉 Success!</div>}
-        {gameOver && !gameWon && <div className="game-status lost">Game Over</div>}
+        {gameWon && <div className="game-status won" role="alert">🎉 Success!</div>}
+        {gameOver && !gameWon && <div className="game-status lost" role="alert">Game Over</div>}
       </div>
       
       <div 
         className="game-2048-grid" 
         style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        role="grid"
+        aria-label={`${gridSize}x${gridSize} game grid`}
       >
         {grid.map((row, i) =>
           row.map((cell, j) => (
             <div
               key={`${i}-${j}`}
               className="game-2048-cell"
+              data-value={cell || undefined}
+              role="gridcell"
+              aria-label={cell ? `Tile with value ${cell.toLocaleString()}` : 'Empty cell'}
               style={{
                 backgroundColor: getTileColor(cell),
                 color: getTileTextColor(cell),
               }}
             >
-              {cell || ''}
+              {cell ? cell.toLocaleString() : ''}
             </div>
           ))
         )}
       </div>
       
       <div className="game-2048-controls">
-        <p>Use arrow keys or buttons to move tiles</p>
+        <p>Use arrow keys, swipe gestures, or buttons to move tiles</p>
         <div className="control-buttons">
-          <button onClick={() => move('up')}>↑</button>
+          <button onClick={() => move('up')} aria-label="Move tiles up">↑</button>
           <div>
-            <button onClick={() => move('left')}>←</button>
-            <button onClick={() => move('down')}>↓</button>
-            <button onClick={() => move('right')}>→</button>
+            <button onClick={() => move('left')} aria-label="Move tiles left">←</button>
+            <button onClick={() => move('down')} aria-label="Move tiles down">↓</button>
+            <button onClick={() => move('right')} aria-label="Move tiles right">→</button>
           </div>
         </div>
       </div>
