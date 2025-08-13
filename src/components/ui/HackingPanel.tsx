@@ -46,6 +46,20 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
     </button>
   );
 
+  const getTargetTypeIcon = (type: string) => {
+    const iconMap: Record<string, string> = {
+      'corporate-server': '🏢',
+      'government-database': '🏛️',
+      'research-lab': '🔬',
+      'military-system': '⚔️',
+      'space-station': '🛰️',
+      'mining-operation': '⛏️',
+      'trading-post': '💼',
+      'communications-hub': '📡',
+    };
+    return iconMap[type] || '💻';
+  };
+
   const renderTargets = () => (
     <div className="targets-tab">
       <h3>Available Targets</h3>
@@ -57,7 +71,12 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
             onClick={() => setSelectedTarget(target)}
           >
             <div className="target-header">
-              <h4>{target.name}</h4>
+              <div>
+                <div className={`target-type-icon ${target.type.split('-')[0]}`}>
+                  {getTargetTypeIcon(target.type)}
+                </div>
+                <h4>{target.name}</h4>
+              </div>
               <div className={`security-level level-${target.security.accessLevel}`}>
                 Level {target.security.accessLevel}
               </div>
@@ -78,19 +97,42 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
                   {target.value.riskLevel}/10
                 </div>
               </div>
+              <div className="info-row">
+                <span className="label">Location:</span>
+                <span className="value">{target.location.stationId || target.location.shipId || target.location.networkId || 'Unknown'}</span>
+              </div>
             </div>
             
-            <div className="security-details">
-              <div className="security-stat">
-                <span>Encryption: {target.security.encryptionStrength}/5</span>
+            <div className="security-progress">
+              <div className="progress-item">
+                <div className="progress-label">
+                  <span>Encryption</span>
+                  <span>{target.security.encryptionStrength}/5</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div 
+                    className="progress-bar-fill encryption" 
+                    style={{ width: `${(target.security.encryptionStrength / 5) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="security-stat">
-                <span>Monitoring: {target.security.monitoring}/5</span>
+              <div className="progress-item">
+                <div className="progress-label">
+                  <span>Monitoring</span>
+                  <span>{target.security.monitoring}/5</span>
+                </div>
+                <div className="progress-bar-container">
+                  <div 
+                    className="progress-bar-fill monitoring" 
+                    style={{ width: `${(target.security.monitoring / 5) * 100}%` }}
+                  ></div>
+                </div>
               </div>
-              {target.security.countermeasures && (
-                <div className="countermeasures">⚠️ Active Countermeasures</div>
-              )}
             </div>
+            
+            {target.security.countermeasures && (
+              <div className="countermeasures">Active Countermeasures</div>
+            )}
             
             <p className="target-description">{target.description}</p>
           </div>
