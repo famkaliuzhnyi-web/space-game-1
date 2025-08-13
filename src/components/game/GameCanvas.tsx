@@ -13,6 +13,7 @@ import {
   CharacterCreationPanel,
   ScenarioSelectionPanel
 } from '../ui/lazy';
+import { TicTacToePanel } from '../ui';
 import MaintenancePanel from '../ui/MaintenancePanel';
 import PlayerInventoryPanel from '../ui/PlayerInventoryPanel';
 import StationContactsPanel from '../ui/StationContactsPanel';
@@ -52,7 +53,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [engineError, setEngineError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | null>(null);
+  const [activePanel, setActivePanel] = useState<'navigation' | 'sectors-map' | 'market' | 'contracts' | 'routes' | 'inventory' | 'ship' | 'factions' | 'maintenance' | 'character' | 'contacts' | 'achievements' | 'events' | 'npcs' | 'security' | 'hacking' | 'combat' | 'investment' | 'quests' | 'tic-tac-toe' | null>(null);
   const [showEquipmentMarket, setShowEquipmentMarket] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
   const [showScenarioSelection, setShowScenarioSelection] = useState(false);
@@ -117,6 +118,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const showInvestment = activePanel === 'investment';
 
   const showQuests = activePanel === 'quests';
+  const showTicTacToe = activePanel === 'tic-tac-toe';
   const [currentMarket, setCurrentMarket] = useState<Market | null>(null);
   const [availableContracts, setAvailableContracts] = useState<TradeContract[]>([]);
   const [playerContracts, setPlayerContracts] = useState<TradeContract[]>([]);
@@ -347,6 +349,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         toggleActivePanelWithTransition('investment');
       } else if (event.code === 'KeyQ') {
         toggleActivePanelWithTransition('quests');
+      } else if (event.code === 'KeyT') {
+        toggleActivePanelWithTransition('tic-tac-toe');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -1146,6 +1150,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           Quests {(questCounts.active > 0 || questCounts.available > 0) && `(${questCounts.active}/${questCounts.available})`}
         </button>
+        <button 
+          onClick={() => toggleActivePanelWithTransition('tic-tac-toe')} 
+          disabled={!engineRef.current || !!engineError}
+          style={{ 
+            backgroundColor: activePanel === 'tic-tac-toe' ? '#4a90e2' : undefined
+          }}
+          title="Tic Tac Toe (T)"
+        >
+          🎮 Games
+        </button>
       </div>
 
       {/* Navigation Panel */}
@@ -1406,6 +1420,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
             onClose={closePanelWithTransition}
           />
         </Suspense>
+      )}
+
+      {/* Tic Tac Toe Panel */}
+      {showTicTacToe && (
+        <TicTacToePanel
+          isVisible={showTicTacToe}
+          onClose={closePanelWithTransition}
+        />
       )}
 
       {/* NPC Panel */}

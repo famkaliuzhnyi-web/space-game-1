@@ -1,0 +1,402 @@
+/* TicTacToePanel.css - Industry standard Tic Tac Toe UI */
+
+.tic-tac-toe-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.tic-tac-toe-panel {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%);
+  border: 2px solid rgba(100, 200, 255, 0.4);
+  border-radius: 12px;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(100, 200, 255, 0.2);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Courier New', monospace;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* Header Styles */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 2px solid rgba(100, 200, 255, 0.3);
+  background: linear-gradient(90deg, rgba(100, 200, 255, 0.1) 0%, rgba(100, 200, 255, 0.05) 100%);
+}
+
+.panel-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #64c8ff;
+  text-shadow: 0 2px 8px rgba(100, 200, 255, 0.3);
+  font-weight: 600;
+}
+
+.close-button {
+  background: transparent;
+  border: 2px solid #ff4757;
+  color: #ff4757;
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.close-button:hover {
+  background: rgba(255, 71, 87, 0.1);
+  border-color: #ff6b81;
+  color: #ff6b81;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
+}
+
+.close-button:active {
+  transform: scale(0.95);
+}
+
+/* Panel Content */
+.panel-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Game Section */
+.game-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.game-status h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #64c8ff;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(100, 200, 255, 0.3);
+  font-weight: 500;
+}
+
+/* Game Board */
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+  width: 300px;
+  height: 300px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid rgba(100, 200, 255, 0.2);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.game-cell {
+  background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+  border: 2px solid rgba(100, 200, 255, 0.2);
+  border-radius: 8px;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-cell:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3a3a3a 0%, #4a4a4a 100%);
+  border-color: rgba(100, 200, 255, 0.4);
+  box-shadow: 
+    0 4px 12px rgba(100, 200, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.game-cell:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.game-cell:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.game-cell.x {
+  color: #ff6b6b;
+  text-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+  border-color: rgba(255, 107, 107, 0.3);
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%);
+}
+
+.game-cell.o {
+  color: #4ecdc4;
+  text-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
+  border-color: rgba(78, 205, 196, 0.3);
+  background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(78, 205, 196, 0.05) 100%);
+}
+
+/* Game Controls */
+.game-controls {
+  display: flex;
+  justify-content: center;
+}
+
+.control-button {
+  background: linear-gradient(135deg, #4a4a4a 0%, #5a5a5a 100%);
+  border: 2px solid rgba(100, 200, 255, 0.3);
+  border-radius: 8px;
+  color: #e0e0e0;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: inherit;
+}
+
+.control-button:hover {
+  background: linear-gradient(135deg, #5a5a5a 0%, #6a6a6a 100%);
+  border-color: rgba(100, 200, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(100, 200, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.control-button:active {
+  transform: scale(0.98);
+}
+
+.reset-button {
+  background: linear-gradient(135deg, #45a3e5 0%, #5fb3f5 100%);
+  border-color: #64c8ff;
+  color: white;
+}
+
+.reset-button:hover {
+  background: linear-gradient(135deg, #5fb3f5 0%, #6fc3ff 100%);
+  box-shadow: 0 4px 12px rgba(100, 200, 255, 0.3);
+}
+
+/* Stats Section */
+.stats-section {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(100, 200, 255, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.stats-section h3 {
+  margin: 0 0 16px 0;
+  color: #64c8ff;
+  font-size: 1.2rem;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(100, 200, 255, 0.3);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #b0b0b0;
+}
+
+.stat-value {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.stat-value.x-wins {
+  color: #ff6b6b;
+}
+
+.stat-value.o-wins {
+  color: #4ecdc4;
+}
+
+.stat-value.draws {
+  color: #feca57;
+}
+
+.stat-value.total {
+  color: #64c8ff;
+}
+
+.reset-stats-button {
+  width: 100%;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+  border-color: #ff4757;
+  color: white;
+}
+
+.reset-stats-button:hover {
+  background: linear-gradient(135deg, #ff8e8e 0%, #ffa8a8 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tic-tac-toe-panel {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .panel-header {
+    padding: 16px 20px;
+  }
+  
+  .panel-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .panel-content {
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .game-board {
+    width: 280px;
+    height: 280px;
+    padding: 10px;
+  }
+  
+  .game-cell {
+    font-size: 2.5rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tic-tac-toe-panel {
+    width: 98vw;
+  }
+  
+  .panel-content {
+    padding: 16px;
+  }
+  
+  .game-board {
+    width: 240px;
+    height: 240px;
+    gap: 6px;
+    padding: 8px;
+  }
+  
+  .game-cell {
+    font-size: 2rem;
+    border-radius: 6px;
+  }
+  
+  .control-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .game-cell,
+  .control-button,
+  .close-button {
+    transition: none;
+  }
+  
+  .game-cell:hover:not(:disabled) {
+    transform: none;
+  }
+  
+  .control-button:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .tic-tac-toe-panel {
+    border-color: #ffffff;
+    background: #000000;
+  }
+  
+  .game-cell {
+    border-color: #ffffff;
+    background: #000000;
+  }
+  
+  .game-cell.x {
+    color: #ffffff;
+    background: #ff0000;
+  }
+  
+  .game-cell.o {
+    color: #000000;
+    background: #00ff00;
+  }
+}
+
+/* Focus indicators for keyboard navigation */
+.game-cell:focus,
+.control-button:focus,
+.close-button:focus {
+  outline: 3px solid #64c8ff;
+  outline-offset: 2px;
+}
+
+/* Ensure proper touch targets on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .game-cell,
+  .control-button,
+  .close-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

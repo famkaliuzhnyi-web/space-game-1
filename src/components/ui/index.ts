@@ -27,6 +27,7 @@ export { CombatPanel } from './CombatPanel';
 export { InvestmentPanel } from './InvestmentPanel';
 
 export { QuestPanel } from './QuestPanel';
+export { TicTacToePanel } from './TicTacToePanel';
 export { default as Modal, ConfirmModal, AlertModal, InputModal } from './Modal';
 export type { InventoryItem, CargoHold } from './InventoryPanel';
 export type { ModalAction } from './Modal';
