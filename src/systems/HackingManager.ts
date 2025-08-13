@@ -516,18 +516,19 @@ export class HackingManager {
     
     // Choose minigame type based on phase
     let minigameType: HackingMinigame['type'];
+    
     switch (attempt.phase) {
       case 'reconnaissance':
-        minigameType = 'pattern-match';
+        minigameType = Math.random() < 0.3 ? '2048' : 'pattern-match';
         break;
       case 'penetration':
-        minigameType = 'password-crack';
+        minigameType = Math.random() < 0.2 ? '2048' : 'password-crack';
         break;
       case 'exploitation':
-        minigameType = 'circuit-bypass';
+        minigameType = Math.random() < 0.4 ? '2048' : 'circuit-bypass';
         break;
       case 'cleanup':
-        minigameType = 'code-inject';
+        minigameType = Math.random() < 0.2 ? '2048' : 'code-inject';
         break;
       default:
         minigameType = 'password-crack';
@@ -953,6 +954,13 @@ export class HackingManager {
           codeLength: Math.min(100, 20 + difficulty * 10),
           syntaxComplexity: Math.min(5, 1 + Math.floor(difficulty / 2)),
           injectionPoints: Math.min(8, 2 + difficulty)
+        };
+      case '2048':
+        return {
+          gridSize: difficulty <= 3 ? 4 : difficulty <= 6 ? 5 : 6, // 4x4, 5x5, or 6x6 grid based on difficulty
+          targetTile: Math.min(4096, Math.pow(2, 8 + Math.floor(difficulty / 2))), // Target: 256, 512, 1024, 2048, 4096
+          moveLimit: Math.max(50, 200 - difficulty * 15), // Fewer moves for higher difficulty
+          startingTiles: Math.max(2, Math.min(4, 2 + Math.floor(difficulty / 3))) // 2-4 starting tiles
         };
       default:
         return {};

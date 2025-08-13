@@ -1,0 +1,202 @@
+/* 2048 Game Styles */
+.game-2048 {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.game-2048-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.game-2048-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #aaa);
+}
+
+.game-status {
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.game-status.won {
+  background: var(--color-success, #4caf50);
+  color: white;
+}
+
+.game-status.lost {
+  background: var(--color-danger, #f44336);
+  color: white;
+}
+
+.game-2048-grid {
+  display: grid;
+  gap: 8px;
+  padding: 1rem;
+  background: var(--color-card-bg, #333);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  aspect-ratio: 1;
+}
+
+.game-2048-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease-in-out;
+  min-height: 60px;
+  position: relative;
+}
+
+/* Smaller grid cells for larger grids */
+.game-2048-grid[style*="repeat(5"] .game-2048-cell {
+  font-size: 1.2rem;
+  min-height: 50px;
+}
+
+.game-2048-grid[style*="repeat(6"] .game-2048-cell {
+  font-size: 1rem;
+  min-height: 40px;
+}
+
+.game-2048-cell:empty {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.game-2048-controls {
+  text-align: center;
+}
+
+.game-2048-controls p {
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary, #aaa);
+  font-size: 0.9rem;
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-buttons > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.control-buttons button {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-button-secondary, #666);
+  color: var(--color-button-text, #fff);
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-buttons button:hover {
+  background: var(--color-button-secondary-hover, #777);
+  transform: scale(1.05);
+}
+
+.control-buttons button:active {
+  transform: scale(0.95);
+}
+
+/* Animations for new tiles */
+@keyframes tile-appear {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.game-2048-cell:not(:empty) {
+  animation: tile-appear 0.15s ease-in-out;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .game-2048 {
+    padding: 0.5rem;
+    max-width: 100%;
+  }
+  
+  .game-2048-grid {
+    gap: 6px;
+    padding: 0.75rem;
+  }
+  
+  .game-2048-cell {
+    font-size: 1.2rem;
+    min-height: 50px;
+  }
+  
+  .game-2048-grid[style*="repeat(5"] .game-2048-cell {
+    font-size: 1rem;
+    min-height: 40px;
+  }
+  
+  .game-2048-grid[style*="repeat(6"] .game-2048-cell {
+    font-size: 0.9rem;
+    min-height: 35px;
+  }
+  
+  .control-buttons button {
+    width: 45px;
+    height: 45px;
+    font-size: 1.1rem;
+  }
+}
+
+/* Integration with space game theme */
+.hacking-panel .game-2048 {
+  background: transparent;
+  padding: 0;
+}
+
+.hacking-panel .game-2048-grid {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border, #555);
+}
+
+.hacking-panel .game-2048-cell {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hacking-panel .game-2048-info {
+  color: var(--color-text, #fff);
+}
+
+.hacking-panel .control-buttons button {
+  background: linear-gradient(135deg, #00ff00, #44ff44);
+  color: black;
+  font-weight: bold;
+}
+
+.hacking-panel .control-buttons button:hover {
+  background: linear-gradient(135deg, #44ff44, #88ff88);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}

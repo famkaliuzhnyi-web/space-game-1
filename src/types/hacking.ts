@@ -116,7 +116,7 @@ export interface HackingAttempt {
  * Hacking minigame mechanics
  */
 export interface HackingMinigame {
-  type: 'password-crack' | 'pattern-match' | 'circuit-bypass' | 'code-inject';
+  type: 'password-crack' | 'pattern-match' | 'circuit-bypass' | 'code-inject' | '2048';
   difficulty: number;
   timeLimit?: number; // Seconds
   parameters: {

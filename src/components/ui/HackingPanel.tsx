@@ -4,7 +4,9 @@ import {
   HackingTarget, 
   HackingMinigame 
 } from '../../types/hacking';
+import { Game2048 } from '../minigames';
 import './HackingPanel.css';
+import '../minigames/Game2048.css';
 
 interface HackingPanelProps {
   hackingManager: HackingManager;
@@ -477,17 +479,27 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
             {renderMinigameContent(activeMinigame)}
           </div>
           
-          <div className="minigame-actions">
-            <button onClick={() => handleMinigameComplete(true, 80)}>
-              Success (80%)
-            </button>
-            <button onClick={() => handleMinigameComplete(false, 30)}>
-              Fail (30%)
-            </button>
-            <button onClick={() => setActiveMinigame(null)}>
-              Cancel
-            </button>
-          </div>
+          {activeMinigame.type !== '2048' && (
+            <div className="minigame-actions">
+              <button onClick={() => handleMinigameComplete(true, 80)}>
+                Success (80%)
+              </button>
+              <button onClick={() => handleMinigameComplete(false, 30)}>
+                Fail (30%)
+              </button>
+              <button onClick={() => setActiveMinigame(null)}>
+                Cancel
+              </button>
+            </div>
+          )}
+          
+          {activeMinigame.type === '2048' && (
+            <div className="minigame-actions">
+              <button onClick={() => setActiveMinigame(null)}>
+                Cancel Game
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -538,6 +550,23 @@ export const HackingPanel: React.FC<HackingPanelProps> = ({
             <div>Code length: {minigame.parameters.codeLength}</div>
             <div>Syntax complexity: {minigame.parameters.syntaxComplexity}/5</div>
             <div>Injection points: {minigame.parameters.injectionPoints}</div>
+          </div>
+        );
+      
+      case '2048':
+        return (
+          <div className="minigame-2048">
+            <p>Solve the data matrix by reaching the target value:</p>
+            <Game2048
+              gridSize={minigame.parameters.gridSize}
+              targetTile={minigame.parameters.targetTile}
+              moveLimit={minigame.parameters.moveLimit}
+              startingTiles={minigame.parameters.startingTiles}
+              onGameEnd={(success, score) => {
+                const finalScore = Math.min(100, Math.max(10, (score / minigame.parameters.targetTile) * 100));
+                handleMinigameComplete(success, finalScore);
+              }}
+            />
           </div>
         );
       
