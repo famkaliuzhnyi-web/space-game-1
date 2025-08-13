@@ -40,12 +40,14 @@ interface GameCanvasProps {
   className?: string;
   debugMode?: boolean;
   debugShipConstructor?: boolean;
+  isMultiplayer?: boolean;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   className = '',
   debugMode = false,
-  debugShipConstructor = false
+  debugShipConstructor = false,
+  isMultiplayer = false
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -155,8 +157,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           return;
         }
 
-        // Initialize the game engine
-        engineRef.current = new Engine(canvasRef.current);
+        // Initialize the game engine with multiplayer support
+        engineRef.current = new Engine(canvasRef.current, { isMultiplayer });
         
         // Start the engine
         engineRef.current.start();
