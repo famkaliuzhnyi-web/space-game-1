@@ -50,9 +50,18 @@ import { audioEngine } from './AudioEngine';
  * @version 1.0.0
  * @since 2024-01-01
  */
+/**
+ * Engine initialization options
+ */
+export interface EngineOptions {
+  isMultiplayer?: boolean;
+  serverUrl?: string;
+}
+
 export class Engine implements GameEngine {
   canvas: HTMLCanvasElement;
   private camera: Camera = { x: 0, y: 0, zoom: 1 };
+  private options: EngineOptions;
   
   // 3D rendering only
   private renderer3D: ThreeRenderer | null = null;
@@ -73,16 +82,18 @@ export class Engine implements GameEngine {
    * The canvas will be configured for optimal pixel art rendering.
    * 
    * @param canvas - HTML canvas element for rendering the game
+   * @param options - Engine initialization options
    * @throws {Error} If the canvas doesn't support 2D context
    * 
    * @example
    * ```typescript
    * const canvas = document.getElementById('game') as HTMLCanvasElement;
-   * const engine = new Engine(canvas);
+   * const engine = new Engine(canvas, { isMultiplayer: true });
    * ```
    */
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, options: EngineOptions = {}) {
     this.canvas = canvas;
+    this.options = options;
     
     // For 3D-only mode, ThreeRenderer will handle canvas context creation
     
@@ -413,6 +424,20 @@ export class Engine implements GameEngine {
    */
   getAudioEngine() {
     return audioEngine;
+  }
+
+  /**
+   * Check if this is a multiplayer session
+   */
+  isMultiplayer(): boolean {
+    return this.options.isMultiplayer || false;
+  }
+
+  /**
+   * Get engine options
+   */
+  getOptions(): EngineOptions {
+    return { ...this.options };
   }
 
   /**
